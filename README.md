@@ -12,10 +12,10 @@ iExtract makes it easy for iPhone users to extract their photos and videos from 
 
 ## Respository Layout
 
-- We have a folder called "living documents" which stores each version of the project proposal document for our app that explains our app idea, along with all the requirements.
+- "living documents": Stores each version of the project proposal document for our app that explains our app idea, along with all the requirements.
 
-- We have a "reports" folder that holds weekly progress reports for our project. Each report contains a weekly status update from our TA and the individual contributions of each team member for that week.
+- "reports": Holds weekly progress reports for our project. Each report contains a weekly status update from our TA and the individual contributions of each team member for that week.
 
-- Our "functional_components" folder will store all our backend logic with all our features in our app.
+- "functional_components": Stores all our backend logic with all our features in our app.
 
-- The "cli_components" folder stores how our command line interface menu will look like for our app.
+- "cli_components": Stores the code for how our command line interface menu will look like for our app.
