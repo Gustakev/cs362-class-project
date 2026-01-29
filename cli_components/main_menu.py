@@ -62,6 +62,7 @@ def loadBackupMenu():
             print("You chose:", selectedFolder)
             print("\n")
             # TODO: Go into loading the backup now. If the backup fails to load, print error and do 'continue' to go
+            #  ask the user how they would like to choose their backup folder again.
             return # Prints successful load message and returns to main menu if successful load happens.
         elif folderPickerMethod == "2":
             selectedFolder = input("Enter the path to your iPhone backup folder: ")
@@ -69,7 +70,7 @@ def loadBackupMenu():
             print("You chose:", selectedFolder)
             print("\n")
             # TODO: Go into loading the backup now. If the backup fails to load, print error and do 'continue' to go
-            return # Prints successful load message and returns to main menu if successful load happens.
+            #  ask the user how they would like to choose their backup folder again.
         elif folderPickerMethod == "3":
             print("\nGoing back...\n")
             return # Return to main menu.
