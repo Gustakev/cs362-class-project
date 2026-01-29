@@ -33,14 +33,18 @@ from tkinter import filedialog
 # Inputs: N/A
 # Outputs: (folder : string): Folder path string
 def guiPickFolder():
-    root = tk.Tk()
-    root.withdraw()
-
-    # Obtain folder string and return it:
-    root.attributes('-topmost', True)
-    root.update()
-    folder = filedialog.askdirectory(title="Select a folder")
-    return folder
+    try:
+         # Obtain folder string and return it:
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes('-topmost', True)
+        root.update()
+        folder = filedialog.askdirectory(title="Select a folder")
+        return folder
+    except tk.TclError:
+        # If there is no GUI on the OS:
+        print("Error: GUI folder selection is not available on this system.", file=sys.stderr)
+        return None
 
 # Name: loadBackupMenu
 # Purpose: Submenu for choosing how to pick the backup folder.
@@ -59,6 +63,9 @@ def loadBackupMenu():
         # Handling their choice:
         if folderPickerMethod == "1":
             selectedFolder = guiPickFolder()
+            if not selectedFolder:
+                print("This system does not support GUI folder selection.\n")
+                continue
             print("You chose:", selectedFolder)
             print("\n")
             # TODO: Go into loading the backup now. If the backup fails to load, print error and do 'continue' to go
@@ -108,7 +115,7 @@ def mainMenu():
         elif mainMenuChoice == "4":
             print("Settings (not implemented yet)\n")
         elif mainMenuChoice == "5":
-            print("\nThank you for using this program. Goodbye.\n")
+            print("Thank you for using this program. Goodbye.")
             return
         else:
             print("Error: Invalid input. Choose one of the displayed options.", file=sys.stderr)
