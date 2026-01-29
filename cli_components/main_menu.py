@@ -108,7 +108,7 @@ def mainMenu():
         elif mainMenuChoice == "4":
             print("Settings (not implemented yet)\n")
         elif mainMenuChoice == "5":
-            print("\nThank you for using this program. Goodbye.\n")
+            print("Thank you for using this program. Goodbye.")
             return
         else:
             print("Error: Invalid input. Choose one of the displayed options.", file=sys.stderr)
