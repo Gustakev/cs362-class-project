@@ -2,9 +2,10 @@
 
 ## Team Report:
 **TA Feedback**
-* N/A
 
-**Goals From Last Week**
+N/A
+
+**Plans/Goals For This Week**
 * N/A
   
 **Progress + Issues**
@@ -18,7 +19,7 @@ Note: What you did, what worked, what you learned, where you had trouble, and wh
 *Issues:*
 * N/A
 
-**Plans/Goals for This Week**
+**Plans/Goals For Next Week**
 
 
 Note: Each bullet point should include a measurable task and a time estimate. You may use nested bullet points for parts of a larger task. No bottom-level time estimate should be greater than 3 days.
@@ -28,7 +29,7 @@ Note: Each bullet point should include a measurable task and a time estimate. Yo
 
 ### Sam Daughtry:
   
-**Goals From Last Week**
+**Plans/Goals For This Week**
 * N/A
 
 **Progress + Issues**
@@ -42,7 +43,7 @@ Note: What you did, what worked, what you learned, where you had trouble, and wh
 *Issues:*
 * N/A
 
-**Plans/Goals for This Week**
+**Plans/Goals For Next Week**
 
 
 Note: Each bullet point should include a measurable task and a time estimate. You may use nested bullet points for parts of a larger task. No bottom-level time estimate should be greater than 3 days.
@@ -50,7 +51,7 @@ Note: Each bullet point should include a measurable task and a time estimate. Yo
 
 ### Noah Gregie:
   
-**Goals From Last Week**
+**Plans/Goals For This Week**
 * N/A
 
 **Progress + Issues**
@@ -64,7 +65,7 @@ Note: What you did, what worked, what you learned, where you had trouble, and wh
 *Issues:*
 * N/A
 
-**Plans/Goals for This Week**
+**Plans/Goals For Next Week**
 
 
 Note: Each bullet point should include a measurable task and a time estimate. You may use nested bullet points for parts of a larger task. No bottom-level time estimate should be greater than 3 days.
@@ -72,7 +73,7 @@ Note: Each bullet point should include a measurable task and a time estimate. Yo
 
 ### Kevin Gustafson:
 
-**Goals From Last Week**
+**Plans/Goals For This Week**
 
 
 **Progress + Issues**
@@ -86,7 +87,7 @@ Note: What you did, what worked, what you learned, where you had trouble, and wh
 *Issues:*
 * N/A
 
-**Plans/Goals for This Week**
+**Plans/Goals For Next Week**
 
 
 Note: Each bullet point should include a measurable task and a time estimate. You may use nested bullet points for parts of a larger task. No bottom-level time estimate should be greater than 3 days.
@@ -94,7 +95,7 @@ Note: Each bullet point should include a measurable task and a time estimate. Yo
 
 ### Brendon Wong:
   
-**Goals From Last Week**
+**Plans/Goals For This Week**
 * N/A
 
 **Progress + Issues**
@@ -108,7 +109,7 @@ Note: What you did, what worked, what you learned, where you had trouble, and wh
 *Issues:*
 * N/A
 
-**Plans/Goals for This Week**
+**Plans/Goals For Next Week**
 
 
 Note: Each bullet point should include a measurable task and a time estimate. You may use nested bullet points for parts of a larger task. No bottom-level time estimate should be greater than 3 days.
