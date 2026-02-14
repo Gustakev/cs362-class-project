@@ -1,98 +1,88 @@
 """
 Author: Kevin Gustafson
-Date: 1/29/2025
+Date: 2026-01-29
 Program Description: Command line interface for iExtract.
 """
-##############
-# Constants: #
-##############
 
-
-############
-# Imports: #
-############
-# For error handling.
 import sys
-# Necessary for GUI dialogue, reducing complexity for the user.
 import tkinter as tk
 from tkinter import filedialog
 
-#########################
-# Function Definitions: #
-#########################
-#||||||||||||||||||||||||||#
-# Generic Function Header: #
-# Name: 
-# Purpose: 
-# Inputs: 
-# Outputs: 
-#||||||||||||||||||||||||||#
 
-# Name: guiPickFolder
-# Purpose: This helper allows a user to pick a folder using their system's built-in GUI folder picker.
-# Inputs: N/A
-# Outputs: (folder : string): Folder path string
-def guiPickFolder():
+def gui_pick_folder():
+    """
+    Opens a GUI folder picker dialog and returns the selected folder path.
+
+    Returns:
+        str | None: The selected folder path, or None if GUI is unavailable.
+    """
     try:
-         # Obtain folder string and return it:
         root = tk.Tk()
         root.withdraw()
         root.attributes('-topmost', True)
         root.update()
+
         folder = filedialog.askdirectory(title="Select a folder")
         return folder
+
     except tk.TclError:
-        # If there is no GUI on the OS:
-        print("Error: GUI folder selection is not available on this system.", file=sys.stderr)
+        print(
+            "Error: GUI folder selection is not available on this system.",
+            file=sys.stderr
+        )
         return None
 
-# Name: loadBackupMenu
-# Purpose: Submenu for choosing how to pick the backup folder.
-def loadBackupMenu():
+
+def load_backup_menu():
+    """
+    Submenu for choosing how to pick the backup folder.
+    """
     while True:
-        # Ask user which way they want to select their folder:
         print("*** Instructions: Enter the number corresponding to the choices below. ***\n")
         print("1. Load iPhone Backup Folder Via GUI")
         print("2. Load iPhone Backup Folder By Entering File Path")
         print("3. Go Back")
 
-        # Collecting which way the user wants to choose their folder:
-        folderPickerMethod = input("\nChoose an option: ")
+        folder_picker_method = input("\nChoose an option: ")
         print("")
 
-        # Handling their choice:
-        if folderPickerMethod == "1":
-            selectedFolder = guiPickFolder()
-            if not selectedFolder:
+        if folder_picker_method == "1":
+            selected_folder = gui_pick_folder()
+            if not selected_folder:
                 print("This system does not support GUI folder selection.\n")
                 continue
-            print("You chose:", selectedFolder)
-            print("\n")
-            # TODO: Go into loading the backup now. If the backup fails to load, print error and do 'continue' to go
-            #  ask the user how they would like to choose their backup folder again.
-            return # Prints successful load message and returns to main menu if successful load happens.
-        elif folderPickerMethod == "2":
-            selectedFolder = input("Enter the path to your iPhone backup folder: ")
-            print("")
-            print("You chose:", selectedFolder)
-            print("\n")
-            # TODO: Go into loading the backup now. If the backup fails to load, print error and do 'continue' to go
-            #  ask the user how they would like to choose their backup folder again.
-        elif folderPickerMethod == "3":
-            print("\nGoing back...\n")
-            return # Return to main menu.
-        else:
-            print("Error: Invalid input. Choose one of the displayed options.", file=sys.stderr)
-            print("")
-            # Naturally restarts loop...
 
-# Name: mainMenu
-# Purpose: This is the main program command line interface loop.
-# Inputs: N/A
-# Outputs: N/A
-def mainMenu():
+            print("You chose:", selected_folder)
+            print("\n")
+            # TODO: Attempt to load the backup. If loading fails, print an error
+            # and continue the loop to let the user choose again.
+            return
+
+        elif folder_picker_method == "2":
+            selected_folder = input("Enter the path to your iPhone backup folder: ")
+            print("")
+            print("You chose:", selected_folder)
+            print("\n")
+            # TODO: Attempt to load the backup. If loading fails, print an error
+            # and continue the loop to let the user choose again.
+
+        elif folder_picker_method == "3":
+            print("\nGoing back...\n")
+            return
+
+        else:
+            print(
+                "Error: Invalid input. Choose one of the displayed options.",
+                file=sys.stderr
+            )
+            print("")
+
+
+def main_menu():
+    """
+    Main program command-line interface loop.
+    """
     while True:
-        # Print options:
         print("\n=========================== iExtract Main Menu ===========================")
         print("\n*** Instructions: Enter the number corresponding to the choices below. ***\n")
         print("1. Load iPhone Backup Folder")
@@ -101,53 +91,68 @@ def mainMenu():
         print("4. Settings")
         print("5. Exit")
 
-        # User options logic:
-        mainMenuChoice = input("\nChoose an option: ")
+        main_menu_choice = input("\nChoose an option: ")
         print("")
 
-        # Branches:
-        if mainMenuChoice == "1":
-            loadBackupMenu()
-        elif mainMenuChoice == "2":
+        if main_menu_choice == "1":
+            load_backup_menu()
+        elif main_menu_choice == "2":
             print("Export All Camera Roll Media (not implemented yet)\n")
-        elif mainMenuChoice == "3":
+        elif main_menu_choice == "3":
             print("Export Specific Camera Roll Media (not implemented yet)\n")
-        elif mainMenuChoice == "4":
+        elif main_menu_choice == "4":
             print("Settings (not implemented yet)\n")
-        elif mainMenuChoice == "5":
+        elif main_menu_choice == "5":
             print("Thank you for using this program. Goodbye.")
             return
         else:
-            print("Error: Invalid input. Choose one of the displayed options.", file=sys.stderr)
+            print(
+                "Error: Invalid input. Choose one of the displayed options.",
+                file=sys.stderr
+            )
 
-def backupMenu():
+
+def backup_menu():
+    """Placeholder for backup menu."""
     print("")
 
-def exportAllMenu():
+
+def export_all_menu():
+    """Placeholder for export-all menu."""
     print("")
 
-def exportSpecificMenu():
+
+def export_specific_menu():
+    """Placeholder for export-specific menu."""
     print("")
 
-def settingsMenu():
+
+def settings_menu():
+    """Placeholder for settings menu."""
     print("")
 
-def inputValidation():
+
+def input_validation():
+    """Placeholder for input validation."""
     print("")
 
-def progressDisplay():
+
+def progress_display():
+    """Placeholder for progress display."""
     print("")
 
-def errorDisplay():
+
+def error_display():
+    """Placeholder for error display."""
     print("")
 
-# Name: main
-# Purpose: This is the program entrypoint.
-# Inputs: N/A
-# Outputs: N/A
+
 def main():
-    # Load the main menu loop:
-    mainMenu()
+    """
+    Program entrypoint.
+    """
+    main_menu()
 
-# Entrypoint for program:
-main()
+
+if __name__ == "__main__":
+    main()
