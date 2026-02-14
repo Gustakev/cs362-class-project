@@ -38,7 +38,10 @@ def load_backup_menu():
     Submenu for choosing how to pick the backup folder.
     """
     while True:
-        print("*** Instructions: Enter the number corresponding to the choices below. ***\n")
+        print(
+            "*** Instructions: Enter the number corresponding to the choices "
+            "below. ***\n"
+        )
         print("1. Load iPhone Backup Folder Via GUI")
         print("2. Load iPhone Backup Folder By Entering File Path")
         print("3. Go Back")
@@ -54,17 +57,20 @@ def load_backup_menu():
 
             print("You chose:", selected_folder)
             print("\n")
-            # TODO: Attempt to load the backup. If loading fails, print an error
-            # and continue the loop to let the user choose again.
+            # TODO: Attempt to load the backup. If loading fails, print an
+            # error and continue the loop to let the user choose again.
             return
 
         elif folder_picker_method == "2":
-            selected_folder = input("Enter the path to your iPhone backup folder: ")
+            selected_folder = input(
+                "Enter the path to your iPhone backup "
+                "folder: "
+            )
             print("")
             print("You chose:", selected_folder)
             print("\n")
-            # TODO: Attempt to load the backup. If loading fails, print an error
-            # and continue the loop to let the user choose again.
+            # TODO: Attempt to load the backup. If loading fails, print an
+            # error and continue the loop to let the user choose again.
 
         elif folder_picker_method == "3":
             print("\nGoing back...\n")
@@ -83,8 +89,14 @@ def main_menu():
     Main program command-line interface loop.
     """
     while True:
-        print("\n=========================== iExtract Main Menu ===========================")
-        print("\n*** Instructions: Enter the number corresponding to the choices below. ***\n")
+        print(
+            "\n=========================== iExtract Main Menu ============="
+            "=============="
+        )
+        print(
+            "\n*** Instructions: Enter the number corresponding to the "
+            "choices below. ***\n"
+        )
         print("1. Load iPhone Backup Folder")
         print("2. Export All Camera Roll Media")
         print("3. Export Specific Camera Roll Media")
