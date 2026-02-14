@@ -90,8 +90,8 @@ def main_menu():
     """
     while True:
         print(
-            "\n=========================== iExtract Main Menu ============="
-            "=============="
+            "\n========================= iExtract Main Menu ============="
+            "============"
         )
         print(
             "\n*** Instructions: Enter the number corresponding to the "
