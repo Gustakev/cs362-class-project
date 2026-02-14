@@ -54,6 +54,8 @@ Lists **every artifact** the team relies on: tools, documents, external resource
   - N/A
 - Any APIs or datasets:
   - N/A
+- AI Photo Captioning Tool:
+  - [Click here](https://github.com/BrendxnW/photo-captioning).
 
 ---
 
