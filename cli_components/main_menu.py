@@ -5,8 +5,17 @@ Program Description: Command line interface for iExtract.
 """
 
 import sys
+
 import tkinter as tk
 from tkinter import filedialog
+
+from pathlib import Path
+
+from functional_components.backup_locator_and_validator.app. \
+    backup_model_builder import build_backup_model
+
+"""Global variables and constants."""
+BACKUP_MODEL = None
 
 
 def gui_pick_folder():
@@ -33,10 +42,31 @@ def gui_pick_folder():
         return None
 
 
+def print_device_metadata():
+    """Prints device metadata in a nice format."""
+    global BACKUP_MODEL
+
+    print(f"Device Name: {BACKUP_MODEL.backup_metadata.source_device.name}")
+
+    # Reformat the device model so it looks better:
+    formatted_model = (BACKUP_MODEL.backup_metadata.source_device.model). \
+        split(",")[0]
+    formatted_model = formatted_model.replace("e", "e ")
+
+    submodel = (BACKUP_MODEL.backup_metadata.source_device.model).split(",")[1]
+
+    print(f"Device Model: {formatted_model}")
+    print(f"Device Submodel: {submodel}")
+    print(f"Device Version: {BACKUP_MODEL.backup_metadata. \
+        source_device.ios_version}")
+
+
 def load_backup_menu():
     """
     Submenu for choosing how to pick the backup folder.
     """
+    global BACKUP_MODEL # The persistent backup model.
+
     while True:
         print(
             "*** Instructions: Enter the number corresponding to the choices "
@@ -59,18 +89,53 @@ def load_backup_menu():
             print("\n")
             # TODO: Attempt to load the backup. If loading fails, print an
             # error and continue the loop to let the user choose again.
+
+            # Attempt loading backup.
+            result = build_backup_model(Path(selected_folder))
+
+            # If BackupModel was not successfully made:
+            if result.success != True:
+                print("Error loading backup:")
+                print(result.error)
+                print("")
+
+                # Try again.
+                continue
+            
+            # If the BackupModel was successfully made:
+            BACKUP_MODEL = result.backup_model
+            print("Backup loaded successfully!")
+            print_device_metadata()
+            print("")
             return
 
         elif folder_picker_method == "2":
-            selected_folder = input(
-                "Enter the path to your iPhone backup "
-                "folder: "
-            )
+            selected_folder = input("Enter the path to your iPhone backup " \
+                "folder: ")
             print("")
             print("You chose:", selected_folder)
             print("\n")
             # TODO: Attempt to load the backup. If loading fails, print an
             # error and continue the loop to let the user choose again.
+
+            # Attempt loading backup.
+            result = build_backup_model(Path(selected_folder))
+
+            # If BackupModel was not successfully made:
+            if result.success != True:
+                print("Error loading backup:")
+                print(result.error)
+                print("")
+                
+                # Try again.
+                continue
+            
+            # If the BackupModel was successfully made:
+            BACKUP_MODEL = result.backup_model
+            print("Backup loaded successfully!")
+            print_device_metadata()
+            print("")
+            return
 
         elif folder_picker_method == "3":
             print("\nGoing back...\n")
