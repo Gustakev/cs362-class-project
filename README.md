@@ -11,6 +11,7 @@ iExtract makes it easy for iPhone users to extract their photos and videos from 
 * Avoid quality loss that typically occurs through compression of files during epxorts using other tools
 
 ## Respository Layout
+- iExtract.py: Launcher for iExtract.
 
 - "living_documents": Stores each version of the project proposal document for our app that explains our app idea, along with all the requirements.
 
