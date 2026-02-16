@@ -69,7 +69,7 @@ def load_backup_menu():
 
     while True:
         print(
-            "*** Instructions: Enter the number corresponding to the choices "
+            "*** Instructions: Enter a number corresponding to the choices "
             "below. ***\n"
         )
         print("1. Load iPhone Backup Folder Via GUI")
@@ -81,10 +81,20 @@ def load_backup_menu():
 
         if folder_picker_method == "1":
             selected_folder = gui_pick_folder()
-            if not selected_folder:
+            
+            # Displays folder picking error if user cancels or it is not
+            # available.
+            if selected_folder is None:
+                # GUI unavailable.
                 print("This system does not support GUI folder selection.\n")
                 continue
-
+            
+            if selected_folder == "":
+                # User canceled folder selection dialog.
+                print("User canceled selection. No folder selected. Please " \
+                      "try again.\n")
+                continue
+            
             print("You chose:", selected_folder)
             print("\n")
             # TODO: Attempt to load the backup. If loading fails, print an
@@ -159,7 +169,7 @@ def main_menu():
             "============"
         )
         print(
-            "\n*** Instructions: Enter the number corresponding to the "
+            "\n*** Instructions: Enter a number corresponding to the "
             "choices below. ***\n"
         )
         print("1. Load iPhone Backup Folder")
