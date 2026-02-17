@@ -43,7 +43,8 @@ Lists **every artifact** the team relies on: tools, documents, external resource
 - Living document:
   - [Click here](https://docs.google.com/document/d/1Mhivfg5L7h5X3cCTO7E5iUiXo8Poj--A-039OMgZ9fI/edit?tab=t.0).
 - Mockups & diagrams:
-  - N/A
+  - Program Flow Diagram:
+    - [Click here](https://oregonstateuniversity-my.sharepoint.com/:u:/g/personal/gustafke_oregonstate_edu/IQBgmBfGjFt0Q5smIIyV4imhAdqkP3baczqTaU_koUTAxiw?e=CP3WyP).
 
 ### **2.3 External Tools & Services**
 - Issue tracker (GitHub Issues):
