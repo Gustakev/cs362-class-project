@@ -14,6 +14,13 @@ from pathlib import Path
 from functional_components.backup_locator_and_validator.app. \
     backup_model_builder import build_backup_model
 
+
+from textual.app import App, ComposeResult
+from textual.containers import Container, Vertical, Horizontal
+from textual.widgets import Header, Footer, Button, Static, Input, Log, Label
+from textual.reactive import reactive
+
+
 """Global variables and constants."""
 BACKUP_MODEL = None
 
@@ -149,45 +156,90 @@ def load_backup_menu():
             print("")
 
 
-def main_menu():
-    """
-    Main program command-line interface loop.
-    """
-    while True:
-        print(
-            "\n========================= iExtract Main Menu ============="
-            "============"
-        )
-        print(
-            "\n*** Instructions: Enter the number corresponding to the "
-            "choices below. ***\n"
-        )
-        print("1. Load iPhone Backup Folder")
-        print("2. Export All Camera Roll Media")
-        print("3. Export Specific Camera Roll Media")
-        print("4. Settings")
-        print("5. Exit")
+class iExtractApp(App):
+    """The main TUI Application Class"""
+# CSS Styling for the layout
+   
+    CSS_PATH = "main_menu.tcss"
+    BINDINGS = [("d", "toggle_dark", "Toggle dark mode")]
 
-        main_menu_choice = input("\nChoose an option: ")
-        print("")
+    def compose(self) -> ComposeResult:
+        """
+        Main program command-line interface loop.
+        """
+       
 
-        if main_menu_choice == "1":
-            load_backup_menu()
-        elif main_menu_choice == "2":
-            print("Export All Camera Roll Media (not implemented yet)\n")
-        elif main_menu_choice == "3":
-            print("Export Specific Camera Roll Media (not implemented yet)\n")
-        elif main_menu_choice == "4":
-            print("Settings (not implemented yet)\n")
-        elif main_menu_choice == "5":
-            print("Thank you for using this program. Goodbye.")
-            return
-        else:
-            print(
-                "Error: Invalid input. Choose one of the displayed options.",
-                file=sys.stderr
-            )
+        yield Header()
+        yield Footer()
 
+
+        with Vertical(id = "side_bar"):
+            yield Label("[b]MAIN MENU[/b]", id="lbl_menu_title")
+            with Vertical(id = "main_menu"):
+                yield Button("1. Load iPhone Backup Folder", id = "btn_load")
+                yield Button("2. Export All Camera Roll Media", id = "btn_export")
+                yield Button("3. Export Specific Camera Roll Media", id = "btn_specific")
+                yield Button("4. Settings", id= "btn_settings")
+                yield Button("5. Exit", id = "btn_exit")
+
+            with Vertical(id = "backup_options", classes="hidden"):
+                yield Button("1. Load via GUI", id="btn_load_gui", variant="primary")
+                yield Button("2. Load via Path", id="btn_load_path")
+                yield Button("3. Go Back", id="btn_back")
+
+        with Vertical (id = "main_content"):
+            yield Label("System Log:")
+            yield Log(id = "log_window",highlight= True)
+
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+
+        """Handles all button clicks"""
+        global BACKUP_MODEL
+        log = self.query_one("#log_window",Log)
+
+        btn_id = event.button.id
+
+        if btn_id == "btn_exit":
+            self.exit()
+
+        """Navigation logic"""
+
+        if btn_id == "btn_load":
+            self.query_one("#main_menu").add_class("hidden")
+            self.query_one("#backup_options").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]LOAD BACKUP[/b]")
+            log.write_line("[MENU] Select load method...")  
+
+
+        if btn_id == "btn_back":
+            self.query_one("#backup_options").add_class("hidden")
+            self.query_one("#main_menu").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
+            log.write_line("[MENU] Returned to Main Menu...") 
+                  
+
+        """Action Logic"""
+
+        if btn_id == "btn_load_gui":
+            log.write_line("[INFO] Opening GUI folder picker...")
+            folder = gui_pick_folder()
+            if folder:
+                log.write_line(f"[INFO] Selected folder: {folder}")
+                
+            else:
+                log.write_line("[WARN] Selection caccelled...")
+        
+
+
+    def action_toggle_dark(self)-> None:
+        self.theme = ("textual-dark" if self.theme == "textual-light" else "textual-light") 
+
+        
+
+
+        
+    
 
 def backup_menu():
     """Placeholder for backup menu."""
@@ -228,8 +280,10 @@ def main():
     """
     Program entrypoint.
     """
-    main_menu()
+    app = iExtractApp()
+    app.run()
 
 
 if __name__ == "__main__":
-    main()
+    app = iExtractApp()
+    app.run()

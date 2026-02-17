@@ -1,0 +1,12 @@
+.hidden{
+    display: none;
+
+}
+
+Button{
+
+    width: 50;
+
+
+}
+
