@@ -20,3 +20,5 @@ iExtract makes it easy for iPhone users to extract their photos and videos from 
 - "functional_components": Stores all our backend logic with all our features in our app.
 
 - "cli_components": Stores the code that runs the CLI for the application, accepting user interaction and calling logic from the 'functional_components' directory to accomplish a given goal.
+
+- "tests": Stores the test cases that are being used against the program.
