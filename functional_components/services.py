@@ -1,5 +1,15 @@
-from .backup_locator_and_validator.app.backup_model_builder import build_backup_model
+"""
+Author: Noah Gregie
+Date: 2026-02-19
+Description: Contains the backup service and settings services for the main
+    menu.
+"""
+
+from .backup_locator_and_validator.app.backup_model_builder import \
+    build_backup_model
+
 from pathlib import Path
+
 
 class BackupService:
     def __init__(self):
@@ -28,7 +38,8 @@ class BackupService:
             f"Device Submodel: {submodel}\n"
             f"iOS Version:     {device.ios_version}"
         )
-    
+
+
     def attempt_load_backup(self, path_str):
         """
         Orchestrates the backup loading process.
@@ -45,16 +56,16 @@ class BackupService:
             return True, "Backup loaded successfully!"
         else:
             return False, f"Error loading backup: {result.error}"
-        
 
 
 class SettingsService:
-  def __init__(self):  
-    self.selected_albums = set()
-    self.is_blacklist_mode = True
+    def __init__(self):  
+        self.selected_albums = set()
+        self.is_blacklist_mode = True
+
 
 def toggle_mode(self):
-        """Switches between Blacklist and Whitelist mode."""
-        self.is_blacklist_mode = not self.is_blacklist_mode
-        mode_name = "Blacklist" if self.is_blacklist_mode else "Whitelist"
-        return f"Mode switched to: {mode_name}"
+    """Switches between Blacklist and Whitelist mode."""
+    self.is_blacklist_mode = not self.is_blacklist_mode
+    mode_name = "Blacklist" if self.is_blacklist_mode else "Whitelist"
+    return f"Mode switched to: {mode_name}"

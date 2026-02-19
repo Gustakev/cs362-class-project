@@ -67,15 +67,15 @@ def load_backup_menu():
 
         if folder_picker_method == "1":
             selected_folder = gui_pick_folder()
+            print("")
             print("You chose:", selected_folder)
-            print("\n")
-            
 
         elif folder_picker_method == "2":
+            print("")
             selected_folder = input("Enter the path to your iPhone backup " \
                 "folder: ")
+            print("")
             print("You chose:", selected_folder)
-            print("\n")
     
         elif folder_picker_method == "3":
             print("\nGoing back...\n")
@@ -83,7 +83,7 @@ def load_backup_menu():
 
         else:
             print(
-                "Error: Invalid input. Choose one of the displayed options.",
+                "\nError: Invalid input. Choose one of the displayed options.",
                 file=sys.stderr
             )
             print("")
@@ -109,8 +109,8 @@ def main_menu():
             "============"
         )
         print(
-            "\n*** Instructions: Enter a number corresponding to the "
-            "choices below. ***\n"
+            "\n** Instructions: Enter a number corresponding to the "
+            "choices below. **\n"
         )
         print("1. Load iPhone Backup Folder")
         print("2. Export All Camera Roll Media")
