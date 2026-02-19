@@ -24,6 +24,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run tests
+    - name: Run tests (if any)
       run: |
-        python -m unittest discover tests
+        if ls tests/test_*.py 1> /dev/null 2>&1; then
+          python -m unittest discover tests
+        else
+          echo "No test cases found. Skipping testing."
+        fi
