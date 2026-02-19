@@ -11,11 +11,10 @@ from tkinter import filedialog
 
 from pathlib import Path
 
-from functional_components.backup_locator_and_validator.app. \
-    backup_model_builder import build_backup_model
+from functional_components.services import BackupService, SettingsService
 
-"""Global variables and constants."""
-BACKUP_MODEL = None
+backup_service = BackupService()
+settings_service = SettingsService()
 
 
 def gui_pick_folder():
@@ -44,28 +43,15 @@ def gui_pick_folder():
 
 def print_device_metadata():
     """Prints device metadata in a nice format."""
-    global BACKUP_MODEL
+    device_data = backup_service.get_formatted_device_metadata()
 
-    print(f"Device Name: {BACKUP_MODEL.backup_metadata.source_device.name}")
-
-    # Reformat the device model so it looks better:
-    formatted_model = (BACKUP_MODEL.backup_metadata.source_device.model). \
-        split(",")[0]
-    formatted_model = formatted_model.replace("e", "e ")
-
-    submodel = (BACKUP_MODEL.backup_metadata.source_device.model).split(",")[1]
-
-    print(f"Device Model: {formatted_model}")
-    print(f"Device Submodel: {submodel}")
-    print(f"Device Version: {BACKUP_MODEL.backup_metadata. \
-        source_device.ios_version}")
+    print(device_data)
 
 
 def load_backup_menu():
     """
     Submenu for choosing how to pick the backup folder.
     """
-    global BACKUP_MODEL # The persistent backup model.
 
     while True:
         print(
@@ -77,87 +63,41 @@ def load_backup_menu():
         print("3. Go Back")
 
         folder_picker_method = input("\nChoose an option: ")
-        print("")
+        selected_folder = None
 
         if folder_picker_method == "1":
             selected_folder = gui_pick_folder()
-            
-            # Displays folder picking error if user cancels or it is not
-            # available.
-            if selected_folder is None:
-                # GUI unavailable.
-                print("This system does not support GUI folder selection.\n")
-                continue
-            
-            if selected_folder == "":
-                # User canceled folder selection dialog.
-                print("User canceled selection. No folder selected. Please " \
-                      "try again.\n")
-                continue
-            
-            print("You chose:", selected_folder)
-            print("\n")
-            # TODO: Attempt to load the backup. If loading fails, print an
-            # error and continue the loop to let the user choose again.
-
-            # Attempt loading backup.
-            result = build_backup_model(Path(selected_folder))
-
-            # If BackupModel was not successfully made:
-            if result.success != True:
-                print("Error loading backup:")
-                print(result.error)
-                print("")
-
-                # Try again.
-                continue
-            
-            # If the BackupModel was successfully made:
-            BACKUP_MODEL = result.backup_model
-            print("Backup loaded successfully!")
-            print_device_metadata()
             print("")
-            return
+            print("You chose:", selected_folder)
 
         elif folder_picker_method == "2":
+            print("")
             selected_folder = input("Enter the path to your iPhone backup " \
                 "folder: ")
             print("")
             print("You chose:", selected_folder)
-            print("\n")
-            # TODO: Attempt to load the backup. If loading fails, print an
-            # error and continue the loop to let the user choose again.
-
-            # Attempt loading backup.
-            result = build_backup_model(Path(selected_folder))
-
-            # If BackupModel was not successfully made:
-            if result.success != True:
-                print("Error loading backup:")
-                print(result.error)
-                print("")
-                
-                # Try again.
-                continue
-            
-            # If the BackupModel was successfully made:
-            BACKUP_MODEL = result.backup_model
-            print("Backup loaded successfully!")
-            print_device_metadata()
-            print("")
-            return
-
+    
         elif folder_picker_method == "3":
             print("\nGoing back...\n")
             return
 
         else:
             print(
-                "Error: Invalid input. Choose one of the displayed options.",
+                "\nError: Invalid input. Choose one of the displayed options.",
                 file=sys.stderr
             )
             print("")
 
+        success, message = backup_service.attempt_load_backup(selected_folder)
+
+        if success:
+            print(f"\n{message}")
+                # Fetch formatted metadata from services.py and print
+            print(backup_service.get_formatted_device_metadata())
+            print("")
+            return
+        else:
+            print(f"\n{message}\n")
 
 def main_menu():
     """
@@ -169,8 +109,8 @@ def main_menu():
             "============"
         )
         print(
-            "\n*** Instructions: Enter a number corresponding to the "
-            "choices below. ***\n"
+            "\n** Instructions: Enter a number corresponding to the "
+            "choices below. **\n"
         )
         print("1. Load iPhone Backup Folder")
         print("2. Export All Camera Roll Media")
@@ -205,8 +145,22 @@ def backup_menu():
 
 
 def export_all_menu():
-    """Placeholder for export-all menu."""
-    print("")
+    print("\n--- EXPORT ALL ---")
+    if not backup_service.current_model:
+        print("[!] Error: No backup loaded. Please load a backup first.")
+        return
+    
+    dest_path = input("Enter destination folder path: ").strip()
+    if not dest_path:
+        print("Export cancelled.")
+        return
+    
+    print(f"Preparing to export all albums to: {dest_path}")
+    confirm = input("Proceed? (y/n): ")
+    if confirm.lower() != 'y':
+        return
+    
+    """Here is where the function would call the export all function"""
 
 
 def export_specific_menu():
@@ -215,8 +169,30 @@ def export_specific_menu():
 
 
 def settings_menu():
-    """Placeholder for settings menu."""
-    print("")
+    
+    while True:
+        # Get data from Service
+        mode, album_list = settings_service.get_state()
+
+        print("\n--- SETTINGS ---")
+        print(f"Mode: {mode}")
+        print(f"List: [{album_list}]")
+        print("1. Switch Mode (Whitelist/Blacklist)")
+        print("2. Add/Remove Album")
+        print("3. Back")
+
+        choice = input("Select: ")
+
+        if choice == "1":
+            print(settings_service.toggle_mode())
+        elif choice == "2":
+            name = input("Album Name: ")
+            success, msg = settings_service.toggle_album(name)
+            print(msg)
+        elif choice == "3":
+            return
+
+       
 
 
 def input_validation():
