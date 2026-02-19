@@ -29,6 +29,7 @@ class TestBackupModelBuilder(unittest.TestCase):
         self.assertEqual(device.model, "iPhone15")
         self.assertEqual(device.ios_version, "17.3.1")
 
+
     @patch("functional_components.backup_locator_and_validator.app.backup_model_builder.build_device")
     def test_build_backup_model_success(self, mock_build_device):
         mock_build_device.return_value = SourceDevice(
@@ -43,6 +44,18 @@ class TestBackupModelBuilder(unittest.TestCase):
         self.assertIsNotNone(result.backup_model)
         self.assertEqual(result.backup_model.backup_metadata.backup_uuid, "test")
         self.assertEqual(result.backup_model.backup_metadata.source_device.name, "Test iPhone")
+
+
+    @patch("functional_components.backup_locator_and_validator.app.backup_model_builder.build_device")
+    def test_build_backup_model_fail(self, mock_build_device):
+        mock_build_device.side_effect = RuntimeError("boom")
+
+        result = build_backup_model(self.backup_root)
+
+        self.assertFalse(result.success)
+        self.assertIsNone(getattr(result, "backup_model", None))
+        self.assertIn("Failed loading device info.", result.error)
+        self.assertIn("boom", result.error)
 
 
 if __name__ == "__main__":
