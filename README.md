@@ -1,5 +1,7 @@
 # iExtract iOS Album to Folder Conversion Tool
 
+### iExtract Version x.y.z
+
 ## Project Overview
 iExtract makes it easy for iPhone users to extract their photos and videos from a local backup to somewhere else on their local storage without breaking album and collection structure or metadata. Instead of having to rely on expensive cloud subscriptions or confusing export workflows, iExtract preserves the original organization of a user's photos, without the bloat or cost of other monolithic apps.
 
@@ -11,16 +13,24 @@ iExtract makes it easy for iPhone users to extract their photos and videos from 
 * Avoid quality loss that typically occurs through compression of files during exports using other tools
 
 ## Respository Layout
-- iExtract.py: Launcher for iExtract.
+- iExtract.py: The launcher for iExtract.
 
-- "living_documents": Stores each version of the project proposal document for our app that explains our app idea, along with all the requirements.
+- README.md: The README file for iExtract.
 
-- "reports": Holds weekly progress reports for our project. Each report contains a weekly status update from our TA and the individual contributions of each team member for that week.
+- requirements.txt: The requirements file for iExtract, which makes it easy to install all the correct dependencies before running the program.
 
-- "functional_components": Stores all our backend logic with all our features in our app.
+- team-resources.md: Describes the resources that the team uses, including relevant artifacts, libraries, etc.
 
-- "cli_components": Stores the code that runs the CLI for the application, accepting user interaction and calling logic from the 'functional_components' directory to accomplish a given goal.
+- /.github/workflows/: Stores the workflow '.yml' file describing how continuous integration testing will be conducted.
 
-- "tests": Stores the test cases that are being used against the program.
+- /cli_components/: Stores the code that runs the CLI for the application, accepting user interaction and calling logic from the 'functional_components' directory to accomplish a given goal.
 
-- "documentation": Stores the user and developer documentation for iExtract.
+- /documentation/: Stores the user and developer documentation for iExtract.
+
+- /functional_components/: Stores all our backend logic with all the features of our app.
+
+- /living_documents/: Stores each version of the project proposal document for our app that explains our app idea, along with all the requirements.
+
+- /reports/: Holds weekly progress reports for our project. Each report contains a weekly status update from our TA and the individual contributions of each team member for that week.
+
+- /tests/: Stores the test cases that are being used against the program.
