@@ -8,9 +8,10 @@ iExtract makes it easy for iPhone users to extract their photos and videos from 
 * Preserve album/collection structure during exports
 * Maintain metadata (dates, locations, file types, etc.)
 * Reduce dependency on iCloud storage
-* Avoid quality loss that typically occurs through compression of files during epxorts using other tools
+* Avoid quality loss that typically occurs through compression of files during exports using other tools
 
 ## Respository Layout
+- iExtract.py: Launcher for iExtract.
 
 - "living_documents": Stores each version of the project proposal document for our app that explains our app idea, along with all the requirements.
 
@@ -19,3 +20,7 @@ iExtract makes it easy for iPhone users to extract their photos and videos from 
 - "functional_components": Stores all our backend logic with all our features in our app.
 
 - "cli_components": Stores the code that runs the CLI for the application, accepting user interaction and calling logic from the 'functional_components' directory to accomplish a given goal.
+
+- "tests": Stores the test cases that are being used against the program.
+
+- "documentation": Stores the user and developer documentation for iExtract.
