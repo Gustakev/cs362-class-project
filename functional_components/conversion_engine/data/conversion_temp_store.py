@@ -1,7 +1,7 @@
 """
 Author: Sam Daughtry
 Date: 2026-02-22
-Description: Temporary data store for converted file paths during the conversion process.
+Description: Temporarily store converted files.
 """
 import os
 from pathlib import Path
