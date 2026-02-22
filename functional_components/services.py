@@ -63,9 +63,23 @@ class SettingsService:
         self.selected_albums = set()
         self.is_blacklist_mode = True
 
+    def get_state(self):
+        """Returns the current settings state."""
+        mode = "Blacklist" if self.is_blacklist_mode else "Whitelist"
+        album_list = ", ".join(self.selected_albums) if self.selected_albums else "None"
+        return mode, album_list
 
-def toggle_mode(self):
-    """Switches between Blacklist and Whitelist mode."""
-    self.is_blacklist_mode = not self.is_blacklist_mode
-    mode_name = "Blacklist" if self.is_blacklist_mode else "Whitelist"
-    return f"Mode switched to: {mode_name}"
+    def toggle_mode(self):
+        """Switches between Blacklist and Whitelist mode."""
+        self.is_blacklist_mode = not self.is_blacklist_mode
+        mode_name = "Blacklist" if self.is_blacklist_mode else "Whitelist"
+        return f"Mode switched to: {mode_name}"
+    
+    def toggle_album(self, album_name):
+        print("placeholder")
+
+
+class ExportService:
+   def get_album_list(self, backup_model):
+        # TODO: Return actual list from backup_model.albums
+        return ["Recents", "Favorites", "Instagram", "WhatsApp", "Hidden"]
