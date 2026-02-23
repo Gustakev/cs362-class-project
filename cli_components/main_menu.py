@@ -11,11 +11,11 @@ from tkinter import filedialog
 
 from pathlib import Path
 
-from functional_components.services import BackupService, SettingsService
+from functional_components.services import BackupService, SettingsService, ExportService
 
 backup_service = BackupService()
 settings_service = SettingsService()
-
+export_service =  ExportService()
 
 def gui_pick_folder():
     """
@@ -87,6 +87,7 @@ def load_backup_menu():
                 file=sys.stderr
             )
             print("")
+            continue
 
         success, message = backup_service.attempt_load_backup(selected_folder)
 
@@ -124,11 +125,11 @@ def main_menu():
         if main_menu_choice == "1":
             load_backup_menu()
         elif main_menu_choice == "2":
-            print("Export All Camera Roll Media (not implemented yet)\n")
+            export_all_menu()
         elif main_menu_choice == "3":
-            print("Export Specific Camera Roll Media (not implemented yet)\n")
+            export_specific_menu()
         elif main_menu_choice == "4":
-            print("Settings (not implemented yet)\n")
+            settings_menu()
         elif main_menu_choice == "5":
             print("Thank you for using this program. Goodbye.")
             return
@@ -145,6 +146,7 @@ def backup_menu():
 
 
 def export_all_menu():
+    """Exports all albums from the backup """
     print("\n--- EXPORT ALL ---")
     if not backup_service.current_model:
         print("[!] Error: No backup loaded. Please load a backup first.")
@@ -164,10 +166,28 @@ def export_all_menu():
 
 
 def export_specific_menu():
-    """Placeholder for export-specific menu."""
-    print("")
+    print("\n--- EXPORT SPECIFIC ALBUM ---")
+
+    if not backup_service.current_model:
+        print("[!] Error: No backup loaded. Please load a backup first.")
+        return
+    
+    available_albums = export_service.get_album_list(backup_service.current_model)
 
 
+    if not available_albums:
+        print("[!] No albums found in backup.")
+        return
+    
+    print(f"\nFound {len(available_albums)} albums:")
+    """For loop printing out available albums with numbers for selection"""
+
+    choice = input("\nEnter the number of the album you want to export: ")
+    """Input validation for choice"""
+    
+    dest_path = input(f"Enter destination for 'selected_album': ")
+
+    """Export the album that the user selected"""""
 def settings_menu():
     
     while True:
