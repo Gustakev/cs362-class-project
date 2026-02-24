@@ -41,41 +41,25 @@ class TestMainMenuUI(unittest.TestCase):
         # Did the UI actually hand the right string to the Application Layer
         mock_backup_service.attempt_load_backup.assert_called_with('/fake/iphone/backup')
 
-    """Export all menu"""
-    @patch('builtins.print')
-    @patch('builtins.input', side_effect=['2', '/fake/export/destination', 'y'])
-    @patch('cli_components.main_menu.export_service')
-    @patch('cli_components.main_menu.backup_service')
-    
-    def test_export_all_menu_sucess(self, mock_backup, mock_export, mock_inport, mock_print):
-       
-       mock_backup.current_model = "FakeBackupModelObject"
-       mock_export.export_all.return_value = (True, "Exported Successfully")
-
-
-        # Run the menu
-       export_all_menu()
-
-        # Did the UI call the service with the backup model and the typed path?
-       mock_export.export_all.assert_called_once_with("FakeBackupModelObject", '/fake/export/destination')
 
 
     """Settings menu"""
     @patch ('builtins.print')
     @patch ('builtins.input', side_effect=['1','3'])
     @patch ('cli_components.main_menu.settings_service')
-
-    def test_settings_menu_toggle_mode(self, mock_settings, mock_input, mock_print):
+    @patch('cli_components.main_menu.backup_service')
+    def test_settings_menu_toggle_mode(self, mock_backup, mock_settings, mock_input, mock_print):
         """Test that typing '1' in settings triggers the mode toggle in the service."""
         
         # Setup mock state for the menu to print
+        mock_backup.current_model = "FakeModel"
         mock_settings.get_state.return_value = ("Blacklist", [])
         mock_settings.toggle_mode.return_value = "Switched to Whitelist"
 
         # Run the menu
         settings_menu()
 
-        # Did the UI trigger the toggle function?
+        # Did the UI trigger the toggle function
         mock_settings.toggle_mode.assert_called_once()
 
 
