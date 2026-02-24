@@ -1,5 +1,5 @@
 """
-Author: Kevin Gustafson
+Author: Sam Daughtry (Edited by Kevin Gustafson)
 Date: 2026-02-23
 Description: Temporarily store converted files.
 """
@@ -14,7 +14,6 @@ register_heif_opener()
 
 def convert_image(path: str, target_format: str) -> str:
     """Open an image file and save it in the target format.
-
     Returns the path to the newly created file.
     """
     img = Image.open(path)
@@ -25,7 +24,6 @@ def convert_image(path: str, target_format: str) -> str:
 
 def convert_video(path: str, target_format: str) -> str:
     """Transcode a video file into the target format using libx264.
-
     Returns the path to the newly created file.
     """
     video = VideoFileClip(path)
