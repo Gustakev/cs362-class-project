@@ -31,12 +31,24 @@ class BackupService:
         formatted_model = raw_model.replace("e", "e ")
         submodel = device.model.split(",")[1]
 
+        # Access the backup_metadata fields regarding backup info specifically
+        device_metadata = self.current_model.backup_metadata
+
+        # Logic: Clean up the formatting of the backup date.
+        formatted_backup_date = device_metadata.backup_date
+        formatted_backup_date = formatted_backup_date.replace("T", " at (24H Time): ")
+
         # Return the string for the UI to use
         return (
-            f"Device Name:     {device.name}\n"
-            f"Device Model:    {formatted_model}\n"
-            f"Device Submodel: {submodel}\n"
-            f"iOS Version:     {device.ios_version}"
+            f"Device:\n"
+            f"- Device Name: ............ {device.name}\n"
+            f"- Device Model: ........... {formatted_model}\n"
+            f"- Device Submodel: ........ {submodel}\n"
+            f"- iOS Version: ............ {device.ios_version}\n"
+            f"Backup:\n"
+            f"- Backup Encryption Status: {device_metadata.is_encrypted}\n"
+            f"- Backup UUID/GUID: ....... {device_metadata.backup_uuid}\n"
+            f"- Backup Date: ............ {formatted_backup_date}"
         )
 
 

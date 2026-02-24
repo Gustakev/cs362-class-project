@@ -1,7 +1,8 @@
 """
 Author: Kevin Gustafson
 Date: 2026-02-15
-Description: Gets info for the device portions of the BackupModel.
+Description: Gets info from Info.plist for the device portions of the
+ BackupModel.
 """
 
 from pathlib import Path
