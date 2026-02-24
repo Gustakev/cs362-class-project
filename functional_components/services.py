@@ -79,6 +79,7 @@ class BackupService:
             return True, "Backup loaded successfully!"
         else:
             return False, f"Error loading backup: {result.error}"
+                
 
 
 class SettingsService:
