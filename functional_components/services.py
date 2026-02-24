@@ -59,6 +59,9 @@ class BackupService:
 
 
 class SettingsService:
+
+    """Manages whitelisting and blacklsiting of albums for export."""
+
     def __init__(self):  
         self.selected_albums = set()
         self.is_blacklist_mode = True
@@ -72,11 +75,29 @@ class SettingsService:
     def toggle_mode(self):
         """Switches between Blacklist and Whitelist mode."""
         self.is_blacklist_mode = not self.is_blacklist_mode
+        self.selected_albums.clear()
         mode_name = "Blacklist" if self.is_blacklist_mode else "Whitelist"
         return f"Mode switched to: {mode_name}"
     
     def toggle_album(self, album_name):
-        print("placeholder")
+        """Adds or removes an album from the selection based on current mode."""
+        name = album_name.strip()
+        if not name:
+            return False, "Album name cannot be empty."
+        if name in self.selected_albums:
+            self.selected_albums.remove(name)
+            return True, f"Album '{name}' removed from selection."
+        else:
+            self.selected_albums.add(name)
+            return True, f"Album '{name}' added to selection."
+        
+
+    def is_album_allowed(self, album_name):
+        """Determines if an album should be exported based on current settings."""
+        if self.is_blacklist_mode:
+            return album_name not in self.selected_albums
+        else:
+            return album_name in self.selected_albums
 
 
 class ExportService:

@@ -152,11 +152,34 @@ def export_all_menu():
         print("[!] Error: No backup loaded. Please load a backup first.")
         return
     
-    dest_path = input("Enter destination folder path: ").strip()
-    if not dest_path:
+    print("How would you like to select the destination folder?")
+    print("1. Select via GUI")
+    print("2. Enter path manually")
+    print("3. Cancel")
+
+    choice = input("\nChoose an option: ").strip()
+    
+    if choice == "1":
+        dest_path = gui_pick_folder()
+        if not dest_path:
+            print("Export cancelled.")
+            return
+
+
+    elif choice == "2":
+        dest_path = input("Enter destination folder path: ").strip()
+        if not dest_path:
+            print("Export cancelled.")
+            return
+    
+    elif choice == "3":
         print("Export cancelled.")
         return
-    
+
+    else:     
+        print("Invalid choice. Export cancelled.")
+        return
+
     print(f"Preparing to export all albums to: {dest_path}")
     confirm = input("Proceed? (y/n): ")
     if confirm.lower() != 'y':
@@ -189,30 +212,90 @@ def export_specific_menu():
 
     """Export the album that the user selected"""""
 def settings_menu():
+  
     
     while True:
         # Get data from Service
         mode, album_list = settings_service.get_state()
 
+        backup_loaded = backup_service.current_model is not None
+
         print("\n--- SETTINGS ---")
         print(f"Mode: {mode}")
         print(f"List: [{album_list}]")
-        print("1. Switch Mode (Whitelist/Blacklist)")
-        print("2. Add/Remove Album")
+
+        if backup_loaded:
+            print("1. Switch Mode (Whitelist/Blacklist)")
+            print("2. Add/Remove Album")
+
+        else: 
+            print("1. Switch mode (DISABLED - Load a backup first)") 
+            print("2. Add/Remove Album (DISABLED - Load a backup first)")   
         print("3. Back")
 
         choice = input("Select: ")
 
         if choice == "1":
-            print(settings_service.toggle_mode())
+            if backup_loaded:
+                print(settings_service.toggle_mode())
+            else:
+                print("\n[!] Error: You must load a backup before changing settings.")
         elif choice == "2":
-            name = input("Album Name: ")
-            success, msg = settings_service.toggle_album(name)
-            print(msg)
+            if backup_loaded:
+                album_selection_submenu()
+            else:
+                print("\n[!] Error: You must load a backup before selecting albums.")
         elif choice == "3":
             return
 
-       
+        else:
+            print("\nInvalid Choice")
+
+
+def album_selection_submenu():
+    """Submenu to handle how users pick albums to filter."""
+    available_albums = sorted(export_service.get_album_list(backup_service.current_model))
+    
+    print("\n--- ALBUM SELECTION ---")
+    print("Available Albums in Backup:")
+    for album in available_albums:
+        print(f" - {album}")
+
+    print("\nHow would you like to select an album?")
+    print("1. Manual Entry")
+    print("2. Checkbox Style Menu")
+    print("3. Go Back")    
+
+    
+    sub_choice = input("\nSelect an option: ").strip()
+
+    if sub_choice == "1":
+        
+       while True:
+                _, current_list = settings_service.get_state()
+                print(f"\nCurrent List: [{current_list}]")
+                
+                name = input("Enter exact Album Name (or type 'done' to finish): ").strip()
+                
+                # Exit condition
+                if name.lower() == 'done' or name == "":
+                    break
+                    
+                # UI Validation
+                if name in available_albums:
+                    success, msg = settings_service.toggle_album(name)
+                    print(msg)
+                else:
+                    print(f"\n[!] Error: Album '{name}' does not exist in the current backup.")
+            
+    elif sub_choice == "2":
+        print("\n[!] Checkbox style menu coming soon!")
+        
+    elif sub_choice == "3":
+        return
+        
+    else:
+        print("\nInvalid choice.")
 
 
 def input_validation():
