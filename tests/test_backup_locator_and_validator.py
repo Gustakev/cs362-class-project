@@ -49,6 +49,46 @@ class TestBuildBackupModel(unittest.TestCase):
         self.backup_root = Path("fake/root")
 
     @patch(
+    "functional_components.backup_locator_and_validator.app"
+    ".backup_model_builder.build_assets"
+    )
+    @patch(
+        "functional_components.backup_locator_and_validator.app"
+        ".backup_model_builder.build_membership_lookup"
+    )
+    @patch(
+        "functional_components.backup_locator_and_validator.app"
+        ".backup_model_builder.get_asset_album_memberships"
+    )
+    @patch(
+        "functional_components.backup_locator_and_validator.app"
+        ".backup_model_builder.get_assets"
+    )
+    @patch(
+        "functional_components.backup_locator_and_validator.app"
+        ".backup_model_builder.build_albums"
+    )
+    @patch(
+        "functional_components.backup_locator_and_validator.app"
+        ".backup_model_builder.get_albums"
+    )
+    @patch(
+        "functional_components.backup_locator_and_validator.app"
+        ".backup_model_builder.find_join_table_columns"
+    )
+    @patch(
+        "functional_components.backup_locator_and_validator.app"
+        ".backup_model_builder.find_album_asset_join_table"
+    )
+    @patch(
+        "functional_components.backup_locator_and_validator.app"
+        ".backup_model_builder.open_db"
+    )
+    @patch(
+        "functional_components.backup_locator_and_validator.app"
+        ".backup_model_builder.get_photos_sqlite_path"
+    )
+    @patch(
         "functional_components.backup_locator_and_validator.app"
         ".backup_model_builder.get_encryption_status"
     )
@@ -57,10 +97,37 @@ class TestBuildBackupModel(unittest.TestCase):
         ".backup_model_builder.get_device_info"
     )
     def test_build_backup_model_success(
-        self, mock_get_device_info, mock_get_encryption_status
+        self,
+        mock_get_device_info,
+        mock_get_encryption_status,
+        mock_get_photos_sqlite_path,
+        mock_open_db,
+        mock_find_join_table,
+        mock_find_join_cols,
+        mock_get_albums,
+        mock_build_albums,
+        mock_get_assets,
+        mock_get_asset_album_memberships,
+        mock_build_membership_lookup,
+        mock_build_assets,
     ):
         mock_get_device_info.return_value = MOCK_RAW_INFO
         mock_get_encryption_status.return_value = False
+        mock_get_photos_sqlite_path.return_value = Path("fake/Photos.sqlite")
+        mock_open_db.return_value.__enter__ = lambda s: s
+        mock_open_db.return_value.__exit__ = lambda s, *a: False
+        mock_find_join_table.return_value = "Z_33ASSETS"
+        mock_find_join_cols.return_value = {
+            "album_fk": "Z_33ALBUMS",
+            "asset_fk": "Z_3ASSETS",
+            "sort_col": "Z_FOK_3ASSETS",
+        }
+        mock_get_albums.return_value = []
+        mock_build_albums.return_value = []
+        mock_get_assets.return_value = []
+        mock_get_asset_album_memberships.return_value = []
+        mock_build_membership_lookup.return_value = {}
+        mock_build_assets.return_value = []
 
         result = build_backup_model(self.backup_root)
 
