@@ -5,6 +5,7 @@ Description: Definition for the ConvertedAsset object.
 """
 
 from typing import List, Optional, Literal
+
 from pydantic import BaseModel
 
 from functional_components.backup_locator_and_validator.domain.backup_model \
