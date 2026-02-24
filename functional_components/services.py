@@ -5,15 +5,14 @@ Description: Contains the backup service and settings services for the main
     menu.
 """
 
-from .backup_locator_and_validator.app.backup_model_builder import \
-    build_backup_model
+from .backup_locator_and_validator.app.backup_model_builder import build_backup_model
 
 from pathlib import Path
 
 
 class BackupService:
     def __init__(self):
-        
+
         self.current_model = None
 
     def get_formatted_device_metadata(self):
@@ -51,7 +50,6 @@ class BackupService:
             f"- Backup Date: ............ {formatted_backup_date}"
         )
 
-
     def attempt_load_backup(self, path_str):
         """
         Orchestrates the backup loading process.
@@ -60,7 +58,7 @@ class BackupService:
         if not path_str:
             return False, "No folder selected. Please try again."
 
-        # Call the Backup Locator & Validator 
+        # Call the Backup Locator & Validator
         result = build_backup_model(Path(path_str))
 
         if result.success:
@@ -71,10 +69,9 @@ class BackupService:
 
 
 class SettingsService:
-
     """Manages whitelisting and blacklsiting of albums for export."""
 
-    def __init__(self):  
+    def __init__(self):
         self.selected_albums = set()
         self.is_blacklist_mode = True
 
@@ -90,7 +87,7 @@ class SettingsService:
         self.selected_albums.clear()
         mode_name = "Blacklist" if self.is_blacklist_mode else "Whitelist"
         return f"Mode switched to: {mode_name}"
-    
+
     def toggle_album(self, album_name):
         """Adds or removes an album from the selection based on current mode."""
         name = album_name.strip()
@@ -102,7 +99,6 @@ class SettingsService:
         else:
             self.selected_albums.add(name)
             return True, f"Album '{name}' added to selection."
-        
 
     def is_album_allowed(self, album_name):
         """Determines if an album should be exported based on current settings."""
@@ -113,6 +109,6 @@ class SettingsService:
 
 
 class ExportService:
-   def get_album_list(self, backup_model):
+    def get_album_list(self, backup_model):
         # TODO: Return actual list from backup_model.albums
         return ["Recents", "Favorites", "Instagram", "WhatsApp", "Hidden"]
