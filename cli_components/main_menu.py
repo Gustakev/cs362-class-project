@@ -55,8 +55,8 @@ def load_backup_menu():
 
     while True:
         print(
-            "*** Instructions: Enter a number corresponding to the choices "
-            "below. ***\n"
+            "** Instructions: Enter a number corresponding to the choices "
+            "below. **\n"
         )
         print("1. Load iPhone Backup Folder Via GUI")
         print("2. Load iPhone Backup Folder By Entering File Path")

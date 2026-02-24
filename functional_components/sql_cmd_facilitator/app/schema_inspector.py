@@ -5,6 +5,8 @@ Description: Inspects the Photos.sqlite schema to discover dynamic
     table and column names that vary across iOS versions.
 """
 
+import re
+
 import sqlite3
 
 
@@ -21,7 +23,7 @@ def find_album_asset_join_table(conn: sqlite3.Connection) -> str:
 
     matches = [
         t for t in tables
-        if t.startswith("Z_") and "ASSET" in t and t != "ZASSET"
+        if re.match(r'^Z_\d+ASSETS$', t)
     ]
 
     if not matches:
