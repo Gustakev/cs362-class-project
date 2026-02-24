@@ -43,7 +43,10 @@ def gui_pick_folder():
 
 
 def print_device_metadata():
-    """Prints device metadata in a nice format."""
+    """
+    Prints device metadata in a nice format.
+
+    """
     device_data = backup_service.get_formatted_device_metadata()
 
     print(device_data)
@@ -51,7 +54,8 @@ def print_device_metadata():
 
 def load_backup_menu():
     """
-    Submenu for choosing how to pick the backup folder.
+    Handles the user interaction for locating and loading an iPhone backup folder.
+    Loops continuously until a valid path is provided or the user cancels.
     """
 
     while True:
@@ -148,8 +152,13 @@ def backup_menu():
 
 def get_export_destination(item_name):
     """
-    Helper function to handle folder selection and confirmation.
-    Returns the destination path string, or None if the user cancels.
+    Helper function to help the folder selection and confirmation process.
+
+    Args:
+        item_name (str): The name of the item being exported (used for UI printing).
+
+    Returns:
+        str | None: The verified destination path, or None if the user cancels.
     """
     print(f"\nHow would you like to select the destination folder for {item_name}?")
     print("1. Select via GUI")
@@ -189,7 +198,10 @@ def get_export_destination(item_name):
 
 
 def export_all_menu():
-    """Exports all albums from the backup"""
+    """
+    Handles the UI flow for exporting all eligible albums.
+    Applies current SettingsService filters automatically via the backend.
+    """
     print("\n--- EXPORT ALL ---")
     if not backup_service.current_model:
         print("[!] Error: No backup loaded. Please load a backup first.")
@@ -199,18 +211,22 @@ def export_all_menu():
     if not dest_path:
         return  # User cancelled somewhere in the helper loop
 
-    """When export all function is implemented
-    success, message = export_service.export_all(backup_service.current_model, dest_path)
-    
-    if success:
-        print(f"\n[SUCCESS] {message}\n")
-    else:
-        print(f"\n[ERROR] {message}\n")
+    # TODO:When export all function is implemented
+    # success, message = export_service.export_all(backup_service.current_model, dest_path)
 
-   """
+
+# if success:
+#    print(f"\n[SUCCESS] {message}\n")
+#  else:
+#    print(f"\n[ERROR] {message}\n")
 
 
 def export_specific_menu():
+    """
+    Handles the UI flow for exporting a single, user-selected album.
+    Provides alphabetized options and input validation.
+    """
+
     print("\n--- EXPORT SPECIFIC ALBUM ---")
 
     if not backup_service.current_model:
@@ -247,23 +263,26 @@ def export_specific_menu():
     if not dest_path:
         return
 
-    """When exporting a single album is implemented 
-    
-    success, message = export_service.export_single_album(
-        backup_model=backup_service.current_model,
-        album_name=selected_album,
-        destination_str=dest_path
-    )
-    
-    if success:
-        print(f"\n[SUCCESS] {message}\n")
-    else:
-        print(f"\n[ERROR] {message}\n")
-    
-    """
+    # TODO:When exporting a single album is implemented
+
+
+# success, message = export_service.export_single_album(
+#     backup_model=backup_service.current_model,
+#   album_name=selected_album,
+#      destination_str=dest_path
+#  )
+
+# if success:
+#      print(f"\n[SUCCESS] {message}\n")
+#  else:
+#      print(f"\n[ERROR] {message}\n")
 
 
 def settings_menu():
+    """
+    Displays and manages the Blacklist/Whitelist export filters.
+    Disables access to modification submenus if a backup is not yet loaded.
+    """
 
     while True:
         # Get data from Service
@@ -304,7 +323,10 @@ def settings_menu():
 
 
 def album_selection_submenu():
-    """Submenu to handle how users pick albums to filter."""
+    """
+    Submenu to handle how users pick albums to filter.
+    Includes a continuous entry loop for rapid manual list building.
+    """
     available_albums = sorted(
         export_service.get_album_list(backup_service.current_model)
     )
@@ -352,6 +374,7 @@ def album_selection_submenu():
         print("\nInvalid choice.")
 
 
+# TODO:
 def input_validation():
     """Placeholder for input validation."""
     print("")

@@ -75,7 +75,7 @@ class TestMainMenuUI(unittest.TestCase):
         # Run the menu
         settings_menu()
 
-        # THE ASSERTION: Did the UI trigger the toggle function?
+        # Did the UI trigger the toggle function?
         mock_settings.toggle_mode.assert_called_once()
 
 
