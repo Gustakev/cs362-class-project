@@ -44,8 +44,7 @@ def _make_asset(file_extension: str, backup_relative_path: str) -> Asset:
 class TestConvertAsset(unittest.TestCase):
 
     @patch(
-        "functional_components.conversion_engine.data.conversion_temp_store"
-        ".store_temp_file"
+        "functional_components.conversion_engine.app.convert_file.store_temp_file"
     )
     @patch(
         "functional_components.conversion_engine.data.media_converter.Image"
@@ -73,7 +72,6 @@ class TestConvertAsset(unittest.TestCase):
             result.converted_asset.backup_relative_path,
             "/tmp/iconvert_xyz/test.png",
         )
-        # All other fields should be unchanged from the original asset
         self.assertEqual(
             result.converted_asset.original_filename, asset.original_filename
         )
@@ -83,8 +81,7 @@ class TestConvertAsset(unittest.TestCase):
         )
 
     @patch(
-        "functional_components.conversion_engine.data.conversion_temp_store"
-        ".store_temp_file"
+        "functional_components.conversion_engine.app.convert_file.store_temp_file"
     )
     @patch(
         "functional_components.conversion_engine.data.media_converter.VideoFileClip"

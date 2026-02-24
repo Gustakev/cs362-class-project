@@ -12,8 +12,8 @@ import shutil
 
 
 def store_temp_file(source_path: str) -> str:
-    """Moves a converted file into a safe temporary directory. Returns the"""
-    """full path to the stored temp file."""
+    """Moves a converted file into a safe temporary directory.
+    Returns the full path to the stored temp file."""
     temp_dir = Path(tempfile.mkdtemp(prefix="iconvert_"))
     destination = temp_dir / Path(source_path).name
     shutil.move(source_path, destination)
