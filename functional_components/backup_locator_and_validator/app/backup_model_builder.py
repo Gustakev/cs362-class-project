@@ -85,10 +85,6 @@ def build_backup_model(backup_root: Path) -> BackupModelResult:
         albums=[]
     )
 
-    # Debug prints
-    # print(f"{backup_model.backup_metadata.backup_date}")
-    # print(f"{backup_model.backup_metadata.is_encrypted}")
-
     return BackupModelResult(
         success=True, backup_model=backup_model
     )
