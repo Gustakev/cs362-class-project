@@ -3,7 +3,7 @@
 ## Team Report:
 **TA Feedback**
 
-N/A
+* N/A
 
 **Plans/Goals For This Week**
 * N/A
@@ -74,7 +74,7 @@ Note: Each bullet point should include a measurable task and a time estimate. Yo
 ### Kevin Gustafson:
 
 **Plans/Goals For This Week**
-
+* N/A
 
 **Progress + Issues**
 
