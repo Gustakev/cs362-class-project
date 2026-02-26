@@ -16,6 +16,7 @@ from cli_components.main_menu import (
     album_selection_submenu
 )
 
+
 class TestMainMenuUI(unittest.TestCase):
     """Testing main menu loop"""
     @patch('builtins.print')

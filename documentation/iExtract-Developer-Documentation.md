@@ -5,7 +5,6 @@
 * **iExtract:**  [https://github.com/Gustakev/cs362-class-project](https://github.com/Gustakev/cs362-class-project)   
 * **Photo Captioning Component:** [https://github.com/BrendxnW/image-captioning-cnn-lstm](https://github.com/BrendxnW/image-captioning-cnn-lstm)
 
-
 **Directory Structure**:
 
 * **/cli\_components/** \- Contains the contents of the Presentation Layer, the CLI and GUI and their related utilities  
@@ -40,10 +39,8 @@
 * **team-resources.md \-** Describes the resources the team uses, such as our miscellaneous design documents, as well as all other primary project documentation  
 * **requirements.txt \-** A list of required modules that the user must install via ‘pip install \-r requirements.txt’, or manually for each, in order to use iExtract
 
-	
+**How to Build the Software:** Provide clear instructions for how to use your project’s build system to build all system components.
 
-* **How to build the software.** Provide clear instructions for how to use your project’s build system to build all system components.  
-  **How to Build:**  
 1. **Clone repo**  
    1. In the terminal run the command:
 
@@ -66,29 +63,30 @@
    1. In the terminal, run the command: \`pip install \-r requirements.txt\`  
    2. **Note:** Some Linux users may need to run the command: \`sudo apt install python3-tk\` in order to obtain a working installation of ‘tkinter’.
 
-	
+**How to Test the Software**
 
-* **How to test the software:**  
-  *Online Continuous Integration*: In order to run the system’s test cases, the automated system that we have enabled in GitHub via the use of GitHub Actions, utilizing ‘unittest’ as our testing technology, a developer must simply follow the following steps:  
+*Online Continuous Integration*: In order to run the system’s test cases, the automated system that we have enabled in GitHub via the use of GitHub Actions, utilizing ‘unittest’ as our testing technology, a developer must simply follow the following steps:
+
 1. Make a push to the repository containing iExtract (or make a pull request to that repository).  
 2. GitHub Actions will automatically run the test suite against the commit. Wait for it to finish.  
 3. View the results of the test in the GitHub Actions tab.  
-   *Offline Testing:* Run the command ‘python \-m unittest discover tests’ locally from the root directory of the project repo.  
-     
-* **How to add new tests:** Are there any naming conventions/patterns to follow when naming test files? Is there a particular test harness to use?  
+   *Offline Testing:* Run the command ‘python \-m unittest discover tests’ locally from the root directory of the project repo.
+
+* **How to Add New Tests:** Are there any naming conventions/patterns to follow when naming test files? Is there a particular test harness to use?  
   To add tests, from the project root, enter the ‘/tests/’ directory, then create a test file adhering to the following requirements:  
 1. Must be testable via the command ‘python \-m unittest discover tests’  
 2. Files must start with ‘test\_’  
-3. Files must end with ‘.py’
+3. Files must end with ‘.py’  
+4. **NOTE:** Any test data, like a CSV file, for example, must go in the ‘test\_data’ folder within the ‘tests’ folder.
 
-	*Example:* ‘test\_backup\_locator.py’
+	*Example Test:* ‘test\_backup\_locator.py’
 
-*Conventions (Within Test Files):* Test cases will start each function with ‘validate’ followed by the task.
+*Conventions (Within Test Files):* Test cases will start each function with ‘test’ followed by the task.
 
-	
+**How to Build a Release of the Software:** Describe any tasks that are not automated. For example, should a developer update a version number (in code and documentation) prior to invoking the build system? Are there any sanity checks a developer should perform after building a release?
 
-* **How to build a release of the software:** Describe any tasks that are not automated. For example, should a developer update a version number (in code and documentation) prior to invoking the build system? Are there any sanity checks a developer should perform after building a release?  
-  *Follow These Steps:*  
+*Follow These Steps:*
+
 1. Pull the latest changes from the main branch.  
 2. Run the test suite offline by entering the command ‘python \-m unittest discover tests’ into the terminal.  
 3. Confirm that the tests pass in GitHub Actions for this commit.  
@@ -109,3 +107,33 @@
    1. Clone the repo to a fresh directory and ensure that the installation instructions actually work.  
    2. Ensure that the release tag matches the one named in ‘README.md’.  
    3. Ensure that the release notes are pertinent to the changes made.
+
+**How to Package This Application**
+
+* **Windows EXE:**  
+1. Install PyInstaller:
+
+   `pip install pyinstaller`
+
+2. Make sure all project dependencies are installed:
+
+   `pip install -r requirements.txt`
+
+3. Build the executable using Python (this avoids PATH issues):
+
+   `python -m PyInstaller --onefile iExtract.py`
+
+4. Wait for the build to finish. PyInstaller will create two folders:  
+* `build/` (temporary files)  
+* `dist/` (this contains the final .exe)  
+5. The runnable program will be located at:
+
+   `dist/iExtract.exe`
+
+6. Run the .exe by double‑clicking it or running it from a terminal.
+
+   Do not use `--noconsole` for this project. It is a CLI program and requires a console window. Using `--noconsole` will cause the program to crash with:
+
+   `RuntimeError: input(): lost sys.stdin`
+
+7. If you change the code later, rebuild the .exe by repeating step 3\.

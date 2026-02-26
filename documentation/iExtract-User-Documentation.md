@@ -4,16 +4,14 @@
 
 This program allows users to export their iPhone photo albums locally without requiring a paid subscription, while preserving original file structure and metadata. This gives users full ownership and offline access to their personal media.
 
-**Supported OSes**
-
-* Microsoft Windows 10/11 32-bit or 64-bit  
-* Linux 32-bit or 64-bit  
-* macOS 32-bit or 64-bit  
-  *Disclaimer:* Whether a system using a certain OS will run this program depends on whether it has a shell and terminal and whether Python 3.14 supports the system. There are no guarantees of functionality offered for rare OSes or rare OS distros.
-
 **System Requirements**
 
-	
+* **Supported OSes**  
+* Microsoft Windows 10/11 32-bit or 64-bit  
+* Linux 32-bit or 64-bit  
+* macOS 32-bit or 64-bit
+
+  *Disclaimer:* Whether a system using a certain OS will run this program depends on whether it has a shell and terminal and whether Python 3.14 supports the system. There are no guarantees of functionality offered for rare OSes or rare OS distros.
 
 **How to Install**
 
@@ -87,4 +85,4 @@ Users can report bugs through the in-app “Report Bug” option, which will lin
 - **Bugs:**  
   * No known bugs at this time.  
 - **Limitations:**  
-  * Menu options 2, 3, 4, 5, 6, and 7 aren’t yet functional.
+  * Menu options 2, 3, 4, 5, 6, and 7 aren’t fully functional yet.

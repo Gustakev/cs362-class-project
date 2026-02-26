@@ -1,5 +1,5 @@
 """
-Author: Kevin Gustafson
+Author: Kevin Gustafson (Brendon Wong worked on 2026-02-26)
 Date: 2026-01-29
 Program Description: Command line interface for iExtract.
 """
@@ -9,9 +9,12 @@ import sys
 import tkinter as tk
 from tkinter import filedialog
 
+import webbrowser
+
 from pathlib import Path
 
 from functional_components.services import BackupService, SettingsService, ExportService
+#from functional_components.photo_captioner import get_caption
 
 backup_service = BackupService()
 settings_service = SettingsService()
@@ -122,7 +125,11 @@ def main_menu():
         print("2. Export All Camera Roll Media")
         print("3. Export Specific Camera Roll Media")
         print("4. Settings")
-        print("5. Exit")
+        print("5. Help")
+        print("6. Report Bug")
+        print("7. Restart")
+        print("8. Photo Descriper (beta)")
+        print("9. Exit")
 
         main_menu_choice = input("\nChoose an option: ")
         print("")
@@ -136,11 +143,21 @@ def main_menu():
         elif main_menu_choice == "4":
             settings_menu()
         elif main_menu_choice == "5":
+            help_user()
+        elif main_menu_choice == "6":
+            report_bug()
+        elif main_menu_choice == "7":
+            report_bug()
+        elif main_menu_choice == "8":
+            # TODO
+            # Needs to get user input still
+            get_caption(...)
+        elif main_menu_choice == "9":
             print("Thank you for using this program. Goodbye.")
-            return
+            sys.exit()
         else:
             print(
-                "Error: Invalid input. Choose one of the displayed options.",
+                "\033[31m" + "Error: Invalid input. Choose one of the displayed options.\n" + "\033[0m",
                 file=sys.stderr,
             )
 
@@ -373,6 +390,33 @@ def album_selection_submenu():
     else:
         print("\nInvalid choice.")
 
+def help_user():
+    """Links user to our documentations that explains how our program works."""
+    dev_doc = "https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-Developer-Documentation.md"
+    user_doc = "https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-User-Documentation.md"
+
+
+    while True:
+        print("1. User Documentation")
+        print("2. Developer Documentation")
+        print("3. Back\n")
+        
+        choice = int(input("Option: "))
+        
+        if choice == 1:
+            webbrowser.open_new_tab(dev_doc)
+        elif choice == 2:
+            webbrowser.open_new_tab(user_doc)
+        elif choice == 3:
+            main_menu()
+        else:
+            print("\033[31m" + "Error: Invalid input. Choose one of the displayed options.\n" + "\033[0m")
+
+def report_bug():
+    """Links to github issues if there is a bug found."""
+    issues_url = "https://github.com/Gustakev/cs362-class-project/issues/new"
+    print("Loading...")
+    webbrowser.open_new_tab(issues_url)
 
 # TODO:
 def input_validation():
