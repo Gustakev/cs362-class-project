@@ -13,6 +13,7 @@ from cli_components.main_menu import (
     settings_menu
 )
 
+
 class TestMainMenuUI(unittest.TestCase):
     """Testing main menu loop"""
     @patch('builtins.print')
