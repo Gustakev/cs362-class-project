@@ -19,45 +19,49 @@ from cli_components.main_menu import (
 
 class TestMainMenuUI(unittest.TestCase):
     """Testing main menu loop"""
+    
+    """Testing main menu loop"""
     @patch('builtins.print')
-    @patch('builtins.input',side_effect = ['5'])
+    @patch('builtins.input',side_effect = ['9'])
     def test_main_menu_exit(self, mock_input, mock_print):
-        """Test that typing '5' successfully breaks the infinite loop and exits."""
-        main_menu()
+        """Test that typing '9' successfully breaks the infinite loop and exits."""
+        # This safely catches the sys.exit() command so it stops the loop without killing the test runner
+        with self.assertRaises(SystemExit):
+            main_menu()
         
         # Check if the goodbye message was printed
         mock_print.assert_any_call("Thank you for using this program. Goodbye.")
 
     @patch('builtins.print')
-    @patch('builtins.input', side_effect=['1', '5'])
+    @patch('builtins.input', side_effect=['1', '9'])
     @patch('cli_components.main_menu.load_backup_menu')
     def test_main_menu_routes_to_load_backup(self, mock_load_backup, mock_input, mock_print):
-        
-        main_menu()
+        with self.assertRaises(SystemExit):
+            main_menu()
         mock_load_backup.assert_called_once()
 
     @patch('builtins.print')
-    @patch('builtins.input', side_effect=['2', '5'])
+    @patch('builtins.input', side_effect=['2', '9'])
     @patch('cli_components.main_menu.export_all_menu')
     def test_main_menu_routes_to_export_all(self, mock_export_all, mock_input, mock_print):
-    
-        main_menu()
+        with self.assertRaises(SystemExit):
+            main_menu()
         mock_export_all.assert_called_once()
 
     @patch('builtins.print')
-    @patch('builtins.input', side_effect=['3', '5'])
+    @patch('builtins.input', side_effect=['3', '9'])
     @patch('cli_components.main_menu.export_specific_menu')
     def test_main_menu_routes_to_export_specific(self, mock_export_specific, mock_input, mock_print):
-   
-        main_menu()
+        with self.assertRaises(SystemExit):
+            main_menu()
         mock_export_specific.assert_called_once()
 
     @patch('builtins.print')
-    @patch('builtins.input', side_effect=['4', '5'])
+    @patch('builtins.input', side_effect=['4', '9'])
     @patch('cli_components.main_menu.settings_menu')
     def test_main_menu_routes_to_settings(self, mock_settings, mock_input, mock_print):
-      
-        main_menu()
+        with self.assertRaises(SystemExit):
+            main_menu()
         mock_settings.assert_called_once()
 
 
