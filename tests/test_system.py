@@ -66,7 +66,7 @@ def _make_asset(extension: str, path: str) -> Asset:
 class TestStoreTempFile(unittest.TestCase):
     """System tests for store_temp_file.
 
-    Verifies real filesystem behaviour on whatever OS the suite runs on.
+    Verifies real filesystem behavior on whatever OS the suite runs on.
     Each test creates a real source file, calls store_temp_file, and
     inspects the result on disk. Temp directories are cleaned up in
     tearDown.
