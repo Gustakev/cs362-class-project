@@ -1,5 +1,5 @@
 """
-Author: Kevin Gustafson
+Author: Kevin Gustafson (Brendon Wong worked on 2026-02-26)
 Date: 2026-01-29
 Program Description: Command line interface for iExtract.
 """
@@ -9,9 +9,12 @@ import sys
 import tkinter as tk
 from tkinter import filedialog
 
+import webbrowser
+
 from pathlib import Path
 
 from functional_components.services import BackupService, SettingsService, ExportService
+#from functional_components.photo_captioner import get_caption
 
 backup_service = BackupService()
 settings_service = SettingsService()
@@ -122,7 +125,11 @@ def main_menu():
         print("2. Export All Camera Roll Media")
         print("3. Export Specific Camera Roll Media")
         print("4. Settings")
-        print("5. Exit")
+        print("5. Help")
+        print("6. Report Bug")
+        print("7. Photo Descriptor (Beta Demo)")
+        print("8. Restart")
+        print("9. Exit")
 
         main_menu_choice = input("\nChoose an option: ")
         print("")
@@ -136,12 +143,22 @@ def main_menu():
         elif main_menu_choice == "4":
             settings_menu()
         elif main_menu_choice == "5":
+            help_user()
+        elif main_menu_choice == "6":
+            report_bug()
+        elif main_menu_choice == "7":
+            # TODO
+            # Needs to get user input still
+            get_caption(...)
+        elif main_menu_choice == "8":
+            print("Restart Feature Status: Feature not yet implemented.")
+        elif main_menu_choice == "9":
             print("Thank you for using this program. Goodbye.")
-            return
+            sys.exit()
         else:
             print(
-                "Error: Invalid input. Choose one of the displayed options.",
-                file=sys.stderr,
+                "\033[31m" + "Error: Invalid input. Choose one of the displayed options.\n" + "\033[0m",
+                file=sys.stderr
             )
 
 
@@ -173,17 +190,14 @@ def get_export_destination(item_name):
         if not dest_path:
             print("Export cancelled.")
             return None
-
     elif dest_choice == "2":
         dest_path = input("Enter destination folder path: ").strip()
         if not dest_path:
             print("Export cancelled.")
             return None
-
     elif dest_choice == "3":
         print("Export cancelled.")
         return None
-
     else:
         print("Invalid choice. Export cancelled.")
         return None
@@ -202,10 +216,13 @@ def export_all_menu():
     Handles the UI flow for exporting all eligible albums.
     Applies current SettingsService filters automatically via the backend.
     """
-    print("\n--- EXPORT ALL ---")
-    if not backup_service.current_model:
+
+    # Prevent exporting without a loaded backup
+    if backup_service.current_model is None:
         print("[!] Error: No backup loaded. Please load a backup first.")
         return
+    
+    print("\n--- EXPORT ALL ---")
 
     dest_path = get_export_destination("all albums")
     if not dest_path:
@@ -230,13 +247,19 @@ def export_specific_menu():
     print("\n--- EXPORT SPECIFIC ALBUM ---")
 
     if not backup_service.current_model:
-        print("[!] Error: No backup loaded. Please load a backup first.")
+        print(
+            "[!] Error: No backup loaded. Please load a backup first.",
+            file=sys.stderr,
+        )
         return
 
     available_albums = export_service.get_album_list(backup_service.current_model)
 
     if not available_albums:
-        print("[!] No albums found in backup.")
+        print(
+            "[!] No albums found in backup.",
+            file=sys.stderr,
+        )
         return
 
     selected_album = None
@@ -248,16 +271,18 @@ def export_specific_menu():
         choice = input(
             "\nEnter exact Album Name to export (or 'cancel' to go back): "
         ).strip()
-
+        
         if choice.lower() == "cancel":
             print("Export cancelled.")
             return
-
         if choice in available_albums:
             selected_album = choice
             break
         else:
-            print(f"\n[!] Error: Album '{choice}' does not exist.")
+            print(
+                f"\n[!] Error: Album '{choice}' does not exist.",
+                file=sys.stderr,
+            )
 
     dest_path = get_export_destination(f"'{selected_album}'")
     if not dest_path:
@@ -283,7 +308,11 @@ def settings_menu():
     Displays and manages the Blacklist/Whitelist export filters.
     Disables access to modification submenus if a backup is not yet loaded.
     """
-
+    # Block access if no backup is loaded
+    if backup_service.current_model is None:
+        print("\n[!] Error: You must load a backup before changing settings.")
+        return
+    
     while True:
         # Get data from Service
         mode, album_list = settings_service.get_state()
@@ -301,7 +330,7 @@ def settings_menu():
         else:
             print("1. Switch mode (DISABLED - Load a backup first)")
             print("2. Add/Remove Album (DISABLED - Load a backup first)")
-        print("3. Back")
+            print("3. Back")
 
         choice = input("Select: ")
 
@@ -309,7 +338,10 @@ def settings_menu():
             if backup_loaded:
                 print(settings_service.toggle_mode())
             else:
-                print("\n[!] Error: You must load a backup before changing settings.")
+                print(
+                    "\n[!] Error: You must load a backup before changing settings.",
+                    file=sys.stderr,
+                )
         elif choice == "2":
             if backup_loaded:
                 album_selection_submenu()
@@ -317,7 +349,6 @@ def settings_menu():
                 print("\n[!] Error: You must load a backup before selecting albums.")
         elif choice == "3":
             return
-
         else:
             print("\nInvalid Choice")
 
@@ -361,7 +392,8 @@ def album_selection_submenu():
                 print(msg)
             else:
                 print(
-                    f"\n[!] Error: Album '{name}' does not exist in the current backup."
+                    f"\n[!] Error: Album '{name}' does not exist in the current backup.",
+                    file=sys.stderr
                 )
 
     elif sub_choice == "2":
@@ -373,6 +405,37 @@ def album_selection_submenu():
     else:
         print("\nInvalid choice.")
 
+def help_user():
+    """Links user to our documentations that explains how our program works."""
+    dev_doc = "https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-Developer-Documentation.md"
+    user_doc = "https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-User-Documentation.md"
+
+
+    while True:
+        print("1. User Documentation")
+        print("2. Developer Documentation")
+        print("3. Back\n")
+        
+        choice = int(input("Option: "))
+        
+        if choice == 1:
+            webbrowser.open_new_tab(dev_doc)
+        elif choice == 2:
+            webbrowser.open_new_tab(user_doc)
+        elif choice == 3:
+            break
+        else:
+            print(
+                "\033[31m" + "Error: Invalid input. Choose one of the displayed options.\n" + "\033[0m",
+                file=sys.stderr,
+            )
+
+def report_bug():
+    """Links to github issues if there is a bug found."""
+    issues_url = "https://github.com/Gustakev/cs362-class-project/issues/new"
+    print("Loading...")
+    webbrowser.open_new_tab(issues_url)
+    return
 
 # TODO:
 def input_validation():
@@ -399,3 +462,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
