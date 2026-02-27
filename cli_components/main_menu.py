@@ -417,10 +417,7 @@ def help_user():
         elif choice == 3:
             break
         else:
-            print(
-                "\033[31m" + "Error: Invalid input. Choose one of the displayed options.\n" + "\033[0m",
-                file=sys.stderr,
-            )
+            print("\033[31m" + "Error: Invalid input. Choose one of the displayed options.\n" + "\033[0m", file=sys.stderr)
 
 def report_bug():
     """Links to github issues if there is a bug found."""
@@ -431,7 +428,44 @@ def report_bug():
 
 def feat_photo_caption():
     """"""
-    print(*Path("functional_components/photo_caption/data/").iterdir(), sep="\n")
+    file_dir = Path("functional_components/photo_caption/data/")
+    
+    print("\033[33m" + "========================= Extracted Albums =========================\n")
+    print(f"** Instructions: Enter a number corresponding to the choices below. **\n"+ "\033[0m")
+    
+    while True:
+
+        items = [p for p in file_dir.iterdir() if p.is_dir()]
+        for i, p in enumerate(items):
+            print(f"{i + 1}. {p.name}")
+
+        back_option = len(items) + 1
+        print(f"{back_option}. Back\n")
+
+        try:
+            choice = int(input("Choice: "))
+        except ValueError:
+            print(f"\033[31m" + "Invalid input. Choose one of the displayed options\n" + "\033[0m")
+            continue
+
+        if choice == back_option:
+            break
+
+        elif 1 <= choice <= len(items):
+            selected = items[choice - 1]
+            file_dir = selected
+            print(f"Changed to: {selected}")
+
+            photos = [p for p in file_dir.iterdir() if p.is_file()]
+            for i, p in enumerate(photos):
+                print(f"{i + 1}. {p.name}")  
+                     
+        else:
+            print("\033[31m" + "Error: Invalid input. Choose one of the displayed options.\n" + "\033[0m")
+        
+
+
+        
 
 
 # TODO:
