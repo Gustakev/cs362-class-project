@@ -151,7 +151,7 @@ def main_menu():
             # Needs to get user input still
             get_caption(...)
         elif main_menu_choice == "8":
-            print("Error w/Restart Feature: Feature not yet implemented.")
+            print("Restart Feature Status: Feature not yet implemented.")
         elif main_menu_choice == "9":
             print("Thank you for using this program. Goodbye.")
             sys.exit()
@@ -458,4 +458,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
