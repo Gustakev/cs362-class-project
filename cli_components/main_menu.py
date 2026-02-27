@@ -216,13 +216,13 @@ def export_all_menu():
     Handles the UI flow for exporting all eligible albums.
     Applies current SettingsService filters automatically via the backend.
     """
-    print("\n--- EXPORT ALL ---")
-    if not backup_service.current_model:
-        print(
-            "[!] Error: No backup loaded. Please load a backup first.",
-            file=sys.stderr,
-        )
+
+    # Prevent exporting without a loaded backup
+    if backup_service.current_model is None:
+        print("[!] Error: No backup loaded. Please load a backup first.")
         return
+    
+    print("\n--- EXPORT ALL ---")
 
     dest_path = get_export_destination("all albums")
     if not dest_path:
@@ -308,7 +308,11 @@ def settings_menu():
     Displays and manages the Blacklist/Whitelist export filters.
     Disables access to modification submenus if a backup is not yet loaded.
     """
-
+    # Block access if no backup is loaded
+    if backup_service.current_model is None:
+        print("\n[!] Error: You must load a backup before changing settings.")
+        return
+    
     while True:
         # Get data from Service
         mode, album_list = settings_service.get_state()
@@ -458,5 +462,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
