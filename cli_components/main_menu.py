@@ -36,7 +36,6 @@ def gui_pick_folder():
 
         folder = filedialog.askdirectory(title="Select a folder")
         return folder
-
     except tk.TclError:
         print(
             "Error: GUI folder selection is not available on this system.",
@@ -77,17 +76,14 @@ def load_backup_menu():
             selected_folder = gui_pick_folder()
             print("")
             print("You chose:", selected_folder)
-
         elif folder_picker_method == "2":
             print("")
             selected_folder = input("Enter the path to your iPhone backup " "folder: ")
             print("")
             print("You chose:", selected_folder)
-
         elif folder_picker_method == "3":
             print("\nGoing back...\n")
             return
-
         else:
             print(
                 "\nError: Invalid input. Choose one of the displayed options.",
@@ -149,6 +145,8 @@ def main_menu():
         elif main_menu_choice == "7":
             # TODO
             # Needs to get user input still
+            print("AI Photo Caption Feature Status: Feature not yet implemented.")
+            continue # Prevent crash due to unfinished code.
             get_caption(...)
         elif main_menu_choice == "8":
             print("Restart Feature Status: Feature not yet implemented.")
@@ -290,7 +288,6 @@ def export_specific_menu():
 
     # TODO:When exporting a single album is implemented
 
-
 # success, message = export_service.export_single_album(
 #     backup_model=backup_service.current_model,
 #   album_name=selected_album,
@@ -301,7 +298,6 @@ def export_specific_menu():
 #      print(f"\n[SUCCESS] {message}\n")
 #  else:
 #      print(f"\n[ERROR] {message}\n")
-
 
 def settings_menu():
     """
@@ -319,14 +315,14 @@ def settings_menu():
 
         backup_loaded = backup_service.current_model is not None
 
-        print("\n--- SETTINGS ---")
+        print("--- SETTINGS ---")
         print(f"Mode: {mode}")
         print(f"List: [{album_list}]")
 
         if backup_loaded:
-            print("1. Switch Mode (Whitelist/Blacklist)")
+            print("1. Switch Mode (Blacklist/Whitelist)")
             print("2. Add/Remove Album")
-
+            print("3. Back")
         else:
             print("1. Switch mode (DISABLED - Load a backup first)")
             print("2. Add/Remove Album (DISABLED - Load a backup first)")
@@ -348,6 +344,7 @@ def settings_menu():
             else:
                 print("\n[!] Error: You must load a backup before selecting albums.")
         elif choice == "3":
+            print("Going back...")
             return
         else:
             print("\nInvalid Choice")
@@ -364,6 +361,7 @@ def album_selection_submenu():
 
     print("\n--- ALBUM SELECTION ---")
     print("Available Albums in Backup:")
+
     for album in available_albums:
         print(f" - {album}")
 
@@ -375,7 +373,6 @@ def album_selection_submenu():
     sub_choice = input("\nSelect an option: ").strip()
 
     if sub_choice == "1":
-
         while True:
             _, current_list = settings_service.get_state()
             print(f"\nCurrent List: [{current_list}]")
@@ -395,13 +392,10 @@ def album_selection_submenu():
                     f"\n[!] Error: Album '{name}' does not exist in the current backup.",
                     file=sys.stderr
                 )
-
     elif sub_choice == "2":
         print("\n[!] Checkbox style menu coming soon!")
-
     elif sub_choice == "3":
         return
-
     else:
         print("\nInvalid choice.")
 
@@ -409,7 +403,6 @@ def help_user():
     """Links user to our documentations that explains how our program works."""
     dev_doc = "https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-Developer-Documentation.md"
     user_doc = "https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-User-Documentation.md"
-
 
     while True:
         print("1. User Documentation")
@@ -437,6 +430,7 @@ def report_bug():
     webbrowser.open_new_tab(issues_url)
     return
 
+
 # TODO:
 def input_validation():
     """Placeholder for input validation."""
@@ -462,6 +456,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
