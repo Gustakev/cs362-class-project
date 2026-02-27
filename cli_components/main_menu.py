@@ -5,6 +5,7 @@ Program Description: Command line interface for iExtract.
 """
 
 import sys
+import os
 
 import tkinter as tk
 from tkinter import filedialog
@@ -14,7 +15,7 @@ import webbrowser
 from pathlib import Path
 
 from functional_components.services import BackupService, SettingsService, ExportService
-#from functional_components.photo_captioner import get_caption
+
 
 backup_service = BackupService()
 settings_service = SettingsService()
@@ -145,9 +146,7 @@ def main_menu():
         elif main_menu_choice == "7":
             # TODO
             # Needs to get user input still
-            print("AI Photo Caption Feature Status: Feature not yet implemented.")
-            continue # Prevent crash due to unfinished code.
-            get_caption(...)
+            feat_photo_caption()
         elif main_menu_choice == "8":
             print("Restart Feature Status: Feature not yet implemented.")
         elif main_menu_choice == "9":
@@ -429,6 +428,10 @@ def report_bug():
     print("Loading...")
     webbrowser.open_new_tab(issues_url)
     return
+
+def feat_photo_caption():
+    """"""
+    print(*Path("functional_components/photo_caption/data/").iterdir(), sep="\n")
 
 
 # TODO:
