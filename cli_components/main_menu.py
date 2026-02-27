@@ -429,17 +429,28 @@ def report_bug():
 def feat_photo_caption():
     """"""
     file_dir = Path("functional_components/photo_caption/data/")
-    
+    root_dir = file_dir
+
     print("\033[33m" + "========================= Extracted Albums =========================\n")
     print(f"** Instructions: Enter a number corresponding to the choices below. **\n"+ "\033[0m")
     
     while True:
 
-        items = [p for p in file_dir.iterdir() if p.is_dir()]
-        for i, p in enumerate(items):
-            print(f"{i + 1}. {p.name}")
+        folders = [p for p in file_dir.iterdir() if p.is_dir()]
+        files = [p for p in file_dir.iterdir() if p.is_file()]
+        file_count = len([p for p in file_dir.iterdir()])
 
-        back_option = len(items) + 1
+        if folders:
+            print("\nAlbums:")
+            for i, p in enumerate(folders, start=1):
+                print(f"{i}. {p.name}")
+
+        if files:
+            print("\nFiles:")
+            for i, p in enumerate(files, start=1):
+                print(f"{i}. {p.name}")
+
+        back_option = file_count + 1
         print(f"{back_option}. Back\n")
 
         try:
@@ -449,19 +460,15 @@ def feat_photo_caption():
             continue
 
         if choice == back_option:
-            break
+            if file_dir == root_dir:
+                break
+            file_dir = file_dir.parent
+            continue
 
-        elif 1 <= choice <= len(items):
-            selected = items[choice - 1]
-            file_dir = selected
-            print(f"Changed to: {selected}")
-
-            photos = [p for p in file_dir.iterdir() if p.is_file()]
-            for i, p in enumerate(photos):
-                print(f"{i + 1}. {p.name}")  
-                     
+        if 1 <= choice <= len(folders):
+            file_dir = folders[choice - 1]
         else:
-            print("\033[31m" + "Error: Invalid input. Choose one of the displayed options.\n" + "\033[0m")
+            print("\033[31mError: Choose one of the displayed options.\033[0m\n")
         
 
 
