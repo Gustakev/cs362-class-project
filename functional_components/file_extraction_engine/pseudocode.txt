@@ -1,0 +1,444 @@
+# -----------------------------------------------------------------------
+# Domain object used internally by the extraction engine.
+# Define this in the file_extraction_engine domain layer.
+# -----------------------------------------------------------------------
+
+CLASS CollectionRef:
+    title:  str   # folder name to use in output (NUAs prefixed with nua_)
+    is_nua: bool  # True for smart folders, False for user albums
+
+
+# -----------------------------------------------------------------------
+# Main procedure
+# -----------------------------------------------------------------------
+
+PROCEDURE RunExtractionEngine(
+        backup_model,
+        blacklist,
+        output_root,
+        os_supports_symlinks,
+        user_set_symlinks,
+        convert_type_dict,
+        progress):
+    # backup_model         -- fully populated BackupModel
+    # blacklist            -- Blacklist object from the domain layer
+    # output_root          -- Path to the root of the extraction output
+    # os_supports_symlinks -- set by the caller via platform detection
+    # user_set_symlinks    -- set by the caller from the user's settings
+    # convert_type_dict    -- e.g. {"HEIC": "PNG", "MOV": "MP4"}
+    # progress             -- mutable ProgressTracker passed in from CLI
+
+    use_symlinks <- os_supports_symlinks AND user_set_symlinks
+
+
+    # --- UUID-to-title lookup (user albums only) ---
+    # asset.relationships.user_albums stores album UUIDs, not titles.
+    # The blacklist stores titles. Build this dict up front so
+    # get_active_collections can resolve UUIDs to titles for comparison.
+    # Only user-type albums are included; burst-type albums are handled
+    # separately via asset.burst_uuid and are never in user_albums.
+
+    album_title_by_uuid <- {album.album_uuid: album.title
+                            for album IN backup_model.albums
+                            if album.type == "user"}
+
+
+    # --- Pre-pass: deduplicate assets ---
+    # The BackupModel may contain the same asset UUID more than once if
+    # it was returned via multiple album memberships during SQL queries.
+    # Deduplicating here means each asset is processed exactly once,
+    # avoiding the need for a mid-loop "already processed" tracker.
+
+    seen_uuids    <- empty set
+    unique_assets <- []
+    FOR EACH asset IN backup_model.assets:
+        IF asset.asset_uuid NOT IN seen_uuids:
+            seen_uuids.add(asset.asset_uuid)
+            unique_assets.append(asset)
+
+
+    # --- Pre-pass: separate burst frames from regular assets ---
+    # Burst frames are grouped by burst_uuid and processed as folder-level
+    # units in the burst loop below. All other assets go into asset_list.
+
+    burst_groups <- {}   # burst_uuid -> [Asset, ...]
+    asset_list   <- []
+
+    FOR EACH asset IN unique_assets:
+        IF asset.subtype == "burst_frame" AND asset.burst_uuid IS NOT None:
+            burst_groups[asset.burst_uuid].append(asset)
+        ELSE:
+            asset_list.append(asset)
+
+
+    # --- Progress tracking ---
+    # One unit of progress per regular asset and per burst group.
+    # Guard against empty backups to avoid division by zero.
+
+    total_units <- len(asset_list) + len(burst_groups)
+
+    PROCEDURE tick():
+        IF total_units == 0:
+            RETURN
+        units_done       <- units_done + 1
+        progress.percent <- int((units_done / total_units) * 100)
+
+    units_done <- 0
+
+
+    # --- Non-exclusive asset registry ---
+    # Maps asset_uuid (or burst_uuid for burst groups) to the absolute
+    # path of the already-extracted file or folder inside
+    # non_exclusive_assets. Only populated and consulted when
+    # use_symlinks is True. When False, files are always duplicated
+    # and this dict is never used.
+
+    non_excl_assets <- {}   # uuid -> absolute_path
+
+
+    # -----------------------------------------------------------------------
+    # Main loop: regular (non-burst) assets
+    # -----------------------------------------------------------------------
+
+    FOR EACH asset IN asset_list:
+
+        active_collections <- get_active_collections(
+                                  asset, blacklist, album_title_by_uuid)
+        collection_count   <- len(active_collections)
+
+        # If symlinks are enabled and this asset was already extracted to
+        # non_exclusive_assets in a prior iteration, only place links into
+        # the remaining active collections. No conversion or copy needed.
+        IF use_symlinks AND asset.asset_uuid IN non_excl_assets:
+            src_path <- non_excl_assets[asset.asset_uuid]
+            FOR EACH collection IN active_collections:
+                dest_folder <- ensure_folder_exists(
+                                   output_root / collection.title)
+                place_link(src_path, dest_folder)
+            tick()
+            CONTINUE
+
+        # Resolve the file, converting format if required.
+        resolved_asset <- maybe_convert(asset, convert_type_dict)
+        src_path       <- resolved_asset.backup_relative_path
+
+        # Derive the correct output filename. Stem always comes from
+        # asset.original_filename. Extension comes from the resolved
+        # (possibly converted) file. Timestamps are applied after each
+        # real file copy inside copy_file_safe.
+        dest_name <- get_dest_name(asset, resolved_asset)
+
+        IF collection_count == 0 OR collection_count > 1:
+
+            IF use_symlinks:
+                # Place the real file in non_exclusive_assets, register it,
+                # then create a symlink into each active collection folder.
+                dest_folder <- ensure_folder_exists(
+                                   output_root / "non_exclusive_assets")
+                dest_path   <- copy_file_safe(
+                                   src_path, dest_folder, dest_name, asset)
+                non_excl_assets[asset.asset_uuid] <- dest_path
+
+                FOR EACH collection IN active_collections:
+                    coll_folder <- ensure_folder_exists(
+                                       output_root / collection.title)
+                    place_link(dest_path, coll_folder)
+
+            ELSE:
+                # Symlinks disabled: duplicate the file everywhere it belongs.
+                # Assets in zero active collections go to non_exclusive_assets
+                # so no file is silently dropped from the output.
+                IF collection_count == 0:
+                    dest_folder <- ensure_folder_exists(
+                                       output_root / "non_exclusive_assets")
+                    copy_file_safe(src_path, dest_folder, dest_name, asset)
+                ELSE:
+                    FOR EACH collection IN active_collections:
+                        dest_folder <- ensure_folder_exists(
+                                           output_root / collection.title)
+                        copy_file_safe(src_path, dest_folder, dest_name, asset)
+
+        ELSE:  # collection_count == 1
+            dest_folder <- ensure_folder_exists(
+                               output_root / active_collections[0].title)
+            copy_file_safe(src_path, dest_folder, dest_name, asset)
+
+        tick()
+
+    END FOR
+
+
+    # -----------------------------------------------------------------------
+    # Burst loop: each burst group is treated as an atomic folder-level unit.
+    # The group's folder is named after burst_uuid and contains all frames.
+    # Collection membership is determined from the key frame (the user's
+    # chosen photo). The same non-exclusive/exclusive logic as the main loop
+    # applies, but operates on a folder rather than a single file.
+    # Individual frame files have their timestamps set when copied to staging.
+    # The burst folder itself is not timestamped since OS support varies.
+    # -----------------------------------------------------------------------
+
+    staging_root <- output_root / "staging"
+
+    FOR EACH burst_uuid, frames IN burst_groups:
+
+        # Determine collection membership from the key frame.
+        # Fall back to frames[0] if none is marked as primary.
+        key_frame <- first frame where is_primary_burst_frame == True,
+                     or frames[0] if none is marked as primary
+
+        active_collections <- get_active_collections(
+                                  key_frame, blacklist, album_title_by_uuid)
+        collection_count   <- len(active_collections)
+
+        # Build the burst folder in staging, converting frames if needed.
+        # Named after burst_uuid for guaranteed uniqueness.
+        # Each frame is copied with its original filename and timestamps.
+        staging_folder <- ensure_folder_exists(staging_root / burst_uuid)
+        FOR EACH frame IN frames:
+            resolved  <- maybe_convert(frame, convert_type_dict)
+            dest_name <- get_dest_name(frame, resolved)
+            copy_file_safe(
+                resolved.backup_relative_path,
+                staging_folder,
+                dest_name,
+                frame)
+
+        # If symlinks are enabled and this burst group was already extracted
+        # in a prior iteration, the staging folder is redundant. Remove it
+        # and only place links into the remaining active collections.
+        IF use_symlinks AND burst_uuid IN non_excl_assets:
+            remove staging_folder
+            src_folder <- non_excl_assets[burst_uuid]
+            FOR EACH collection IN active_collections:
+                dest_folder <- ensure_folder_exists(
+                                   output_root / collection.title)
+                place_folder_link(src_folder, dest_folder)
+            tick()
+            CONTINUE
+
+        IF collection_count == 0 OR collection_count > 1:
+
+            IF use_symlinks:
+                # Move staging folder into non_exclusive_assets, register it,
+                # then symlink into each active collection folder.
+                dest_parent <- ensure_folder_exists(
+                                   output_root / "non_exclusive_assets")
+                dest_folder <- move_folder_safe(staging_folder, dest_parent)
+                non_excl_assets[burst_uuid] <- dest_folder
+
+                FOR EACH collection IN active_collections:
+                    coll_folder <- ensure_folder_exists(
+                                       output_root / collection.title)
+                    place_folder_link(dest_folder, coll_folder)
+
+            ELSE:
+                IF collection_count == 0:
+                    # No active collections: preserve in non_exclusive_assets.
+                    dest_parent <- ensure_folder_exists(
+                                       output_root / "non_exclusive_assets")
+                    move_folder_safe(staging_folder, dest_parent)
+
+                ELSE:
+                    # Move into the first collection, then copy from there
+                    # into remaining collections. Never read from staging
+                    # after the move since staging_folder no longer exists.
+                    first_dest  <- ensure_folder_exists(
+                                       output_root /
+                                       active_collections[0].title)
+                    moved_path  <- move_folder_safe(staging_folder, first_dest)
+
+                    FOR EACH collection IN active_collections[1:]:
+                        dest_parent <- ensure_folder_exists(
+                                           output_root / collection.title)
+                        copy_folder_safe(moved_path, dest_parent)
+
+        ELSE:  # collection_count == 1
+            dest_parent <- ensure_folder_exists(
+                               output_root / active_collections[0].title)
+            move_folder_safe(staging_folder, dest_parent)
+
+        tick()
+
+    END FOR
+
+    # Remove staging_root if it still exists and is empty.
+    # All burst folders were either moved out or explicitly removed above.
+    IF staging_root exists AND staging_root is empty:
+        remove staging_root
+
+    progress.percent <- 100
+
+END PROCEDURE
+
+
+# -----------------------------------------------------------------------
+# Helper definitions
+# -----------------------------------------------------------------------
+
+FUNCTION get_active_collections(asset, blacklist, album_title_by_uuid)
+        -> List[CollectionRef]:
+    # Returns a list of non-blacklisted collections this asset belongs to.
+    # User album UUIDs are resolved to titles via album_title_by_uuid
+    # before comparing against the blacklist, since user_albums stores
+    # UUIDs but ListEntry.name stores titles.
+    # NUA folder names are prefixed with "nua_" so users can distinguish
+    # them from user albums in the output.
+
+    blacklisted_uas  <- {e.name for e in blacklist.current_list
+                         if NOT e.is_NUA}
+    blacklisted_nuas <- {e.name for e in blacklist.current_list
+                         if e.is_NUA}
+
+    result <- []
+
+    FOR EACH album_uuid IN asset.relationships.user_albums:
+        title <- album_title_by_uuid.get(album_uuid)
+        IF title IS None:
+            CONTINUE   # UUID has no matching album in BackupModel, skip
+        IF title NOT IN blacklisted_uas:
+            result.append(CollectionRef(title=title, is_nua=False))
+
+    FOR EACH nua IN asset.relationships.smart_folders:
+        # nua is one of: "favorites", "hidden", "selfies",
+        # "recently_deleted" as defined in Relationships.smart_folders.
+        # ListEntry.name for NUAs must use these exact same strings.
+        IF nua NOT IN blacklisted_nuas:
+            result.append(CollectionRef(title="nua_" + nua, is_nua=True))
+
+    RETURN result
+
+
+FUNCTION get_dest_name(asset, resolved_asset) -> str:
+    # Returns the correct output filename for a copied file.
+    # Stem always comes from asset.original_filename so the user sees the
+    # original name regardless of what the hashed backup path looks like.
+    # Extension comes from the resolved (possibly converted) temp file path
+    # rather than from resolved_asset.file_extension, because convert_file.py
+    # currently only updates backup_relative_path on the returned Asset and
+    # not file_extension. If backup_relative_path is unchanged, conversion
+    # did not happen and we use asset.file_extension directly, since the
+    # hashed backup path has no meaningful extension.
+
+    stem <- Path(asset.original_filename).stem
+
+    IF resolved_asset.backup_relative_path != asset.backup_relative_path:
+        # Conversion happened: derive extension from the temp file path,
+        # which has the correct converted extension (e.g. ".png", ".mp4").
+        ext <- Path(resolved_asset.backup_relative_path).suffix
+    ELSE:
+        # No conversion: use the original file extension from the Asset.
+        ext <- "." + asset.file_extension.lower()
+
+    RETURN stem + ext
+
+
+FUNCTION maybe_convert(asset, convert_type_dict) -> Asset:
+    # Returns the converted asset on success, or the original asset if
+    # the format is not in the conversion dict or if conversion fails.
+    # On failure, writes a message to stderr so the CLI can surface it
+    # without the application layer importing any presentation code.
+
+    IF asset.file_extension.upper() IN convert_type_dict:
+        result <- convert_asset(AssetToConvert(asset, convert_type_dict))
+        IF result.success:
+            RETURN result.converted_asset
+        ELSE:
+            WRITE "Conversion failed for {asset.original_filename}: \
+                   {result.error}" TO stderr
+            RETURN asset   # fall back to original, do not skip the file
+    RETURN asset
+
+
+FUNCTION copy_file_safe(src_path, dest_folder, dest_name, asset) -> dest_path:
+    # Copies src_path into dest_folder using dest_name as the filename.
+    # If a file with that name already exists, appends (1), (2), etc.
+    # until a free name is found, matching Windows collision behaviour.
+    # After copying, applies the asset's original timestamps to the file.
+    # Timestamps are only set on real copied files, never on symlinks.
+    # Note: os.utime() sets modification time cross-platform. Setting the
+    # true creation/birth time requires platform-specific calls (win32file
+    # on Windows, ctypes birthtime on macOS) and is a future enhancement.
+
+    stem      <- Path(dest_name).stem
+    extension <- Path(dest_name).suffix
+    candidate <- dest_folder / (stem + extension)
+    counter   <- 1
+    WHILE candidate exists:
+        candidate <- dest_folder / (stem + " (" + counter + ")" + extension)
+        counter   <- counter + 1
+
+    copy src_path to candidate
+    set_file_times(candidate, asset.modification_date)
+    RETURN candidate
+
+
+FUNCTION set_file_times(file_path, modification_date_str):
+    # Parses the ISO date string and applies it to the file's modification
+    # time via os.utime(). Access time is set to the same value.
+    mtime <- parse ISO string modification_date_str to Unix timestamp
+    os.utime(file_path, times=(mtime, mtime))
+
+
+FUNCTION move_folder_safe(src_folder, dest_parent) -> dest_path:
+    # Moves src_folder into dest_parent. Resolves name collisions by
+    # appending (1), (2), etc. to the folder name until a free name
+    # is found. Returns the path of the moved folder.
+
+    name      <- src_folder.name
+    candidate <- dest_parent / name
+    counter   <- 1
+    WHILE candidate exists:
+        candidate <- dest_parent / (name + " (" + counter + ")")
+        counter   <- counter + 1
+    move src_folder to candidate
+    RETURN candidate
+
+
+FUNCTION copy_folder_safe(src_folder, dest_parent) -> dest_path:
+    # Same as move_folder_safe but copies rather than moving.
+
+    name      <- src_folder.name
+    candidate <- dest_parent / name
+    counter   <- 1
+    WHILE candidate exists:
+        candidate <- dest_parent / (name + " (" + counter + ")")
+        counter   <- counter + 1
+    copy src_folder to candidate
+    RETURN candidate
+
+
+FUNCTION ensure_folder_exists(path) -> path:
+    IF path does NOT exist:
+        create directory at path
+    RETURN path
+
+
+FUNCTION resolve_free_name(dest_folder, name) -> str:
+    # Returns a name that does not already exist in dest_folder.
+    # Used by place_link and place_folder_link to avoid symlink collisions.
+
+    stem      <- Path(name).stem
+    extension <- Path(name).suffix
+    candidate <- name
+    counter   <- 1
+    WHILE dest_folder / candidate exists:
+        candidate <- stem + " (" + counter + ")" + extension
+        counter   <- counter + 1
+    RETURN candidate
+
+
+FUNCTION place_link(src_path, dest_folder):
+    # Creates a symlink in dest_folder pointing to src_path.
+    # Resolves filename collisions using resolve_free_name.
+    # Timestamps are not set on symlinks.
+
+    link_name <- resolve_free_name(dest_folder, Path(src_path).name)
+    create symlink at dest_folder / link_name -> src_path
+
+
+FUNCTION place_folder_link(src_folder, dest_folder):
+    # Same as place_link but targets a folder rather than a file.
+
+    link_name <- resolve_free_name(dest_folder, src_folder.name)
+    create symlink at dest_folder / link_name -> src_folder
