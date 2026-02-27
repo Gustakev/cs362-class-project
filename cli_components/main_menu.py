@@ -13,9 +13,10 @@ from tkinter import filedialog
 import webbrowser
 
 from pathlib import Path
+from PIL import Image
 
 from functional_components.services import BackupService, SettingsService, ExportService
-
+from functional_components.photo_caption.app import photo_captioner
 
 backup_service = BackupService()
 settings_service = SettingsService()
@@ -438,25 +439,18 @@ def feat_photo_caption():
 
         folders = [p for p in file_dir.iterdir() if p.is_dir()]
         files = [p for p in file_dir.iterdir() if p.is_file()]
-        file_count = len([p for p in file_dir.iterdir()])
+        entries = folders + files
 
-        if folders:
-            print("\nAlbums:")
-            for i, p in enumerate(folders, start=1):
-                print(f"{i}. {p.name}")
+        for i, p in enumerate(entries, start=1):
+            print(f"{i}. {p.name}")
 
-        if files:
-            print("\nFiles:")
-            for i, p in enumerate(files, start=1):
-                print(f"{i}. {p.name}")
-
-        back_option = file_count + 1
+        back_option = len(entries) + 1
         print(f"{back_option}. Back\n")
 
         try:
             choice = int(input("Choice: "))
         except ValueError:
-            print(f"\033[31m" + "Invalid input. Choose one of the displayed options\n" + "\033[0m")
+            print("\033[31mInvalid input. Enter a number.\033[0m\n")
             continue
 
         if choice == back_option:
@@ -465,10 +459,25 @@ def feat_photo_caption():
             file_dir = file_dir.parent
             continue
 
-        if 1 <= choice <= len(folders):
-            file_dir = folders[choice - 1]
-        else:
+        if not (1 <= choice <= len(entries)):
             print("\033[31mError: Choose one of the displayed options.\033[0m\n")
+            continue
+
+        selected = entries[choice - 1]
+
+        if selected.is_dir():
+            file_dir = selected
+            continue
+
+        ext = selected.suffix.lower()
+        if ext in {".jpg", ".jpeg", ".png"}:
+            caption = photo_captioner.get_caption(str(selected))
+            image = Image.open(Path(selected))
+            image.show()
+            print(f"\nCaption: {caption}\n")
+        else:
+            print("Not valid")
+
         
 
 
