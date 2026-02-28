@@ -5,7 +5,7 @@ Program Description: Starts the iExtract program.
 """
 
 from cli_components.main_menu import main
-
+from cli_components.textual_main_menu import main
 
 if __name__ == "__main__":
     main()
