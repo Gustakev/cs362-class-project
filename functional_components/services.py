@@ -248,8 +248,13 @@ class ExportService:
         Returns:
             list: A list of string album names.
         """
-        # TODO: Return actual list from backup_model.albums
-        return ["Recents", "Favorites", "Instagram", "WhatsApp", "Hidden"]
+        
+        
+        if not backup_model or not hasattr(backup_model, 'albums'):
+            return []
+
+        # Extract the 'title' string from every Album object in the list
+        return [album.title for album in backup_model.albums]
     
     
 
