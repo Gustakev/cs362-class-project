@@ -113,7 +113,7 @@ class SettingsService:
     """
 
     def __init__(self):
-        self._working_blacklist = set()
+        self.current_list = set()
         self._original_full_list = set()
         self.is_blacklist_mode = True
 
@@ -121,7 +121,7 @@ class SettingsService:
     def get_engine_blacklist(self):
         """Returns the final blacklist for the Extraction Engine to evaluate.
         """
-        return self._working_blacklist    
+        return self.current_list    
 
     def get_state(self):
         """
@@ -134,11 +134,11 @@ class SettingsService:
         mode = "Blacklist" if self.is_blacklist_mode else "Whitelist"
 
         if self.is_blacklist_mode:
-            display_list = [entry.name for entry in self._working_blacklist]
+            display_list = [entry.name for entry in self.current_list]
         
         # Subtracting blacklist from full list to get whitelist 
         else:   
-            whitelist_objects = self._original_full_list - self._working_blacklist    
+            whitelist_objects = self._original_full_list - self.current_list    
             display_list = [entry.name for entry in whitelist_objects]
 
 
@@ -154,7 +154,7 @@ class SettingsService:
             str: A formatted string confirming the mode switch.
         """
         self.is_blacklist_mode = not self.is_blacklist_mode
-        self._working_blacklist.clear()
+        self.current_list.clear()
         self._original_full_list.clear()
 
         if not self.is_blacklist_mode:
@@ -166,7 +166,7 @@ class SettingsService:
         # Fill the blacklist with every album as an ListEntry object
             for name in all_available_album_names:
                 entry = listEntry(name)
-                self._working_blacklist.add(entry)
+                self.current_list.add(entry)
                 self._original_full_list.add(entry)
 
             return "Mode switched to: Whitelist (List cleared. Select albums to ALLOW.)"
@@ -191,22 +191,22 @@ class SettingsService:
 
         if self.is_blacklist_mode:
             #  Add/Remove from the internal blacklist
-            if entry in self._working_blacklist:
-                self._working_blacklist.remove(entry)
+            if entry in self.current_list:
+                self.current_list.remove(entry)
                 return True, f"Album '{entry.name}' removed from Blacklist."
             else:
-                self._working_blacklist.add(entry)
+                self.current_list.add(entry)
                 return True, f"Album '{entry.name}' added to Blacklist."
 
         else:
             # Inverted logic: If it's in the working blacklist, "adding it to the whitelist" 
             # means we remove it from the working blacklist so the engine exports it.
-            if entry in self._working_blacklist:
-                self._working_blacklist.remove(entry)
+            if entry in self.current_list:
+                self.current_list.remove(entry)
                 return True, f"Album '{entry.name}' added to Whitelist."
             else:
                 # If they "remove" it from the whitelist, it goes back into the blacklist
-                self._working_blacklist.add(entry)
+                self.current_list.add(entry)
                 return True, f"Album '{entry.name}' removed from Whitelist."
 
 
@@ -224,7 +224,12 @@ class SettingsService:
         entry = listEntry(album_name)
         
         # If the object is inside the blacklist, it is not allowed. 
-        return entry not in self._working_blacklist
+        return entry not in self.current_list
+
+class DummyProgress:
+    """A simple placeholder to catch the progress.percent updates from the engine."""
+    def __init__(self):
+        self.percent = 0
 
 
 class ExportService:
@@ -245,3 +250,35 @@ class ExportService:
         """
         # TODO: Return actual list from backup_model.albums
         return ["Recents", "Favorites", "Instagram", "WhatsApp", "Hidden"]
+    
+    
+
+    def export_all(self, backup_model, destination_str, settings_service):
+        """
+        Export all function, based on psuedo code of extraction engine. subject to change
+        """
+        if not backup_model:
+            return False, "No backup loaded."
+
+
+        try:
+            os_supports_symlinks = False  
+            user_set_symlinks = False     
+            convert_type_dict = {}        
+            progress_tracker = DummyProgress() 
+
+           # 
+           # run_extraction_engine(
+            #    backup_model=backup_model,
+           #     blacklist=settings_service,
+           #     output_root=destination_str,
+          #      os_supports_symlinks=os_supports_symlinks,
+          #      user_set_symlinks=user_set_symlinks,
+         #       convert_type_dict=convert_type_dict,
+         #       progress=progress_tracker
+         #   )
+            
+            return True, f"Export complete! Files successfully extracted to '{destination_str}'."
+            
+        except Exception as e:
+            return False, f"Extraction Engine Error: {str(e)}"
