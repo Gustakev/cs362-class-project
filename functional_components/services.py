@@ -81,6 +81,30 @@ class BackupService:
             return False, f"Error loading backup: {result.error}"
                 
 
+class listEntry:
+    """
+    Represents an album or collection as a filterable object.
+    Automatically identifies Non-User-Albums (NUAs).
+    """
+    # Define standard NUAs for special extraction engine handling
+    NUAS = {"Favorites", "Hidden", "Selfies", "Recently Deleted"}
+
+    def __init__(self, name: str):
+        self.name = name.strip()
+        self.is_nua = self.name in self.NUAS
+
+    def __eq__(self, other):
+        """Allows Python to compare two AlbumFilterEntry objects by name."""
+        if isinstance(other, listEntry):
+            return self.name == other.name
+        return False
+
+    def __hash__(self):
+        """Allows AlbumFilterEntry objects to be stored in Sets for difference calculations."""
+        return hash(self.name)
+
+
+
 
 class SettingsService:
     """
@@ -89,8 +113,15 @@ class SettingsService:
     """
 
     def __init__(self):
-        self.selected_albums = set()
+        self._working_blacklist = set()
+        self._original_full_list = set()
         self.is_blacklist_mode = True
+
+
+    def get_engine_blacklist(self):
+        """Returns the final blacklist for the Extraction Engine to evaluate.
+        """
+        return self._working_blacklist    
 
     def get_state(self):
         """
@@ -101,10 +132,20 @@ class SettingsService:
             comma-separated string of the currently selected albums.
         """
         mode = "Blacklist" if self.is_blacklist_mode else "Whitelist"
-        album_list = ", ".join(self.selected_albums) if self.selected_albums else "None"
-        return mode, album_list
 
-    def toggle_mode(self):
+        if self.is_blacklist_mode:
+            display_list = [entry.name for entry in self._working_blacklist]
+        
+        # Subtracting blacklist from full list to get whitelist 
+        else:   
+            whitelist_objects = self._original_full_list - self._working_blacklist    
+            display_list = [entry.name for entry in whitelist_objects]
+
+
+        album_string = ", ".join(display_list) if display_list else "None"
+        return mode, album_string    
+
+    def toggle_mode(self,all_available_album_names=None):
         """
         Switches the application between Blacklist and Whitelist mode.
         Automatically clears the current album selection to prevent logic bleed.
@@ -113,10 +154,24 @@ class SettingsService:
             str: A formatted string confirming the mode switch.
         """
         self.is_blacklist_mode = not self.is_blacklist_mode
-        self.selected_albums.clear()
-        mode_name = "Blacklist" if self.is_blacklist_mode else "Whitelist"
-        return f"Mode switched to: {mode_name}"
+        self._working_blacklist.clear()
+        self._original_full_list.clear()
 
+        if not self.is_blacklist_mode:
+            if not all_available_album_names:
+                # Failsafe: Revert to blacklist if we don't have the albums to build the whitelist
+                self.is_blacklist_mode = True
+                return "[!] Error: Cannot create Whitelist without backup data."
+     
+        # Fill the blacklist with every album as an ListEntry object
+            for name in all_available_album_names:
+                entry = listEntry(name)
+                self._working_blacklist.add(entry)
+                self._original_full_list.add(entry)
+
+            return "Mode switched to: Whitelist (List cleared. Select albums to ALLOW.)"
+        
+        return "Mode switched to: Blacklist (List cleared. Select albums to BLOCK.)"
     def toggle_album(self, album_name):
         """
         Adds or removes an album from the active selection set.
@@ -131,12 +186,29 @@ class SettingsService:
         name = album_name.strip()
         if not name:
             return False, "Album name cannot be empty."
-        if name in self.selected_albums:
-            self.selected_albums.remove(name)
-            return True, f"Album '{name}' removed from selection."
+
+        entry = listEntry(album_name)    
+
+        if self.is_blacklist_mode:
+            #  Add/Remove from the internal blacklist
+            if entry in self._working_blacklist:
+                self._working_blacklist.remove(entry)
+                return True, f"Album '{entry.name}' removed from Blacklist."
+            else:
+                self._working_blacklist.add(entry)
+                return True, f"Album '{entry.name}' added to Blacklist."
+
         else:
-            self.selected_albums.add(name)
-            return True, f"Album '{name}' added to selection."
+            # Inverted logic: If it's in the working blacklist, "adding it to the whitelist" 
+            # means we remove it from the working blacklist so the engine exports it.
+            if entry in self._working_blacklist:
+                self._working_blacklist.remove(entry)
+                return True, f"Album '{entry.name}' added to Whitelist."
+            else:
+                # If they "remove" it from the whitelist, it goes back into the blacklist
+                self._working_blacklist.add(entry)
+                return True, f"Album '{entry.name}' removed from Whitelist."
+
 
     def is_album_allowed(self, album_name):
         """
@@ -149,10 +221,10 @@ class SettingsService:
         Returns:
             bool: True if the album should be exported, False otherwise.
         """
-        if self.is_blacklist_mode:
-            return album_name not in self.selected_albums
-        else:
-            return album_name in self.selected_albums
+        entry = listEntry(album_name)
+        
+        # If the object is inside the blacklist, it is not allowed. 
+        return entry not in self._working_blacklist
 
 
 class ExportService:

@@ -332,7 +332,8 @@ def settings_menu():
 
         if choice == "1":
             if backup_loaded:
-                print(settings_service.toggle_mode())
+                available_albums = export_service.get_album_list(backup_service.current_model)
+                print(settings_service.toggle_mode(available_albums))
             else:
                 print(
                     "\n[!] Error: You must load a backup before changing settings.",
