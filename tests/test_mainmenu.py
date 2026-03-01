@@ -119,7 +119,7 @@ class TestMainMenuUI(unittest.TestCase):
         settings_menu()
 
         # Did the UI trigger the toggle function
-        mock_print.assert_any_call("\n[!] Error: You must load a backup before changing settings.")
+        mock_print.assert_any_call("\033[31m" + "\n[!] Error: You must load a backup before changing settings." + "\033[0m")
 
 
 
@@ -147,7 +147,7 @@ class TestMainMenuUI(unittest.TestCase):
         export_all_menu()
         
         # Check the exact screen output
-        mock_print.assert_any_call("[!] Error: No backup loaded. Please load a backup first.")
+        mock_print.assert_any_call("\033[31m" + "[!] Error: No backup loaded. Please load a backup first." "\033[31m")
 
 
     """Testing exporting a specific album"""

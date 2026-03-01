@@ -5,6 +5,7 @@ Program Description: Command line interface for iExtract.
 """
 
 import sys
+import os
 
 import tkinter as tk
 from tkinter import filedialog
@@ -12,9 +13,10 @@ from tkinter import filedialog
 import webbrowser
 
 from pathlib import Path
+from PIL import Image
 
 from functional_components.services import BackupService, SettingsService, ExportService
-#from functional_components.photo_captioner import get_caption
+from functional_components.photo_caption.app import photo_captioner
 
 backup_service = BackupService()
 settings_service = SettingsService()
@@ -61,10 +63,7 @@ def load_backup_menu():
     """
 
     while True:
-        print(
-            "** Instructions: Enter a number corresponding to the choices "
-            "below. **\n"
-        )
+        print(f"\033[33m" + "** Instructions: Enter a number corresponding to the choices below. **\n"+ "\033[0m")
         print("1. Load iPhone Backup Folder Via GUI")
         print("2. Load iPhone Backup Folder By Entering File Path")
         print("3. Go Back")
@@ -109,14 +108,9 @@ def main_menu():
     Main program command-line interface loop.
     """
     while True:
-        print(
-            "\n========================= iExtract Main Menu ============="
-            "============"
-        )
-        print(
-            "\n** Instructions: Enter a number corresponding to the "
-            "choices below. **\n"
-        )
+        print("\033[33m" + "========================= Extracted Albums =========================\n")
+        print(f"** Instructions: Enter a number corresponding to the choices below. **\n"+ "\033[0m")
+
         print("1. Load iPhone Backup Folder")
         print("2. Export All Camera Roll Media")
         print("3. Export Specific Camera Roll Media")
@@ -143,11 +137,7 @@ def main_menu():
         elif main_menu_choice == "6":
             report_bug()
         elif main_menu_choice == "7":
-            # TODO
-            # Needs to get user input still
-            print("AI Photo Caption Feature Status: Feature not yet implemented.")
-            continue # Prevent crash due to unfinished code.
-            get_caption(...)
+            feat_photo_caption()
         elif main_menu_choice == "8":
             print("Restart Feature Status: Feature not yet implemented.")
         elif main_menu_choice == "9":
@@ -217,7 +207,7 @@ def export_all_menu():
 
     # Prevent exporting without a loaded backup
     if backup_service.current_model is None:
-        print("[!] Error: No backup loaded. Please load a backup first.")
+        print("\033[31m" + "[!] Error: No backup loaded. Please load a backup first." "\033[31m")
         return
     
     print("\n--- EXPORT ALL ---")
@@ -242,11 +232,11 @@ def export_specific_menu():
     Provides alphabetized options and input validation.
     """
 
-    print("\n--- EXPORT SPECIFIC ALBUM ---")
+    print("\033[33m" + "\n--- EXPORT SPECIFIC ALBUM ---" + "\033[0m")
 
     if not backup_service.current_model:
         print(
-            "[!] Error: No backup loaded. Please load a backup first.",
+            "\033[31m" + "[!] Error: No backup loaded. Please load a backup first." + "\033[0m",
             file=sys.stderr,
         )
         return
@@ -255,7 +245,7 @@ def export_specific_menu():
 
     if not available_albums:
         print(
-            "[!] No albums found in backup.",
+            "\033[31m" + "[!] No albums found in backup." + "\033[0m",
             file=sys.stderr,
         )
         return
@@ -278,7 +268,7 @@ def export_specific_menu():
             break
         else:
             print(
-                f"\n[!] Error: Album '{choice}' does not exist.",
+                f"\033[31m" + "\n[!] Error: Album '{choice}' does not exist." + "\033[0m",
                 file=sys.stderr,
             )
 
@@ -306,7 +296,7 @@ def settings_menu():
     """
     # Block access if no backup is loaded
     if backup_service.current_model is None:
-        print("\n[!] Error: You must load a backup before changing settings.")
+        print("\033[31m" + "\n[!] Error: You must load a backup before changing settings." + "\033[0m")
         return
     
     while True:
@@ -335,14 +325,14 @@ def settings_menu():
                 print(settings_service.toggle_mode())
             else:
                 print(
-                    "\n[!] Error: You must load a backup before changing settings.",
+                    "\033[31m" + "\n[!] Error: You must load a backup before changing settings." + "\033[0m",
                     file=sys.stderr,
                 )
         elif choice == "2":
             if backup_loaded:
                 album_selection_submenu()
             else:
-                print("\n[!] Error: You must load a backup before selecting albums.")
+                print("\033[31m" + "\n[!] Error: You must load a backup before selecting albums." "\033[0m")
         elif choice == "3":
             print("Going back...")
             return
@@ -359,7 +349,7 @@ def album_selection_submenu():
         export_service.get_album_list(backup_service.current_model)
     )
 
-    print("\n--- ALBUM SELECTION ---")
+    print("\033[33m" + "\n--- ALBUM SELECTION ---" + "\033[0m")
     print("Available Albums in Backup:")
 
     for album in available_albums:
@@ -389,7 +379,7 @@ def album_selection_submenu():
                 print(msg)
             else:
                 print(
-                    f"\n[!] Error: Album '{name}' does not exist in the current backup.",
+                    f"\033[31m" + "\n[!] Error: Album '{name}' does not exist in the current backup." + "\033[0m",
                     file=sys.stderr
                 )
     elif sub_choice == "2":
@@ -404,7 +394,9 @@ def help_user():
     dev_doc = "https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-Developer-Documentation.md"
     user_doc = "https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-User-Documentation.md"
 
+
     while True:
+        print("\033[33m" + "========================= Documentation =========================\n" + "\033[0m")
         print("1. User Documentation")
         print("2. Developer Documentation")
         print("3. Back\n")
@@ -418,10 +410,7 @@ def help_user():
         elif choice == 3:
             break
         else:
-            print(
-                "\033[31m" + "Error: Invalid input. Choose one of the displayed options.\n" + "\033[0m",
-                file=sys.stderr,
-            )
+            print("\033[31m" + "Error: Invalid input. Choose one of the displayed options.\n" + "\033[0m", file=sys.stderr)
 
 def report_bug():
     """Links to github issues if there is a bug found."""
@@ -429,6 +418,59 @@ def report_bug():
     print("Loading...")
     webbrowser.open_new_tab(issues_url)
     return
+
+def feat_photo_caption():
+    """"""
+    file_dir = Path("functional_components/photo_caption/data/")
+    root_dir = file_dir
+
+    print("\033[33m" + "========================= Extracted Albums =========================\n")
+    print(f"** Instructions: Enter a number corresponding to the choices below. **\n"+ "\033[0m")
+    
+    while True:
+
+        folders = [p for p in file_dir.iterdir() if p.is_dir()]
+        files = [p for p in file_dir.iterdir() if p.is_file()]
+        entries = folders + files
+
+        for i, p in enumerate(entries, start=1):
+            print(f"{i}. {p.name}")
+
+        back_option = len(entries) + 1
+        print(f"{back_option}. Back\n")
+
+        try:
+            choice = int(input("Choice: "))
+        except ValueError:
+            print("\033[31mInvalid input. Enter a number.\033[0m\n")
+            continue
+
+        if choice == back_option:
+            if file_dir == root_dir:
+                break
+            file_dir = file_dir.parent
+            continue
+
+        if not (1 <= choice <= len(entries)):
+            print("\033[31m" + "Error: Choose one of the displayed options." + "\033[0m\n")
+            continue
+
+        selected = entries[choice - 1]
+
+        if selected.is_dir():
+            file_dir = selected
+            continue
+
+        ext = selected.suffix.lower()
+        if ext in {".jpg", ".jpeg", ".png"}:
+            caption = photo_captioner.get_caption(str(selected))
+            image = Image.open(Path(selected))
+            image.show()
+            print("Loading...")
+            print(f"\nCaption: {caption}\n")
+        else:
+            print("Unsupported file type. Please report bug.")
+
 
 
 # TODO:
