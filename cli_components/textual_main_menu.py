@@ -61,7 +61,7 @@ class iExtractApp(App):
             yield Label("[b]MAIN MENU[/b]", id="lbl_menu_title")
             with Vertical(id = "main_menu"):
                 yield Button("1. Load iPhone Backup Folder", id = "btn_load")
-                yield Button("2. Export All Camera Roll Media", id = "btn_export")
+                yield Button("2. Export All Camera Roll Media", id = "btn_export_all")
                 yield Button("3. Export Specific Camera Roll Media", id = "btn_specific")
                 yield Button("4. Settings", id= "btn_settings")
                 yield Button("5. Help", id="btn_help")
@@ -137,7 +137,7 @@ class iExtractApp(App):
             log.write_line("[MENU] Returned to Main Menu...") 
                   
         # Hiding main menu and showing settings options 
-        if btn_id == "btn_settings":
+        if btn_id == "btn_settings_options":
             self.query_one("#main_menu").add_class("hidden")
             self.query_one("#settings_options").remove_class("hidden")
             self.query_one("#lbl_menu_title").update("[b]SETTINGS[/b]")
@@ -146,7 +146,7 @@ class iExtractApp(App):
             self.query_one("#lbl_settings_mode").update(f"Current Mode: {mode}") 
 
         # Returning from settings menu to main menu
-        if btn_id == "btn_back_load":
+        if btn_id == "btn_back_settings":
             self.query_one("#settings_options").add_class("hidden")
             self.query_one("#main_menu").remove_class("hidden")
             self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
@@ -164,6 +164,16 @@ class iExtractApp(App):
             self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
             log.write_line("[MENU] Returned to Main Menu...") 
 
+
+         # Route to the export options menu
+        if btn_id == "btn_export_all":
+            self.query_one("#main_menu").add_class("hidden")
+            self.query_one("#export_options").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]EXPORT DESTINATION[/b]")
+            self.query_one("#lbl_export_item").update("Destination for: all albums")
+                
+           
+         
 
         """Action Logic"""
 
@@ -221,9 +231,88 @@ class iExtractApp(App):
                     log.write_line(f"\n[ERROR]{message}\n")
 
         
-        
+        #Export all logic 
 
+        # --- EXPORT ALL ---
+        if btn_id == "btn_export_all":
+            if backup_service.current_model is None:
+                log.write_line("[!] Error: No backup loaded. Please load a backup first.")
+            else:
+                log.write_line("\n--- EXPORT ALL ---")
+                
+              
 
+        # --- EXPORT DESTINATION HELPER LOGIC ---
+        if btn_id == "btn_export_cancel":
+            log.write_line("Export cancelled.")
+            self.query_one("#export_options").add_class("hidden")
+            self.query_one("#main_menu").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
+
+        if btn_id == "btn_export_gui":
+            dest_path = gui_pick_folder()
+            if not dest_path:
+                log.write_line("Export cancelled.")
+                self.query_one("#export_options").add_class("hidden")
+                self.query_one("#main_menu").remove_class("hidden")
+                self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
+            else:
+                # Trigger the confirmation state
+                self.query_one("#btn_export_gui").add_class("hidden")
+                self.query_one("#btn_export_path").add_class("hidden")
+                
+                confirm_lbl = self.query_one("#lbl_export_confirm", Label)
+                confirm_lbl.update(f"\nPreparing to export to: {dest_path}")
+                confirm_lbl.remove_class("hidden")
+                self.query_one("#btn_export_confirm_yes").remove_class("hidden")
+                
+                # Store the path temporarily so the confirm button knows where to export
+                self.query_one("#btn_export_confirm_yes").tooltip = dest_path
+
+        if btn_id == "btn_export_path":
+            self.query_one("#input_export_path").remove_class("hidden")
+            self.query_one("#btn_submit_export_path").remove_class("hidden")
+
+        if btn_id == "btn_submit_export_path":
+            dest_path = self.query_one("#input_export_path", Input).value
+            if not dest_path:
+                log.write_line("Export cancelled.")
+                self.query_one("#export_options").add_class("hidden")
+                self.query_one("#main_menu").remove_class("hidden")
+                self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
+            else:
+                # Trigger the confirmation state
+                self.query_one("#btn_export_gui").add_class("hidden")
+                self.query_one("#btn_export_path").add_class("hidden")
+                self.query_one("#input_export_path").add_class("hidden")
+                self.query_one("#btn_submit_export_path").add_class("hidden")
+
+                confirm_lbl = self.query_one("#lbl_export_confirm", Label)
+                confirm_lbl.update(f"\nPreparing to export to: {dest_path}")
+                confirm_lbl.remove_class("hidden")
+                self.query_one("#btn_export_confirm_yes").remove_class("hidden")
+                
+                self.query_one("#btn_export_confirm_yes").tooltip = dest_path
+
+        if btn_id == "btn_export_confirm_yes":
+            # Retrieve the path we stored during the selection step
+            dest_path = self.query_one("#btn_export_confirm_yes").tooltip
+            item_name = str(self.query_one("#lbl_export_item", Label).renderable)
+            
+            # Execute the export
+            log.write_line(f"[INFO] Executing export for {item_name} to {dest_path}")
+            
+            # TODO: When export all function is implemented
+            # success, message = export_service.export_all(backup_service.current_model, dest_path)
+            # if success:
+            #     log.write_line(f"\n[SUCCESS] {message}\n")
+            # else:
+            #     log.write_line(f"\n[ERROR] {message}\n")
+            
+            # Return to main menu
+            self.query_one("#export_options").add_class("hidden")
+            self.query_one("#main_menu").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
 
 def main():
     """
