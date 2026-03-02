@@ -170,7 +170,8 @@ class SettingsService:
             tuple: A boolean indicating success (False if empty), and a
             message string confirming the action taken.
         """
-        name = album_name.strip()
+        # Remove potential suffix indicating smart album.
+        name = album_name.strip().removesuffix(" [Smart Album]")
         if not name:
             return False, "Album name cannot be empty."
 
@@ -236,13 +237,17 @@ class ExportService:
         Returns:
             list: A list of string album names.
         """
-        
-        
         if not backup_model or not hasattr(backup_model, 'albums'):
             return []
-
-        # Extract the 'title' string from every Album object in the list
-        return [album.title for album in backup_model.albums]
+        
+        result = []
+        for album in backup_model.albums:
+            entry = ListEntry(album.title)
+            if entry.is_NUA:
+                result.append(f"{album.title} [Smart Album]")
+            else:
+                result.append(album.title)
+        return result
     
     def export_all(self, backup_model, destination_str, settings_service):
         """
@@ -257,7 +262,7 @@ class ExportService:
             user_set_symlinks = True
             convert_type_dict = {}
             progress_tracker = DummyProgress()
-            
+
             # Determine OS symlink support.
             try:
                 test = pathlib.Path(tempfile.mkdtemp()) / "test_link"

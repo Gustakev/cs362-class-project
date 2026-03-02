@@ -83,8 +83,8 @@ class TestExtractionHelpers(unittest.TestCase):
     def test_get_active_collections(self):
         # build a blacklist that excludes one user album and one NUA
         blacklist = Blacklist(current_list=[
-            ListEntry(name="Album A", is_NUA=False),
-            ListEntry(name="favorites", is_NUA=True),
+            ListEntry(name="Album A"),
+            ListEntry(name="favorites"),
         ])
         mapping = {"uuidA": "Album A", "uuidB": "Album B"}
         asset = _make_asset(
