@@ -5,7 +5,6 @@
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white" />
-  <img src="https://img.shields.io/badge/Status-Educational-green" />
   <img src="https://img.shields.io/badge/Version-0.1.0--alpha.1-red">
   <img src="https://github.com/Gustakev/cs362-class-project/actions/workflows/ci.yml/badge.svg">
 
@@ -104,4 +103,5 @@ Steps:
 ```bash
 python iExtract.py
 ```
+
 
