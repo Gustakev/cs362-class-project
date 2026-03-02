@@ -171,7 +171,7 @@ def build_assets(
             media_type=_get_media_type(row.get("ZKIND")),
             subtype=_get_subtype(row.get("ZKINDSUBTYPE")),
             live_photo_group_uuid=row.get("ZMEDIAGROUPUUID"),
-            burst_uuid=None,
+            burst_uuid=row.get("ZAVALANCHEUUID"),
             is_primary_burst_frame=bool(
                 row.get("ZAVALANCHEPICKTYPE") == 2
             ),
