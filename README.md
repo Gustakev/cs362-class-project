@@ -1,6 +1,15 @@
-# iExtract iOS Album to Folder Conversion Tool
+<h1 align="center"><b>iExtract iOS Album to Folder Conversion Tool</b></h1>
 
-### iExtract Version 0.1.0-alpha.1
+<p align="center">
+  <strong>iExtract Version 0.1.0-alpha.1</strong>
+</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Status-Educational-green" />
+  <img src="https://img.shields.io/badge/Version-0.1.0--alpha.1-red">
+  <img src="https://github.com/Gustakev/cs362-class-project/actions/workflows/ci.yml/badge.svg">
+
+</p>
 
 ## Project Overview
 iExtract makes it easy for iPhone users to extract their photos and videos from a local backup to somewhere else on their local storage without breaking album and collection structure or metadata. Instead of having to rely on expensive cloud subscriptions or confusing export workflows, iExtract preserves the original organization of a user's photos, without the bloat or cost of other monolithic apps.
@@ -87,7 +96,6 @@ python -m unittest discover tests
 
 ## Usage
 
-
 **Use Case:** User exports all albums
 
 Steps:
@@ -96,3 +104,4 @@ Steps:
 ```bash
 python iExtract.py
 ```
+
