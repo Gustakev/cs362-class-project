@@ -11,7 +11,14 @@ from pathlib import Path
 
 from .file_extraction_engine.domain.blacklist import ListEntry, Blacklist
 
+from functional_components.file_extraction_engine.app.extract_files import (
+    run_extraction_engine
+)
+
 import os
+
+import tempfile, pathlib
+
 
 class BackupService:
     """
@@ -142,7 +149,7 @@ class SettingsService:
      
         # Fill the blacklist with every album as an ListEntry object
             for name in all_available_album_names:
-                entry = listEntry(name)
+                entry = ListEntry(name)
                 self.current_list.add(entry)
                 self._original_full_list.add(entry)
 
@@ -165,7 +172,7 @@ class SettingsService:
         if not name:
             return False, "Album name cannot be empty."
 
-        entry = listEntry(album_name)    
+        entry = ListEntry(album_name)    
 
         if self.is_blacklist_mode:
             #  Add/Remove from the internal blacklist
@@ -199,7 +206,7 @@ class SettingsService:
         Returns:
             bool: True if the album should be exported, False otherwise.
         """
-        entry = listEntry(album_name)
+        entry = ListEntry(album_name)
         
         # If the object is inside the blacklist, it is not allowed. 
         return entry not in self.current_list
@@ -249,17 +256,23 @@ class ExportService:
             convert_type_dict = {}        
             progress_tracker = DummyProgress() 
 
-            from functional_components.file_extraction_engine.app.extract_files import (
-                run_extraction_engine,
-            )
+            # Determine OS symlink support.
+            try:
+                test = pathlib.Path(tempfile.mkdtemp()) / "test_link"
+                test.symlink_to(pathlib.Path(tempfile.mkdtemp()))
+                os_supports_symlinks = True
+                test.unlink()
+            except (OSError, NotImplementedError):
+                os_supports_symlinks = False
+
+            # Run extraction engine.
             run_extraction_engine(
                 backup_model=backup_model,
                 blacklist=settings_service.get_engine_blacklist(),
                 output_root=Path(destination_str),
-                os_supports_symlinks=os.path.supports_unicode_filenames,
                 user_set_symlinks=user_set_symlinks,
                 convert_type_dict=convert_type_dict,
-                progress=progress_tracker,
+                progress=progress_tracker
             )
             
             return True, f"Export complete! Files successfully extracted to '{destination_str}'."

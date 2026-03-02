@@ -216,14 +216,16 @@ def export_all_menu():
     if not dest_path:
         return  # User cancelled somewhere in the helper loop
 
-    # TODO:When export all function is implemented
-    # success, message = export_service.export_all(backup_service.current_model, dest_path)
-
-
-# if success:
-#    print(f"\n[SUCCESS] {message}\n")
-#  else:
-#    print(f"\n[ERROR] {message}\n")
+    # Attempt extraction.
+    success, message = export_service.export_all(
+        backup_service.current_model,
+        dest_path,
+        settings_service
+    )
+    if success:
+        print(f"\n[SUCCESS] {message}\n")
+    else:
+        print(f"\n[ERROR] {message}\n", file=sys.stderr)
 
 
 def export_specific_menu():
