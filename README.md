@@ -93,7 +93,7 @@ To run tests locally:
 python -m unittest discover tests
 ```
 
-## Usage
+## Usage (Once You Have Already Fully Installed iExtract)
 
 **Use Case:** User exports all albums
 
@@ -130,8 +130,16 @@ Steps:
     - **Note the location of the backup:** The backup will be located in the folder you specified (in this example, `~/iPhoneBackup`), contained within a subfolder named after your device’s Unique Device ID (UDID).
     - **Quick Tip:** On Linux, if the device isn't recognized immediately, you might need to restart the `usbmuxd` service with `sudo systemctl restart usbmuxd`.
 
-3. Start the progam by running the following command in your shell (Command Prompt, PowerShell, Bash, Terminal, etc.):
+2. Start the progam by running the following command in your shell (Command Prompt, PowerShell, Bash, Terminal, etc.):
 ```bash
    python iExtract.py
 ```
+
+3. Extract All Camera Roll Media:
+- In the main menu, (via option 1) choose `Load iPhone Backup Folder` by providing the path to a valid unencrypted backup.
+- In the main menu, (via option 2) choose to `Export All Camera Roll Media`.
+- Choose a location for the extraction to be stored to.
+- Choose to proceed by entering `y`.
+- Wait for the extraction to finish.
+
 - Note: The command may differ depending on the Python setup installed on your machine. You may instead need to enter `python3`, `python3.13`, `python3.14`, etc., or you may need to start Python by providing the path to the executable itself if none of these methods work. We recommend adding `python` to your system's path environment variable to prevent this issue from occurring.
