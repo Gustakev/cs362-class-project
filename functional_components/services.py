@@ -103,10 +103,12 @@ class SettingsService:
         self.is_blacklist_mode = True
 
     def get_engine_blacklist(self):
-        """Returns the final blacklist for the Extraction Engine to evaluate.
-        """
-        return self.current_list    
-
+        """Returns a Blacklist object for the Extraction Engine to evaluate."""
+        return Blacklist(
+            current_list=list(self.current_list),
+            is_blacklist=self.is_blacklist_mode
+        )
+    
     def get_state(self):
         """
         Retrieves the current settings mode and the active list of albums.
@@ -270,6 +272,7 @@ class ExportService:
                 backup_model=backup_model,
                 blacklist=settings_service.get_engine_blacklist(),
                 output_root=Path(destination_str),
+                os_supports_symlinks=os_supports_symlinks,
                 user_set_symlinks=user_set_symlinks,
                 convert_type_dict=convert_type_dict,
                 progress=progress_tracker
