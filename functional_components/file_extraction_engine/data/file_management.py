@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Dict
 from datetime import datetime
 
-non_excl_assets: Dict[str, Path] = {}
 
 def ensure_folder_exists(path: Path) -> Path:
     """Ensure that a folder exists at the given path."""
@@ -22,7 +21,7 @@ def resolve_free_name(dest_folder: Path, name: str) -> str:
     counter = 1
     new_name = name
     while (dest_folder / new_name).exists():
-        new_name = f"{base_name}_{counter}{ext}"
+        new_name = f"{base_name} ({counter}){ext}"
         counter += 1
     return new_name
 

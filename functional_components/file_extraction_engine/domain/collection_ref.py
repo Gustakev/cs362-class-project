@@ -3,6 +3,7 @@ Author: Sam Daughtry
 Date: 2026-02-28
 Description: Definition for the CollectionRef object.
 """
+
 from dataclasses import dataclass
 
 

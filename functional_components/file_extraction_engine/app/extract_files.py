@@ -5,25 +5,29 @@ Description: Main extraction entry point for the file‑extraction engine.
 """
 
 import shutil
+
 from pathlib import Path
+
 from typing import Dict
 
 from functional_components.file_extraction_engine.data.collection_management import (
     deduplicate_assets,
     separate_burst_frames,
-    build_album_uuid_to_title_map,
+    build_album_uuid_to_title_map
 )
+
 from functional_components.file_extraction_engine.data.file_management import (
-    non_excl_assets,
     ensure_folder_exists,
     copy_file,
     move_folder,
     copy_folder,
     place_symlink,
-    place_folder_symlink,
+    place_folder_symlink
 )
 
-from .extraction_helpers import get_active_collections, get_dest_name, maybe_convert
+from .extraction_helpers import (
+    get_active_collections, get_dest_name, maybe_convert
+)
 
 
 def run_extraction_engine(
@@ -38,6 +42,8 @@ def run_extraction_engine(
     """Perform the full extraction process."""
 
     use_symlinks = os_supports_symlinks and user_set_symlinks
+
+    non_excl_assets: Dict[str, Path] = {}
 
     # --- UUID-to-title lookup for user albums ---
     album_title_by_uuid = build_album_uuid_to_title_map(backup_model.albums)

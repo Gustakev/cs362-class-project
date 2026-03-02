@@ -9,6 +9,9 @@ from .backup_locator_and_validator.app.backup_model_builder import build_backup_
 
 from pathlib import Path
 
+from .file_extraction_engine.domain.blacklist import ListEntry, Blacklist
+
+import os
 
 class BackupService:
     """
@@ -79,31 +82,6 @@ class BackupService:
             return True, "Backup loaded successfully!"
         else:
             return False, f"Error loading backup: {result.error}"
-                
-
-class listEntry:
-    """
-    Represents an album or collection as a filterable object.
-    Automatically identifies Non-User-Albums (NUAs).
-    """
-    # Define standard NUAs for special extraction engine handling
-    NUAS = {"Favorites", "Hidden", "Selfies", "Recently Deleted"}
-
-    def __init__(self, name: str):
-        self.name = name.strip()
-        self.is_nua = self.name in self.NUAS
-
-    def __eq__(self, other):
-        """Allows Python to compare two AlbumFilterEntry objects by name."""
-        if isinstance(other, listEntry):
-            return self.name == other.name
-        return False
-
-    def __hash__(self):
-        """Allows AlbumFilterEntry objects to be stored in Sets for difference calculations."""
-        return hash(self.name)
-
-
 
 
 class SettingsService:
@@ -116,7 +94,6 @@ class SettingsService:
         self.current_list = set()
         self._original_full_list = set()
         self.is_blacklist_mode = True
-
 
     def get_engine_blacklist(self):
         """Returns the final blacklist for the Extraction Engine to evaluate.
@@ -172,6 +149,7 @@ class SettingsService:
             return "Mode switched to: Whitelist (List cleared. Select albums to ALLOW.)"
         
         return "Mode switched to: Blacklist (List cleared. Select albums to BLOCK.)"
+    
     def toggle_album(self, album_name):
         """
         Adds or removes an album from the active selection set.
@@ -226,6 +204,7 @@ class SettingsService:
         # If the object is inside the blacklist, it is not allowed. 
         return entry not in self.current_list
 
+
 class DummyProgress:
     """A simple placeholder to catch the progress.percent updates from the engine."""
     def __init__(self):
@@ -256,8 +235,6 @@ class ExportService:
         # Extract the 'title' string from every Album object in the list
         return [album.title for album in backup_model.albums]
     
-    
-
     def export_all(self, backup_model, destination_str, settings_service):
         """
         Export all function, based on psuedo code of extraction engine. subject to change
@@ -272,18 +249,19 @@ class ExportService:
             convert_type_dict = {}        
             progress_tracker = DummyProgress() 
 
-           # 
-           # run_extraction_engine(
-            #    backup_model=backup_model,
-           #     blacklist=settings_service,
-           #     output_root=destination_str,
-          #      os_supports_symlinks=os_supports_symlinks,
-          #      user_set_symlinks=user_set_symlinks,
-         #       convert_type_dict=convert_type_dict,
-         #       progress=progress_tracker
-         #   )
+        # 
+        # run_extraction_engine(
+        #    backup_model=backup_model,
+        #    blacklist=settings_service,
+        #    output_root=destination_str,
+        #    os_supports_symlinks=os_supports_symlinks,
+        #    user_set_symlinks=user_set_symlinks,
+        #    convert_type_dict=convert_type_dict,
+        #    progress=progress_tracker
+        # )
             
             return True, f"Export complete! Files successfully extracted to '{destination_str}'."
             
         except Exception as e:
             return False, f"Extraction Engine Error: {str(e)}"
+        
