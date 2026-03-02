@@ -242,23 +242,25 @@ class ExportService:
         if not backup_model:
             return False, "No backup loaded."
 
-
+        # Attempt the extraction.
         try:
             os_supports_symlinks = False  
             user_set_symlinks = False     
             convert_type_dict = {}        
             progress_tracker = DummyProgress() 
 
-        # 
-        # run_extraction_engine(
-        #    backup_model=backup_model,
-        #    blacklist=settings_service,
-        #    output_root=destination_str,
-        #    os_supports_symlinks=os_supports_symlinks,
-        #    user_set_symlinks=user_set_symlinks,
-        #    convert_type_dict=convert_type_dict,
-        #    progress=progress_tracker
-        # )
+            from functional_components.file_extraction_engine.app.extract_files import (
+                run_extraction_engine,
+            )
+            run_extraction_engine(
+                backup_model=backup_model,
+                blacklist=settings_service.get_engine_blacklist(),
+                output_root=Path(destination_str),
+                os_supports_symlinks=os.path.supports_unicode_filenames,
+                user_set_symlinks=user_set_symlinks,
+                convert_type_dict=convert_type_dict,
+                progress=progress_tracker,
+            )
             
             return True, f"Export complete! Files successfully extracted to '{destination_str}'."
             
