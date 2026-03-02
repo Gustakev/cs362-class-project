@@ -5,6 +5,12 @@
 ## Project Overview
 iExtract makes it easy for iPhone users to extract their photos and videos from a local backup to somewhere else on their local storage without breaking album and collection structure or metadata. Instead of having to rely on expensive cloud subscriptions or confusing export workflows, iExtract preserves the original organization of a user's photos, without the bloat or cost of other monolithic apps.
 
+## Table of Contents
+- [Goal of Our App](#Goal-of-Our-App)
+- [Repository Layout](#Repository-Layout)
+- [Install](#Install)
+- [Usage](#Usage)
+
 ## Goal of Our App
 * Provide a fast and intuitive export process for iOS media using a backup as the source
 * Preserve album/collection structure during exports
@@ -12,7 +18,7 @@ iExtract makes it easy for iPhone users to extract their photos and videos from 
 * Reduce dependency on iCloud storage
 * Avoid quality loss that typically occurs through compression of files during exports using other tools
 
-## Respository Layout
+## Repository Layout
 - iExtract.py: The launcher for iExtract. In the future, this will include the ability to launch the app in CLI or Textual-based GUI mode. As of now, it just launches the CLI mode.
 
 - README.md: The README file for iExtract.
@@ -53,3 +59,40 @@ iExtract makes it easy for iPhone users to extract their photos and videos from 
 
 - /tests/: Stores the test cases that are being used against the program.
   - /test_data/: Stores data for tests, if needed.
+
+## Install
+
+### **Build**
+```bash
+git clone https://github.com/Gustakev/cs362-class-project.git
+cd cs362-class-project/
+python -m venv venv
+
+# If windows run:
+source venv/Scripts/activate
+
+# If Mac/Linux run:
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+### **Testing**
+Tests are automatically run via GitHub Actions on every push and pull request.
+
+To run tests locally:
+```bash
+python -m unittest discover tests
+```
+
+## Usage
+
+
+**Use Case:** User exports all albums
+
+Steps:
+1. Plug in your phone to your machine 
+2. Start the progam by running:
+```bash
+python iExtract.py
+```
