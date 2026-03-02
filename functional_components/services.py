@@ -253,11 +253,11 @@ class ExportService:
 
         # Attempt the extraction.
         try:
-            os_supports_symlinks = False  
-            user_set_symlinks = False     
-            convert_type_dict = {}        
-            progress_tracker = DummyProgress() 
-
+            os_supports_symlinks = True
+            user_set_symlinks = True
+            convert_type_dict = {}
+            progress_tracker = DummyProgress()
+            
             # Determine OS symlink support.
             try:
                 test = pathlib.Path(tempfile.mkdtemp()) / "test_link"
