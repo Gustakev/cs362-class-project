@@ -185,7 +185,7 @@ def build_backup_model(backup_root: Path) -> BackupModelResult:
     # print(f"{backup_model.backup_metadata.is_encrypted}")
     # print("")
     # print("-- Debug Prints (backup_model_builder.py) --")
-    # print(f"Albums loaded: {len(backup_model.albums)}")
+    # print(f"User Albums loaded: {len(backup_model.albums)}")
     # print(f"Assets loaded: {len(backup_model.assets)}")
 
     # # Debugging subtype values.

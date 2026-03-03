@@ -108,7 +108,7 @@ def main_menu():
     Main program command-line interface loop.
     """
     while True:
-        print("\033[33m" + "========================= Extracted Albums =========================\n")
+        print("\033[33m" + "=========================== iExtract Menu ============================\n")
         print(f"** Instructions: Enter a number corresponding to the choices below. **\n"+ "\033[0m")
 
         print("1. Load iPhone Backup Folder")
@@ -427,7 +427,7 @@ def feat_photo_caption():
     file_dir = Path("functional_components/photo_caption/data/")
     root_dir = file_dir
 
-    print("\033[33m" + "========================= Extracted Albums =========================\n")
+    print("\033[33m" + "=========================== iExtract Menu ===========================\n")
     print(f"** Instructions: Enter a number corresponding to the choices below. **\n"+ "\033[0m")
     
     while True:
