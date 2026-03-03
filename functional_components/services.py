@@ -9,6 +9,42 @@ from .backup_locator_and_validator.app.backup_model_builder import build_backup_
 
 from pathlib import Path
 
+from .file_extraction_engine.domain.blacklist import ListEntry, Blacklist
+
+from functional_components.file_extraction_engine.app.extract_files import (
+    run_extraction_engine
+)
+
+import os
+
+import tempfile, pathlib
+
+
+def draw_progress_bar(progress, thread):
+    """Draws a live progress bar in the terminal until the thread finishes."""
+    import time
+    import sys
+
+    BAR_WIDTH = 70
+    INDENT = "  "
+    FILLED = "█"
+    EMPTY  = "░"
+
+    print("")
+    while thread.is_alive() or progress.percent < 100:
+        pct    = min(progress.percent, 100)
+        filled = int((pct / 100) * BAR_WIDTH)
+        empty  = BAR_WIDTH - filled
+        bar    = INDENT + FILLED * filled + EMPTY * empty + f"  {pct}%"
+        print(f"\r{bar}", end="", flush=True)
+        if pct >= 100:
+            break
+        time.sleep(0.1)
+
+    # Final complete bar
+    bar = INDENT + FILLED * BAR_WIDTH + "  100%"
+    print(f"\r{bar}", flush=True)
+
 
 class BackupService:
     """
@@ -49,14 +85,17 @@ class BackupService:
         # Return the string for the UI to use
         return (
             f"Device:\n"
-            f"- Device Name: ............ {device.name}\n"
-            f"- Device Model: ........... {formatted_model}\n"
-            f"- Device Submodel: ........ {submodel}\n"
-            f"- iOS Version: ............ {device.ios_version}\n"
+            f"- Device Name: ............... {device.name}\n"
+            f"- Device Model: .............. {formatted_model}\n"
+            f"- Device Submodel: ........... {submodel}\n"
+            f"- iOS Version: ............... {device.ios_version}\n"
             f"Backup:\n"
-            f"- Backup Encryption Status: {device_metadata.is_encrypted}\n"
-            f"- Backup UUID/GUID: ....... {device_metadata.backup_uuid}\n"
-            f"- Backup Date: ............ {formatted_backup_date}"
+            f"- Backup Encryption Status: .. {device_metadata.is_encrypted}\n"
+            f"- Backup UUID/GUID: .......... {device_metadata.backup_uuid}\n"
+            f"- Backup Date: ............... {formatted_backup_date}\n"
+            f"Backup Contents:\n"
+            f"- User Albums loaded: ........ {len(self.current_model.albums)}\n"
+            f"- Unhidden Assets Loaded: .... {len(self.current_model.assets)}\n"
         )
 
     def attempt_load_backup(self, path_str):
@@ -79,31 +118,6 @@ class BackupService:
             return True, "Backup loaded successfully!"
         else:
             return False, f"Error loading backup: {result.error}"
-                
-
-class listEntry:
-    """
-    Represents an album or collection as a filterable object.
-    Automatically identifies Non-User-Albums (NUAs).
-    """
-    # Define standard NUAs for special extraction engine handling
-    NUAS = {"Favorites", "Hidden", "Selfies", "Recently Deleted"}
-
-    def __init__(self, name: str):
-        self.name = name.strip()
-        self.is_nua = self.name in self.NUAS
-
-    def __eq__(self, other):
-        """Allows Python to compare two AlbumFilterEntry objects by name."""
-        if isinstance(other, listEntry):
-            return self.name == other.name
-        return False
-
-    def __hash__(self):
-        """Allows AlbumFilterEntry objects to be stored in Sets for difference calculations."""
-        return hash(self.name)
-
-
 
 
 class SettingsService:
@@ -117,12 +131,13 @@ class SettingsService:
         self._original_full_list = set()
         self.is_blacklist_mode = True
 
-
     def get_engine_blacklist(self):
-        """Returns the final blacklist for the Extraction Engine to evaluate.
-        """
-        return self.current_list    
-
+        """Returns a Blacklist object for the Extraction Engine to evaluate."""
+        return Blacklist(
+            current_list=list(self.current_list),
+            is_blacklist=self.is_blacklist_mode
+        )
+    
     def get_state(self):
         """
         Retrieves the current settings mode and the active list of albums.
@@ -165,13 +180,14 @@ class SettingsService:
      
         # Fill the blacklist with every album as an ListEntry object
             for name in all_available_album_names:
-                entry = listEntry(name)
+                entry = ListEntry(name)
                 self.current_list.add(entry)
                 self._original_full_list.add(entry)
 
             return "Mode switched to: Whitelist (List cleared. Select albums to ALLOW.)"
         
         return "Mode switched to: Blacklist (List cleared. Select albums to BLOCK.)"
+    
     def toggle_album(self, album_name):
         """
         Adds or removes an album from the active selection set.
@@ -183,11 +199,12 @@ class SettingsService:
             tuple: A boolean indicating success (False if empty), and a
             message string confirming the action taken.
         """
-        name = album_name.strip()
+        # Remove potential suffix indicating smart album.
+        name = album_name.strip().removesuffix(" [Smart Album]")
         if not name:
             return False, "Album name cannot be empty."
 
-        entry = listEntry(album_name)    
+        entry = ListEntry(name)
 
         if self.is_blacklist_mode:
             #  Add/Remove from the internal blacklist
@@ -221,10 +238,11 @@ class SettingsService:
         Returns:
             bool: True if the album should be exported, False otherwise.
         """
-        entry = listEntry(album_name)
+        entry = ListEntry(album_name)
         
         # If the object is inside the blacklist, it is not allowed. 
         return entry not in self.current_list
+
 
 class DummyProgress:
     """A simple placeholder to catch the progress.percent updates from the engine."""
@@ -248,42 +266,88 @@ class ExportService:
         Returns:
             list: A list of string album names.
         """
-        
-        
         if not backup_model or not hasattr(backup_model, 'albums'):
             return []
 
-        # Extract the 'title' string from every Album object in the list
-        return [album.title for album in backup_model.albums]
-    
-    
+        result = []
 
+        # User albums
+        for album in backup_model.albums:
+            entry = ListEntry(album.title)
+            if entry.is_NUA:
+                result.append(f"{album.title} [Smart Album]")
+            else:
+                result.append(album.title)
+
+        # NUAs: scan assets to find which smart folders are actually present
+        present_nuas = set()
+        for asset in backup_model.assets:
+            for nua in asset.relationships.smart_folders:
+                present_nuas.add(nua)
+
+        # Display names for each canonical NUA name
+        NUA_DISPLAY = {
+            "favorites": "favorites [Smart Album]",
+            "hidden": "hidden [Smart Album]",
+            "selfies": "selfies [Smart Album]",
+            "recently_deleted": "recently_deleted [Smart Album]",
+        }
+
+        for nua in sorted(present_nuas):
+            result.append(NUA_DISPLAY.get(nua, nua + " [Smart Album]"))
+
+        return result
+    
     def export_all(self, backup_model, destination_str, settings_service):
         """
-        Export all function, based on psuedo code of extraction engine. subject to change
+        Export all function, based on psuedo code of extraction engine. subject to change.
         """
         if not backup_model:
             return False, "No backup loaded."
 
-
         try:
-            os_supports_symlinks = False  
-            user_set_symlinks = False     
-            convert_type_dict = {}        
-            progress_tracker = DummyProgress() 
+            import threading
 
-           # 
-           # run_extraction_engine(
-            #    backup_model=backup_model,
-           #     blacklist=settings_service,
-           #     output_root=destination_str,
-          #      os_supports_symlinks=os_supports_symlinks,
-          #      user_set_symlinks=user_set_symlinks,
-         #       convert_type_dict=convert_type_dict,
-         #       progress=progress_tracker
-         #   )
-            
-            return True, f"Export complete! Files successfully extracted to '{destination_str}'."
-            
+            user_set_symlinks = True
+            convert_type_dict = {}
+            progress_tracker = DummyProgress()
+
+            try:
+                test = pathlib.Path(tempfile.mkdtemp()) / "test_link"
+                test.symlink_to(pathlib.Path(tempfile.mkdtemp()))
+                os_supports_symlinks = True
+                test.unlink()
+            except (OSError, NotImplementedError):
+                os_supports_symlinks = False
+
+            engine_error = []
+
+            def run():
+                try:
+                    run_extraction_engine(
+                        backup_model=backup_model,
+                        blacklist=settings_service.get_engine_blacklist(),
+                        output_root=Path(destination_str),
+                        os_supports_symlinks=os_supports_symlinks,
+                        user_set_symlinks=user_set_symlinks,
+                        convert_type_dict=convert_type_dict,
+                        progress=progress_tracker,
+                    )
+                except Exception as e:
+                    engine_error.append(str(e))
+
+            thread = threading.Thread(target=run, daemon=True)
+            thread.start()
+
+            # Draw progress bar while engine runs
+            draw_progress_bar(progress_tracker, thread)
+
+            thread.join()
+
+            if engine_error:
+                return False, f"Extraction Engine Error: {engine_error[0]}"
+
+            return True, f"Export complete! Files saved to '{destination_str}'."
+
         except Exception as e:
             return False, f"Extraction Engine Error: {str(e)}"

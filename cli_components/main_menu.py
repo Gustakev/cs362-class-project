@@ -108,7 +108,7 @@ def main_menu():
     Main program command-line interface loop.
     """
     while True:
-        print("\033[33m" + "========================= Extracted Albums =========================\n")
+        print("\033[33m" + "=========================== iExtract Menu ============================\n")
         print(f"** Instructions: Enter a number corresponding to the choices below. **\n"+ "\033[0m")
 
         print("1. Load iPhone Backup Folder")
@@ -216,14 +216,16 @@ def export_all_menu():
     if not dest_path:
         return  # User cancelled somewhere in the helper loop
 
-    # TODO:When export all function is implemented
-    # success, message = export_service.export_all(backup_service.current_model, dest_path)
-
-
-# if success:
-#    print(f"\n[SUCCESS] {message}\n")
-#  else:
-#    print(f"\n[ERROR] {message}\n")
+    # Attempt extraction.
+    success, message = export_service.export_all(
+        backup_service.current_model,
+        dest_path,
+        settings_service
+    )
+    if success:
+        print(f"\n[SUCCESS] {message}\n")
+    else:
+        print(f"\n[ERROR] {message}\n", file=sys.stderr)
 
 
 def export_specific_menu():
@@ -425,7 +427,7 @@ def feat_photo_caption():
     file_dir = Path("functional_components/photo_caption/data/")
     root_dir = file_dir
 
-    print("\033[33m" + "========================= Extracted Albums =========================\n")
+    print("\033[33m" + "=========================== iExtract Menu ===========================\n")
     print(f"** Instructions: Enter a number corresponding to the choices below. **\n"+ "\033[0m")
     
     while True:
