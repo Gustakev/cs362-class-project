@@ -333,7 +333,8 @@ class ExportService:
                         progress=progress_tracker,
                     )
                 except Exception as e:
-                    engine_error.append(str(e))
+                    import traceback
+                    engine_error.append(traceback.format_exc())
 
             thread = threading.Thread(target=run, daemon=True)
             thread.start()

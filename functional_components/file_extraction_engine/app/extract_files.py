@@ -97,7 +97,7 @@ def run_extraction_engine(
 
                 for collection in active_collections:
                     coll_folder = ensure_folder_exists(
-                        output_root / collection.title
+                        output_root / sanitize_folder_name(collection.title)
                     )
                     place_symlink(dest_path, coll_folder)
             else:
@@ -109,12 +109,12 @@ def run_extraction_engine(
                 else:
                     for collection in active_collections:
                         dest_folder = ensure_folder_exists(
-                            output_root / collection.title
+                            output_root / sanitize_folder_name(collection.title)
                         )
                         copy_file(src_path, dest_folder, dest_name, asset)
         else:  # exactly one collection
             dest_folder = ensure_folder_exists(
-                output_root / active_collections[0].title
+                output_root / sanitize_folder_name(active_collections[0].title)
             )
             copy_file(src_path, dest_folder, dest_name, asset)
 
@@ -167,7 +167,7 @@ def run_extraction_engine(
 
                 for collection in active_collections:
                     coll_folder = ensure_folder_exists(
-                        output_root / collection.title
+                        output_root / sanitize_folder_name(collection.title)
                     )
                     place_folder_symlink(dest_folder, coll_folder)
             else:
@@ -178,17 +178,17 @@ def run_extraction_engine(
                     move_folder(staging_folder, dest_parent)
                 else:
                     first_dest = ensure_folder_exists(
-                        output_root / active_collections[0].title
+                        output_root / sanitize_folder_name(active_collections[0].title)
                     )
                     moved_path = move_folder(staging_folder, first_dest)
                     for collection in active_collections[1:]:
                         dest_parent = ensure_folder_exists(
-                            output_root / collection.title
+                            output_root / sanitize_folder_name(collection.title)
                         )
                         copy_folder(moved_path, dest_parent)
         else:  # exactly one collection
             dest_parent = ensure_folder_exists(
-                output_root / active_collections[0].title
+                output_root / sanitize_folder_name(active_collections[0].title)
             )
             move_folder(staging_folder, dest_parent)
 
