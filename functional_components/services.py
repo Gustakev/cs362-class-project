@@ -21,7 +21,6 @@ import tempfile, pathlib
 
 
 def draw_progress_bar(progress, thread):
-    """Draws a live progress bar in the terminal until the thread finishes."""
     import time
     import sys
 
@@ -30,19 +29,19 @@ def draw_progress_bar(progress, thread):
     FILLED = "█"
     EMPTY  = "░"
 
-    print("")
-    while thread.is_alive() or progress.percent < 100:
+    while thread.is_alive():
         pct    = min(progress.percent, 100)
         filled = int((pct / 100) * BAR_WIDTH)
         empty  = BAR_WIDTH - filled
         bar    = INDENT + FILLED * filled + EMPTY * empty + f"  {pct}%"
         print(f"\r{bar}", end="", flush=True)
-        if pct >= 100:
-            break
         time.sleep(0.1)
 
-    # Final complete bar
-    bar = INDENT + FILLED * BAR_WIDTH + "  100%"
+    # Final bar reflecting actual completion
+    pct    = min(progress.percent, 100)
+    filled = int((pct / 100) * BAR_WIDTH)
+    empty  = BAR_WIDTH - filled
+    bar    = INDENT + FILLED * filled + EMPTY * empty + f"  {pct}%"
     print(f"\r{bar}", flush=True)
 
 

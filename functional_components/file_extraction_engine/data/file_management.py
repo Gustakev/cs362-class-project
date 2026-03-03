@@ -3,10 +3,15 @@ Author: Sam Daughtry
 Date: 2026-02-28
 Description: Manages file paths and directories for the file extraction engine.
 """
+
 import os
+
 import shutil
+
 from pathlib import Path
+
 from typing import Dict
+
 from datetime import datetime
 
 
@@ -76,3 +81,10 @@ def set_file_times(file_path: Path, modification_date) -> None:
 
     mod_time = int(dt.timestamp())
     os.utime(file_path, (mod_time, mod_time))
+
+def sanitize_folder_name(name: str) -> str:
+    """Remove or replace characters illegal in Windows folder names."""
+    illegal = r'\/:*?"<>|'
+    for char in illegal:
+        name = name.replace(char, "_")
+    return name.strip()

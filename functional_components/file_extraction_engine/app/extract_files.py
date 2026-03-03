@@ -22,7 +22,8 @@ from functional_components.file_extraction_engine.data.file_management import (
     move_folder,
     copy_folder,
     place_symlink,
-    place_folder_symlink
+    place_folder_symlink,
+    sanitize_folder_name
 )
 
 from .extraction_helpers import (
@@ -76,7 +77,7 @@ def run_extraction_engine(
         if use_symlinks and asset.asset_uuid in non_excl_assets:
             src_path = non_excl_assets[asset.asset_uuid]
             for collection in active_collections:
-                dest_folder = ensure_folder_exists(output_root / collection.title)
+                dest_folder = ensure_folder_exists(output_root / sanitize_folder_name(collection.title))
                 place_symlink(src_path, dest_folder)
             tick()
             continue
@@ -151,7 +152,7 @@ def run_extraction_engine(
             shutil.rmtree(staging_folder)
             src_folder = non_excl_assets[burst_uuid]
             for collection in active_collections:
-                dest_folder = ensure_folder_exists(output_root / collection.title)
+                dest_folder = ensure_folder_exists(output_root / sanitize_folder_name(collection.title))
                 place_folder_symlink(src_folder, dest_folder)
             tick()
             continue
