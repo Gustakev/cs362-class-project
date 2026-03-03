@@ -62,7 +62,8 @@ def _build_flags(row: dict) -> Flags:
         is_favorite=bool(row.get("ZFAVORITE", 0)),
         is_hidden=bool(row.get("ZHIDDEN", 0)),
         is_recently_deleted=bool(row.get("ZTRASHEDSTATE", 0)),
-        is_selfie=False,  # derived from smart album membership, set later
+        # Correctly find selfies.
+        is_selfie=row.get("ZDERIVEDCAMERACAPTUREDEVICE") == 1
     )
 
 
@@ -113,7 +114,7 @@ def build_assets(
 ) -> List[Asset]:
     """Converts raw asset rows into Asset domain objects."""
     from functional_components.sql_cmd_facilitator.data.asset_reader import (
-        get_file_id_for_asset,
+        get_file_id_for_asset
     )
 
     assets = []

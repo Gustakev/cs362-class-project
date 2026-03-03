@@ -175,7 +175,7 @@ class SettingsService:
         if not name:
             return False, "Album name cannot be empty."
 
-        entry = ListEntry(album_name)    
+        entry = ListEntry(name)
 
         if self.is_blacklist_mode:
             #  Add/Remove from the internal blacklist
@@ -239,14 +239,34 @@ class ExportService:
         """
         if not backup_model or not hasattr(backup_model, 'albums'):
             return []
-        
+
         result = []
+
+        # User albums
         for album in backup_model.albums:
             entry = ListEntry(album.title)
             if entry.is_NUA:
                 result.append(f"{album.title} [Smart Album]")
             else:
                 result.append(album.title)
+
+        # NUAs: scan assets to find which smart folders are actually present
+        present_nuas = set()
+        for asset in backup_model.assets:
+            for nua in asset.relationships.smart_folders:
+                present_nuas.add(nua)
+
+        # Display names for each canonical NUA name
+        NUA_DISPLAY = {
+            "favorites": "favorites [Smart Album]",
+            "hidden": "hidden [Smart Album]",
+            "selfies": "selfies [Smart Album]",
+            "recently_deleted": "recently_deleted [Smart Album]",
+        }
+
+        for nua in sorted(present_nuas):
+            result.append(NUA_DISPLAY.get(nua, nua + " [Smart Album]"))
+
         return result
     
     def export_all(self, backup_model, destination_str, settings_service):

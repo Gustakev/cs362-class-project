@@ -45,7 +45,7 @@ from functional_components.sql_cmd_facilitator.app.album_builder import (
 
 from functional_components.sql_cmd_facilitator.data.asset_reader import (
     get_assets,
-    get_asset_album_memberships,
+    get_asset_album_memberships
 )
 
 from functional_components.sql_cmd_facilitator.app.asset_builder import (
@@ -114,7 +114,7 @@ def build_backup_model(backup_root: Path) -> BackupModelResult:
         manifest_db_path = backup_root / "Manifest.db"
 
         with open_db(photos_sqlite_path) as photos_conn, \
-             open_db(manifest_db_path) as manifest_conn:
+            open_db(manifest_db_path) as manifest_conn:
 
             # Discover dynamic schema
             join_table = find_album_asset_join_table(photos_conn)
@@ -133,11 +133,12 @@ def build_backup_model(backup_root: Path) -> BackupModelResult:
                 join_cols["asset_fk"],
             )
             membership_lookup = build_membership_lookup(raw_memberships)
+
             assets = build_assets(
                 raw_assets,
                 membership_lookup,
                 backup_root,
-                manifest_conn,
+                manifest_conn
             )
 
     except Exception as e:
