@@ -148,7 +148,7 @@ class SettingsService:
     def toggle_mode(self,all_available_album_names=None):
         """
         Switches the application between Blacklist and Whitelist mode.
-        Automatically clears the current album selection to prevent logic bleed.
+        Automatically clears the current album selection.
 
         Returns:
             str: A formatted string confirming the mode switch.

@@ -402,13 +402,13 @@ def help_user():
         print("2. Developer Documentation")
         print("3. Back\n")
         
-        choice = int(input("Option: "))
+        choice = input("Option: ").strip()
         
-        if choice == 1:
+        if choice == "1":
             webbrowser.open_new_tab(dev_doc)
-        elif choice == 2:
+        elif choice == "2":
             webbrowser.open_new_tab(user_doc)
-        elif choice == 3:
+        elif choice == "3":
             break
         else:
             print("\033[31m" + "Error: Invalid input. Choose one of the displayed options.\n" + "\033[0m", file=sys.stderr)
