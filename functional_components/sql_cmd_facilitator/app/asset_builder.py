@@ -181,12 +181,25 @@ def build_assets(
             relationships=relationships,
         ))
 
+    # Add the index to make the LIKE query fast
+    try:
+        manifest_conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_files_path ON Files(relativePath)"
+        )
+    except Exception:
+        pass
+
     # Debug print
     # print(f"Assets skipped (unresolvable in Manifest.db): {skipped}")
 
     # Second pass: synthesize live_photo_video assets for iOS 26+
     # where companion MOV files exist in Manifest.db but have no ZASSET row.
-    live_stills = [a for a in assets if a.subtype == "live_photo_still"]
+    live_stills = [
+        a for a in assets
+        if a.subtype == "live_photo_still"
+        and a.live_photo_group_uuid is not None
+        and Path(a.original_filename).stem.upper().startswith("IMG_")
+    ]
     for still in live_stills:
         stem = Path(still.original_filename).stem
         mov_filename = stem + ".MOV"
