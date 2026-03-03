@@ -93,7 +93,7 @@ To run tests locally:
 python -m unittest discover tests
 ```
 
-## Usage (Once You Have Already Fully Installed iExtract)
+## Usage (WORKING USE CASES) (Once You Have Already Fully Installed iExtract)
 
 **Use Case:** User exports all albums
 
@@ -134,6 +134,7 @@ Steps:
 ```bash
    python iExtract.py
 ```
+- **NOTE**: If using Windows, you must begin the program in administrator mode, or else it will not allow the symlink logic to work. The system will fall back to duplication mode, in that case, which causes equal space to be taken up for each time an asset is in a subsequent album following the first copy.
 
 3. Extract All Camera Roll Media:
 - In the main menu, (via option 1) choose `Load iPhone Backup Folder` by providing the path to a valid unencrypted backup.
