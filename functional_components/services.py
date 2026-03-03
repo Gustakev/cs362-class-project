@@ -20,6 +20,32 @@ import os
 import tempfile, pathlib
 
 
+def draw_progress_bar(progress, thread):
+    """Draws a live progress bar in the terminal until the thread finishes."""
+    import time
+    import sys
+
+    BAR_WIDTH = 70
+    INDENT = "  "
+    FILLED = "█"
+    EMPTY  = "░"
+
+    print("")
+    while thread.is_alive() or progress.percent < 100:
+        pct    = min(progress.percent, 100)
+        filled = int((pct / 100) * BAR_WIDTH)
+        empty  = BAR_WIDTH - filled
+        bar    = INDENT + FILLED * filled + EMPTY * empty + f"  {pct}%"
+        print(f"\r{bar}", end="", flush=True)
+        if pct >= 100:
+            break
+        time.sleep(0.1)
+
+    # Final complete bar
+    bar = INDENT + FILLED * BAR_WIDTH + "  100%"
+    print(f"\r{bar}", flush=True)
+
+
 class BackupService:
     """
     Manages the state of the loaded iPhone backup in memory.
@@ -271,19 +297,18 @@ class ExportService:
     
     def export_all(self, backup_model, destination_str, settings_service):
         """
-        Export all function, based on psuedo code of extraction engine. subject to change
+        Export all function, based on psuedo code of extraction engine. subject to change.
         """
         if not backup_model:
             return False, "No backup loaded."
 
-        # Attempt the extraction.
         try:
-            os_supports_symlinks = True
+            import threading
+
             user_set_symlinks = True
             convert_type_dict = {}
             progress_tracker = DummyProgress()
 
-            # Determine OS symlink support.
             try:
                 test = pathlib.Path(tempfile.mkdtemp()) / "test_link"
                 test.symlink_to(pathlib.Path(tempfile.mkdtemp()))
@@ -292,19 +317,34 @@ class ExportService:
             except (OSError, NotImplementedError):
                 os_supports_symlinks = False
 
-            # Run extraction engine.
-            run_extraction_engine(
-                backup_model=backup_model,
-                blacklist=settings_service.get_engine_blacklist(),
-                output_root=Path(destination_str),
-                os_supports_symlinks=os_supports_symlinks,
-                user_set_symlinks=user_set_symlinks,
-                convert_type_dict=convert_type_dict,
-                progress=progress_tracker
-            )
-            
-            return True, f"Export complete! Files successfully extracted to '{destination_str}'."
-            
+            engine_error = []
+
+            def run():
+                try:
+                    run_extraction_engine(
+                        backup_model=backup_model,
+                        blacklist=settings_service.get_engine_blacklist(),
+                        output_root=Path(destination_str),
+                        os_supports_symlinks=os_supports_symlinks,
+                        user_set_symlinks=user_set_symlinks,
+                        convert_type_dict=convert_type_dict,
+                        progress=progress_tracker,
+                    )
+                except Exception as e:
+                    engine_error.append(str(e))
+
+            thread = threading.Thread(target=run, daemon=True)
+            thread.start()
+
+            # Draw progress bar while engine runs
+            draw_progress_bar(progress_tracker, thread)
+
+            thread.join()
+
+            if engine_error:
+                return False, f"Extraction Engine Error: {engine_error[0]}"
+
+            return True, f"Export complete! Files saved to '{destination_str}'."
+
         except Exception as e:
             return False, f"Extraction Engine Error: {str(e)}"
-        
