@@ -93,15 +93,53 @@ To run tests locally:
 python -m unittest discover tests
 ```
 
-## Usage
+## Usage (Once You Have Already Fully Installed iExtract)
 
 **Use Case:** User exports all albums
 
 Steps:
-1. Plug in your phone to your machine 
-2. Start the progam by running:
+- Ensure that iCloud for your camera roll is not enabled (if it is enabled, your camera roll items won't be backed up), and then make an unencrypted backup of your iPhone using one of the following methods:
+  - Windows:
+    - Download and open iTunes.
+    - Plug in your iPhone to your computer running Windows.
+    - Ensure that your iPhone has "**Trust this computer**" enabled when prompted.
+    - Approve access to the iPhone within iTunes when prompted (you may need to unlock the phone when iTunes states it is waiting for a response).
+    - Click "**File**" in the toobar at the top of the screen.
+    - Click "**Devices**".
+    - Click "**Back Up**".
+    - Wait for the backup to finish being made.
+    - **Note the location of the backup** (the default location on Windows can be found by pressing ((Windows Key) + R) and entering `%AppData%`, and then entering `Roaming\Apple Computer\MobileSync\Backup`).
+      - The folder that contains the backup will be the only one present inside the `Backup` folder.
+  - macOS:
+    - Plug in your iPhone to your Mac.
+    - Open **Finder** (iTunes is no longer used for backups on macOS Catalina or later).
+    - Select your iPhone from the sidebar under **Locations**.
+    - Ensure that your iPhone has "**Trust this computer**" enabled when prompted.
+    - In the **General** tab, look at the "Backups" section and ensure "**Encrypt local backup**" is **unchecked**.
+    - Click "**Back Up Now**".
+    - Wait for the backup to finish.
+    - **Note the location of the backup:** You can find the folder by clicking "**Manage Backups...**" in the General tab, right-clicking your backup, and selecting "**Show in Finder**." (The manual path is `~/Library/Application Support/MobileSync/Backup/`).
+  - Linux:
+    - Open your terminal and install `libimobiledevice` (e.g., `sudo apt install libimobiledevice-utils` on Ubuntu/Debian).
+    - Plug in your iPhone to your computer.
+    - Ensure your iPhone has "**Trust this computer**" enabled when prompted.
+    - Open a terminal and run `idevicepair pair` to confirm the connection.
+    - Create a folder where you want the backup to live (e.g., `mkdir ~/iPhoneBackup`).
+    - Run the command: `idevicebackup2 backup ~/iPhoneBackup`.
+    - Wait for the terminal to indicate the backup is complete.
+    - **Note the location of the backup:** The backup will be located in the folder you specified (in this example, `~/iPhoneBackup`), contained within a subfolder named after your device’s Unique Device ID (UDID).
+    - **Quick Tip:** On Linux, if the device isn't recognized immediately, you might need to restart the `usbmuxd` service with `sudo systemctl restart usbmuxd`.
+
+2. Start the progam by running the following command in your shell (Command Prompt, PowerShell, Bash, Terminal, etc.):
 ```bash
-python iExtract.py
+   python iExtract.py
 ```
 
+3. Extract All Camera Roll Media:
+- In the main menu, (via option 1) choose `Load iPhone Backup Folder` by providing the path to a valid unencrypted backup.
+- In the main menu, (via option 2) choose to `Export All Camera Roll Media`.
+- Choose a location for the extraction to be stored to.
+- Choose to proceed by entering `y`.
+- Wait for the extraction to finish.
 
+- Note: The command may differ depending on the Python setup installed on your machine. You may instead need to enter `python3`, `python3.13`, `python3.14`, etc., or you may need to start Python by providing the path to the executable itself if none of these methods work. We recommend adding `python` to your system's path environment variable to prevent this issue from occurring.

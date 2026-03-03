@@ -45,7 +45,7 @@ from functional_components.sql_cmd_facilitator.app.album_builder import (
 
 from functional_components.sql_cmd_facilitator.data.asset_reader import (
     get_assets,
-    get_asset_album_memberships,
+    get_asset_album_memberships
 )
 
 from functional_components.sql_cmd_facilitator.app.asset_builder import (
@@ -114,7 +114,7 @@ def build_backup_model(backup_root: Path) -> BackupModelResult:
         manifest_db_path = backup_root / "Manifest.db"
 
         with open_db(photos_sqlite_path) as photos_conn, \
-             open_db(manifest_db_path) as manifest_conn:
+            open_db(manifest_db_path) as manifest_conn:
 
             # Discover dynamic schema
             join_table = find_album_asset_join_table(photos_conn)
@@ -126,6 +126,26 @@ def build_backup_model(backup_root: Path) -> BackupModelResult:
 
             # Build assets
             raw_assets = get_assets(photos_conn)
+
+            # -- Debug live photo videos not appearing.
+            # from collections import Counter
+            # raw_subtype_counts = Counter(row.get("ZKINDSUBTYPE") for row in raw_assets)
+            # print(f"Raw ZKINDSUBTYPE values in DB: {dict(raw_subtype_counts)}")
+
+            # for row in raw_assets:
+            #     if row.get("ZKINDSUBTYPE") == 2:
+            #         print(f"  ZKINDSUBTYPE=2  ZKIND={row.get('ZKIND')}  UTI={row.get('ZUNIFORMTYPEIDENTIFIER')}  FILE={row.get('ZFILENAME')}")
+
+            # from functional_components.sql_cmd_facilitator.data.sql_executor import execute_query
+            # from functional_components.sql_cmd_facilitator.data.row_mapper import map_rows
+
+            # mov_rows = execute_query(
+            #     manifest_conn,
+            #     "SELECT fileID, relativePath FROM Files WHERE relativePath LIKE '%.MOV'"
+            # )
+            # for row in map_rows(mov_rows):
+            #     print(f"  MOV in Manifest.db: {row['relativePath']}")
+
             raw_memberships = get_asset_album_memberships(
                 photos_conn,
                 join_table,
@@ -133,11 +153,12 @@ def build_backup_model(backup_root: Path) -> BackupModelResult:
                 join_cols["asset_fk"],
             )
             membership_lookup = build_membership_lookup(raw_memberships)
+
             assets = build_assets(
                 raw_assets,
                 membership_lookup,
                 backup_root,
-                manifest_conn,
+                manifest_conn
             )
 
     except Exception as e:
@@ -158,14 +179,25 @@ def build_backup_model(backup_root: Path) -> BackupModelResult:
         albums=albums
     )
 
-    # Debug prints
+    # # Debug prints
     # print(f"{backup_model.backup_metadata.backup_uuid}")
     # print(f"{backup_model.backup_metadata.backup_date}")
     # print(f"{backup_model.backup_metadata.is_encrypted}")
-    print("")
-    print("-- Debug Prints (backup_model_builder.py) --")
-    print(f"Albums loaded: {len(backup_model.albums)}")
-    print(f"Assets loaded: {len(backup_model.assets)}")
+    # print("")
+    # print("-- Debug Prints (backup_model_builder.py) --")
+    # print(f"Albums loaded: {len(backup_model.albums)}")
+    # print(f"Assets loaded: {len(backup_model.assets)}")
+
+    # # Debugging subtype values.
+    # from collections import Counter
+    # subtype_counts = Counter(a.subtype for a in backup_model.assets)
+    # print(f"Subtype breakdown: {dict(subtype_counts)}")
+
+    # # Debugging live photo video part inclusion.
+    # live_videos = [a for a in backup_model.assets if a.subtype == "live_photo_video"]
+    # print(f"Live photo videos in model: {len(live_videos)}")
+    # for a in live_videos:
+    #     print(f"  {a.original_filename}  group={a.live_photo_group_uuid}")
 
     return BackupModelResult(
         success=True, backup_model=backup_model

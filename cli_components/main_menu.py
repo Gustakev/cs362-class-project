@@ -216,14 +216,16 @@ def export_all_menu():
     if not dest_path:
         return  # User cancelled somewhere in the helper loop
 
-    # TODO:When export all function is implemented
-    # success, message = export_service.export_all(backup_service.current_model, dest_path)
-
-
-# if success:
-#    print(f"\n[SUCCESS] {message}\n")
-#  else:
-#    print(f"\n[ERROR] {message}\n")
+    # Attempt extraction.
+    success, message = export_service.export_all(
+        backup_service.current_model,
+        dest_path,
+        settings_service
+    )
+    if success:
+        print(f"\n[SUCCESS] {message}\n")
+    else:
+        print(f"\n[ERROR] {message}\n", file=sys.stderr)
 
 
 def export_specific_menu():
@@ -322,7 +324,8 @@ def settings_menu():
 
         if choice == "1":
             if backup_loaded:
-                print(settings_service.toggle_mode())
+                available_albums = export_service.get_album_list(backup_service.current_model)
+                print(settings_service.toggle_mode(available_albums))
             else:
                 print(
                     "\033[31m" + "\n[!] Error: You must load a backup before changing settings." + "\033[0m",
