@@ -84,3 +84,16 @@ def get_file_id_for_asset(
             f"No file found in Manifest.db for path: {relative_path}"
         )
     return results[0]["fileID"]
+
+
+def get_file_id_for_mov_companion(conn, mov_filename: str):
+    """Finds a live photo MOV companion file anywhere under Media/DCIM/."""
+    rows = execute_query(
+        conn,
+        "SELECT fileID FROM Files WHERE relativePath LIKE ?",
+        (f"Media/DCIM/%/{mov_filename}",)
+    )
+    results = map_rows(rows)
+    if not results:
+        raise FileNotFoundError(f"No MOV companion found for: {mov_filename}")
+    return results[0]["fileID"]

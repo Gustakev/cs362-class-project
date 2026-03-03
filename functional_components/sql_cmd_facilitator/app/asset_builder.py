@@ -114,7 +114,8 @@ def build_assets(
 ) -> List[Asset]:
     """Converts raw asset rows into Asset domain objects."""
     from functional_components.sql_cmd_facilitator.data.asset_reader import (
-        get_file_id_for_asset
+        get_file_id_for_asset,
+        get_file_id_for_mov_companion
     )
 
     assets = []
@@ -182,5 +183,41 @@ def build_assets(
 
     # Debug print
     # print(f"Assets skipped (unresolvable in Manifest.db): {skipped}")
+
+    # Second pass: synthesize live_photo_video assets for iOS 26+
+    # where companion MOV files exist in Manifest.db but have no ZASSET row.
+    live_stills = [a for a in assets if a.subtype == "live_photo_still"]
+    for still in live_stills:
+        stem = Path(still.original_filename).stem
+        mov_filename = stem + ".MOV"
+        directory = str(Path(still.backup_relative_path).parent)
+        # Derive the relative path the same way build_assets does for normal assets
+        # We need to find the directory from the original still's path construction
+        # Query Manifest.db for the MOV companion
+        try:
+            file_id = get_file_id_for_mov_companion(manifest_conn, mov_filename)
+            mov_backup_path = str(backup_root / file_id[:2] / file_id)
+        except FileNotFoundError:
+            continue
+
+        assets.append(Asset(
+            asset_uuid=still.asset_uuid + "_mov",
+            local_identifier=still.local_identifier + "_mov",
+            original_filename=mov_filename,
+            file_extension="MOV",
+            uti_type="com.apple.quicktime-movie",
+            creation_date=still.creation_date,
+            modification_date=still.modification_date,
+            timezone_offset=still.timezone_offset,
+            backup_relative_path=mov_backup_path,
+            backup_hashed_filename=file_id,
+            media_type="video",
+            subtype="live_photo_video",
+            live_photo_group_uuid=still.live_photo_group_uuid,
+            burst_uuid=None,
+            is_primary_burst_frame=False,
+            flags=still.flags,
+            relationships=still.relationships,
+        ))
 
     return assets
