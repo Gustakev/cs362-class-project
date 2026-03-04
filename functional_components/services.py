@@ -21,7 +21,6 @@ import tempfile, pathlib
 
 
 def draw_progress_bar(progress, thread):
-    """Draws a live progress bar in the terminal until the thread finishes."""
     import time
     import sys
 
@@ -30,19 +29,19 @@ def draw_progress_bar(progress, thread):
     FILLED = "█"
     EMPTY  = "░"
 
-    print("")
-    while thread.is_alive() or progress.percent < 100:
+    while thread.is_alive():
         pct    = min(progress.percent, 100)
         filled = int((pct / 100) * BAR_WIDTH)
         empty  = BAR_WIDTH - filled
         bar    = INDENT + FILLED * filled + EMPTY * empty + f"  {pct}%"
         print(f"\r{bar}", end="", flush=True)
-        if pct >= 100:
-            break
         time.sleep(0.1)
 
-    # Final complete bar
-    bar = INDENT + FILLED * BAR_WIDTH + "  100%"
+    # Final bar reflecting actual completion
+    pct    = min(progress.percent, 100)
+    filled = int((pct / 100) * BAR_WIDTH)
+    empty  = BAR_WIDTH - filled
+    bar    = INDENT + FILLED * filled + EMPTY * empty + f"  {pct}%"
     print(f"\r{bar}", flush=True)
 
 
@@ -85,14 +84,17 @@ class BackupService:
         # Return the string for the UI to use
         return (
             f"Device:\n"
-            f"- Device Name: ............ {device.name}\n"
-            f"- Device Model: ........... {formatted_model}\n"
-            f"- Device Submodel: ........ {submodel}\n"
-            f"- iOS Version: ............ {device.ios_version}\n"
+            f"- Device Name: ............... {device.name}\n"
+            f"- Device Model: .............. {formatted_model}\n"
+            f"- Device Submodel: ........... {submodel}\n"
+            f"- iOS Version: ............... {device.ios_version}\n"
             f"Backup:\n"
-            f"- Backup Encryption Status: {device_metadata.is_encrypted}\n"
-            f"- Backup UUID/GUID: ....... {device_metadata.backup_uuid}\n"
-            f"- Backup Date: ............ {formatted_backup_date}"
+            f"- Backup Encryption Status: .. {device_metadata.is_encrypted}\n"
+            f"- Backup UUID/GUID: .......... {device_metadata.backup_uuid}\n"
+            f"- Backup Date: ............... {formatted_backup_date}\n"
+            f"Backup Contents:\n"
+            f"- User Albums loaded: ........ {len(self.current_model.albums)}\n"
+            f"- Unhidden Assets Loaded: .... {len(self.current_model.assets)}\n"
         )
 
     def attempt_load_backup(self, path_str):
@@ -331,7 +333,8 @@ class ExportService:
                         progress=progress_tracker,
                     )
                 except Exception as e:
-                    engine_error.append(str(e))
+                    import traceback
+                    engine_error.append(traceback.format_exc())
 
             thread = threading.Thread(target=run, daemon=True)
             thread.start()
