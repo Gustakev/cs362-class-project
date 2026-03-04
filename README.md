@@ -1,13 +1,12 @@
 <h1 align="center"><b>iExtract iOS Album to Folder Conversion Tool</b></h1>
 
 <p align="center">
-  <strong>iExtract Version 0.1.0-alpha.1</strong>
+  <strong>iExtract Version 0.1.0-beta.1</strong>
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white" />
-  <img src="https://img.shields.io/badge/Version-0.1.0--alpha.1-red">
+  <img src="https://img.shields.io/badge/Version-0.1.0--beta.1-red">
   <img src="https://github.com/Gustakev/cs362-class-project/actions/workflows/ci.yml/badge.svg">
-
 </p>
 
 ## Project Overview
@@ -24,7 +23,7 @@ iExtract makes it easy for iPhone users to extract their photos and videos from 
 * Provide a fast and intuitive export process for iOS media using a backup as the source
 * Preserve album/collection structure during exports
 * Maintain metadata (dates, locations, file types, etc.)
-* Reduce dependency on iCloud storage
+* Reduce dependency on iCloud (and other cloud service) storage
 * Avoid quality loss that typically occurs through compression of files during exports using other tools
 
 ## Repository Layout
@@ -32,7 +31,7 @@ iExtract makes it easy for iPhone users to extract their photos and videos from 
 
 - README.md: The README file for iExtract.
 
-- requirements.txt: The requirements file for iExtract, which makes it easy to install all the correct dependencies before running the program.
+- requirements.txt: A list of required modules that the user must install via ‘pip install -r requirements.txt’, or manually for each, in order to use iExtract.
 
 - team-resources.md: Describes the resources that the team uses, including relevant artifacts, libraries, etc.
 
@@ -61,6 +60,7 @@ iExtract makes it easy for iPhone users to extract their photos and videos from 
     - /app/: Contains code relevant to the Application Layer of iExtract, the code that executes program logic, like value processing.
     - /data/: Contains code relevant to the Data Layer of iExtract, the code that reads/writes data.
     - /domain/: Contains the code relevant to the Domain Layer of iExtract, the data structures and definitions primarily utilized by this module.
+  - directory-explanation.md: An explanation of the directory structure.
 
 - /living_documents/: Stores each version of the project proposal document for our app that explains our app idea, along with all the requirements.
 
@@ -69,22 +69,35 @@ iExtract makes it easy for iPhone users to extract their photos and videos from 
 - /tests/: Stores the test cases that are being used against the program.
   - /test_data/: Stores data for tests, if needed.
 
+- /beta-testing/: Contains beta testing feedback.
+
 ## Install
+
+**Important Note Regarding Python**: The command may differ depending on the Python setup installed on your machine. You may instead need to enter `python3`, `python3.13`, `python3.14`, etc., or you may need to start Python by providing the path to the executable itself if none of these methods work. We recommend adding `python` to your system's path environment variable to prevent this issue from occurring.
 
 ### **Build**
 ```bash
+# HTTPS Clone:
 git clone https://github.com/Gustakev/cs362-class-project.git
+# or SSH Clone:
+git clone git@github.com:Gustakev/cs362-class-project.git
+# or GitHub CLI Clone:
+gh repo clone Gustakev/cs362-class-project
+
+# Then...
 cd cs362-class-project/
 python -m venv venv
 
-# If windows run:
+# If Windows, run:
 source venv/Scripts/activate
-
-# If Mac/Linux run:
+# Or if Mac/Linux, run:
 source venv/bin/activate
 
+# Then...
 pip install -r requirements.txt
 ```
+
+**NOTE:** Each time you open a new terminal, run `source venv/Scripts/activate` before running `python iExtract.py`.
 
 ### **Testing**
 Tests are automatically run via GitHub Actions on every push and pull request.
@@ -146,9 +159,6 @@ Steps:
 - Choose to proceed by entering `y`.
 - Wait for the extraction to finish.
 
-- Note: The command may differ depending on the Python setup installed on your machine. You may instead need to enter `python3`, `python3.13`, `python3.14`, etc., or you may need to start Python by providing the path to the executable itself if none of these methods work. We recommend adding `python` to your system's path environment variable to prevent this issue from occurring.
-
 ## Documentation
 - <a href="https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-Developer-Documentation.md"> Developer Documentation</a>
-- <a href="https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-User-Documentation.md"> Developer Documentation</a>
-
+- <a href="https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-User-Documentation.md"> User Documentation</a>
