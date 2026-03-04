@@ -149,5 +149,6 @@ Steps:
 - Note: The command may differ depending on the Python setup installed on your machine. You may instead need to enter `python3`, `python3.13`, `python3.14`, etc., or you may need to start Python by providing the path to the executable itself if none of these methods work. We recommend adding `python` to your system's path environment variable to prevent this issue from occurring.
 
 ## Documentation
-<a href="https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-Developer-Documentation.md"> Developer Documentation</a>
-<a href="https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-User-Documentation.md"> Developer Documentation</a>
+- <a href="https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-Developer-Documentation.md"> Developer Documentation</a>
+- <a href="https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-User-Documentation.md"> Developer Documentation</a>
+
