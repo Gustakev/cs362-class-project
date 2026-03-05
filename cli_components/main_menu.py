@@ -324,8 +324,6 @@ def blacklist_whitelist_menu():
         mode, album_list = settings_service.get_state()
         backup_loaded = backup_service.current_model is not None
 
-        sym_status = "ON" if settings_service.user_set_symlinks else "OFF"
-
         print("\033[33m" + "\n--- BLACKLIST/WHITELIST SETTINGS ---" + "\033[0m")
         print(f"Mode: {mode}")
         print(f"List: [{album_list}]")
@@ -365,7 +363,7 @@ def blacklist_whitelist_menu():
             return
         
         else:
-            print("\033[31m\nInvalid input. Please select 1, 2, or 3.\033[0m")
+            print("\nInvalid Choice")
 
 def conversion_settings_menu():
     """Manages conversion format settings."""
