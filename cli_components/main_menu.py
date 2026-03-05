@@ -266,10 +266,10 @@ def export_specific_menu():
             print(f" - {album}")
 
         choice = input(
-            "\nEnter exact Album Name to export (or 'cancel' to go back): "
+            "\nEnter exact Album Name to export (or 'cancel'/'Enter' to go back): "
         ).strip()
         
-        if choice.lower() == "cancel":
+        if choice.lower() == "cancel" or choice.lower() == '':
             print("Export cancelled.")
             return
         if choice in available_albums:
@@ -314,18 +314,23 @@ def settings_menu():
 
         backup_loaded = backup_service.current_model is not None
 
+        sym_status = "ON" if settings_service.user_set_symlinks else "OFF"
+
         print("--- SETTINGS ---")
         print(f"Mode: {mode}")
         print(f"List: [{album_list}]")
+        print(f"Symlinks: {sym_status}")
 
         if backup_loaded:
             print("1. Switch Mode (Blacklist/Whitelist)")
             print("2. Add/Remove Album")
-            print("3. Back")
+            print("3. Toggle Symlinks (ON/OFF)")
+            print("4. Back")
         else:
             print("1. Switch mode (DISABLED - Load a backup first)")
             print("2. Add/Remove Album (DISABLED - Load a backup first)")
-            print("3. Back")
+            print("3. Toggle Symlinks (ON/OFF)(DISABLED - Load a backup first)")
+            print("4. Back")
 
         choice = input("Select: ")
 
@@ -343,9 +348,15 @@ def settings_menu():
                 album_selection_submenu()
             else:
                 print("\033[31m" + "\n[!] Error: You must load a backup before selecting albums." "\033[0m")
+        
         elif choice == "3":
+            print(settings_service.toggle_symlinks())
+            
+
+        elif choice == "4":
             print("Going back...")
             return
+        
         else:
             print("\033[31m\nInvalid input. Please select 1, 2, or 3.\033[0m")
 
@@ -382,10 +393,13 @@ def album_selection_submenu():
                 # Exit condition
                 if name.lower() == "cancel" or name == "":
                     break
+                
+                # making sure that a user can type in a album name and find it even if it has spaces at the end
+                match = next((a for a in available_albums if a.strip().lower == name.lower()),None)
 
                 # UI Validation
-                if name in available_albums:
-                    success, msg = settings_service.toggle_album(name)
+                if match:
+                    success, msg = settings_service.toggle_album(match)
                     print(msg)
                 else:
                     print(
