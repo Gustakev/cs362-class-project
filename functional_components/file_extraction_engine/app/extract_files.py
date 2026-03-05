@@ -73,6 +73,18 @@ def run_extraction_engine(
         )
         collection_count = len(active_collections)
 
+        # Determine if the asset has any collections before blacklist filtering
+        has_any_collections = (
+            len(asset.relationships.user_albums) > 0
+            or len(asset.relationships.smart_folders) > 0
+        )
+
+        # If the asset had collections but all were blacklisted, skip it
+        #  entirely
+        if has_any_collections and collection_count == 0:
+            tick()
+            continue
+
         # already extracted earlier when using symlinks
         if use_symlinks and asset.asset_uuid in non_excl_assets:
             src_path = non_excl_assets[asset.asset_uuid]
@@ -134,6 +146,18 @@ def run_extraction_engine(
             key_frame, blacklist, album_title_by_uuid
         )
         collection_count = len(active_collections)
+
+        # Determine if the asset has any collections before blacklist filtering
+        has_any_collections = (
+            len(key_frame.relationships.user_albums) > 0
+            or len(key_frame.relationships.smart_folders) > 0
+        )
+
+        # If the asset had collections but all were blacklisted, skip it
+        #  entirely
+        if has_any_collections and collection_count == 0:
+            tick()
+            continue
 
         # build staging folder and populate with converted frames
         staging_folder = ensure_folder_exists(staging_root / burst_uuid)
