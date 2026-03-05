@@ -141,7 +141,7 @@ class SettingsService:
         """Returns a Blacklist object for the Extraction Engine to evaluate."""
         return Blacklist(
             current_list=list(self.current_list),
-            is_blacklist=True
+            is_blacklist=True  # Always treat as blacklist for engine.
         )
     
     def get_state(self):
@@ -184,11 +184,10 @@ class SettingsService:
                 self.is_blacklist_mode = True
                 return "[!] Error: Cannot create Whitelist without backup data."
      
-        # Fill the blacklist with every album as an ListEntry object
+            # Fill the blacklist with every album as an ListEntry object
             for name in all_available_album_names:
-                clean_name = name.replace(" [Smart Album]", "")
-            
-                entry = ListEntry(clean_name)
+                clean = name.removesuffix(" [Smart Album]")
+                entry = ListEntry(clean)
                 self.current_list.add(entry)
                 self._original_full_list.add(entry)
             return "Mode switched to: Whitelist (List cleared. Select albums to ALLOW.)"
@@ -257,6 +256,31 @@ class DummyProgress:
         self.percent = 0
 
 
+class ConversionService:
+    """Manages conversion format settings."""
+
+    SUPPORTED_CONVERSIONS = {
+        "HEIC": "JPG",
+        "MOV": "MP4",
+    }
+
+    def __init__(self):
+        self.enabled = set()  # set of source extensions that are active
+
+    def toggle(self, ext: str):
+        ext = ext.upper()
+        if ext in self.enabled:
+            self.enabled.discard(ext)
+            return f"Conversion {ext} → {self.SUPPORTED_CONVERSIONS[ext]} disabled."
+        else:
+            self.enabled.add(ext)
+            return f"Conversion {ext} → {self.SUPPORTED_CONVERSIONS[ext]} enabled."
+
+    def get_convert_type_dict(self) -> dict:
+        """Returns the dict the extraction engine expects."""
+        return {ext: self.SUPPORTED_CONVERSIONS[ext] for ext in self.enabled}
+    
+
 class ExportService:
     """
     Handles the orchestration of extracting media from the backup and
@@ -305,7 +329,7 @@ class ExportService:
 
         return result
     
-    def export_all(self, backup_model, destination_str, settings_service):
+    def export_all(self, backup_model, destination_str, settings_service, conversion_service):
         """
         Export all function, based on psuedo code of extraction engine. subject to change.
         """
@@ -315,8 +339,8 @@ class ExportService:
         try:
             import threading
 
-        
-            convert_type_dict = {}
+            user_set_symlinks = True
+            convert_type_dict = conversion_service.get_convert_type_dict()
             progress_tracker = DummyProgress()
 
             try:
@@ -350,6 +374,75 @@ class ExportService:
             # Draw progress bar while engine runs
             draw_progress_bar(progress_tracker, thread)
 
+            thread.join()
+
+            if engine_error:
+                return False, f"Extraction Engine Error: {engine_error[0]}"
+
+            return True, f"Export complete! Files saved to '{destination_str}'."
+
+        except Exception as e:
+            return False, f"Extraction Engine Error: {str(e)}"
+
+
+    def export_single_album(self, backup_model, destination_str, album_name, settings_service, conversion_service):
+        """Export a single specific album only."""
+        if not backup_model:
+            return False, "No backup loaded."
+
+        from functional_components.file_extraction_engine.domain.blacklist import Blacklist, ListEntry
+
+        # Build a whitelist containing only the requested album
+        # Remove the suffix from the name
+        is_nua = album_name.endswith(" [Smart Album]")
+        clean_name = album_name.removesuffix(" [Smart Album]") if is_nua else album_name
+
+        single_album_blacklist = Blacklist(
+            current_list=[
+                entry for entry in
+                [ListEntry(album.title) for album in backup_model.albums
+                    if album.title != album_name]
+                + [ListEntry(nua) for nua in ["favorites", "hidden", "selfies", "recently_deleted"]
+                    if nua != clean_name]
+            ],
+            is_blacklist=True
+        )
+
+        try:
+            import threading
+            user_set_symlinks = True
+            convert_type_dict = conversion_service.get_convert_type_dict()
+            progress_tracker = DummyProgress()
+
+            try:
+                test = pathlib.Path(tempfile.mkdtemp()) / "test_link"
+                test.symlink_to(pathlib.Path(tempfile.mkdtemp()))
+                os_supports_symlinks = True
+                test.unlink()
+            except (OSError, NotImplementedError):
+                os_supports_symlinks = False
+
+            engine_error = []
+
+            def run():
+                try:
+                    run_extraction_engine(
+                        backup_model=backup_model,
+                        blacklist=single_album_blacklist,
+                        output_root=Path(destination_str),
+                        os_supports_symlinks=os_supports_symlinks,
+                        user_set_symlinks=user_set_symlinks,
+                        convert_type_dict=convert_type_dict,
+                        progress=progress_tracker,
+                        include_unassigned=False,
+                    )
+                except Exception as e:
+                    import traceback
+                    engine_error.append(traceback.format_exc())
+
+            thread = threading.Thread(target=run, daemon=True)
+            thread.start()
+            draw_progress_bar(progress_tracker, thread)
             thread.join()
 
             if engine_error:

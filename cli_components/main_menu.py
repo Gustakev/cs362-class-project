@@ -15,12 +15,14 @@ import webbrowser
 from pathlib import Path
 from PIL import Image
 
-from functional_components.services import BackupService, SettingsService, ExportService
+from functional_components.services import BackupService, SettingsService, \
+    ExportService, ConversionService
 from functional_components.photo_caption.app import photo_captioner
 
 backup_service = BackupService()
 settings_service = SettingsService()
 export_service = ExportService()
+conversion_service = ConversionService()
 
 
 def gui_pick_folder():
@@ -45,7 +47,6 @@ def gui_pick_folder():
         )
         return None
 
-
 def print_device_metadata():
     """
     Prints device metadata in a nice format.
@@ -54,7 +55,6 @@ def print_device_metadata():
     device_data = backup_service.get_formatted_device_metadata()
 
     print(device_data)
-
 
 def load_backup_menu():
     """
@@ -102,7 +102,6 @@ def load_backup_menu():
         else:
             print(f"\n{message}\n")
 
-
 def main_menu():
     """
     Main program command-line interface loop.
@@ -149,11 +148,9 @@ def main_menu():
                 file=sys.stderr
             )
 
-
 def backup_menu():
     """Placeholder for backup menu."""
     print("")
-
 
 def get_export_destination(item_name):
     """
@@ -205,7 +202,6 @@ def get_export_destination(item_name):
         else:
             print("\033[31mInvalid input. Please enter 'y' or 'n'.\033[0m")
 
-
 def export_all_menu():
     """
     Handles the UI flow for exporting all eligible albums.
@@ -227,13 +223,13 @@ def export_all_menu():
     success, message = export_service.export_all(
         backup_service.current_model,
         dest_path,
-        settings_service
+        settings_service,
+        conversion_service
     )
     if success:
         print(f"\n[SUCCESS] {message}\n")
     else:
         print(f"\n[ERROR] {message}\n", file=sys.stderr)
-
 
 def export_specific_menu():
     """
@@ -280,43 +276,57 @@ def export_specific_menu():
                 f"\033[31m" + "\n[!] Error: Album '{choice}' does not exist." + "\033[0m",
                 file=sys.stderr,
             )
-
+    
+    # Do export of single collection:
     dest_path = get_export_destination(f"'{selected_album}'")
     if not dest_path:
         return
 
-    # TODO:When exporting a single album is implemented
-
-# success, message = export_service.export_single_album(
-#     backup_model=backup_service.current_model,
-#   album_name=selected_album,
-#      destination_str=dest_path
-#  )
-
-# if success:
-#      print(f"\n[SUCCESS] {message}\n")
-#  else:
-#      print(f"\n[ERROR] {message}\n")
+    success, message = export_service.export_single_album(
+        backup_model=backup_service.current_model,
+        destination_str=dest_path,
+        album_name=selected_album,
+        settings_service=settings_service,
+        conversion_service=conversion_service
+    )
+    if success:
+        print(f"\n[SUCCESS] {message}\n")
+    else:
+        print(f"\n[ERROR] {message}\n", file=sys.stderr)
 
 def settings_menu():
-    """
-    Displays and manages the Blacklist/Whitelist export filters.
-    Disables access to modification submenus if a backup is not yet loaded.
-    """
-    # Block access if no backup is loaded
+    """Top-level settings menu. Routes to submenus."""
     if backup_service.current_model is None:
         print("\033[31m" + "\n[!] Error: You must load a backup before changing settings." + "\033[0m")
         return
-    
-    while True:
-        # Get data from Service
-        mode, album_list = settings_service.get_state()
 
+    while True:
+        print("\033[33m" + "\n--- SETTINGS ---" + "\033[0m")
+        print("1. Blacklist/Whitelist Settings")
+        print("2. Conversion Settings")
+        print("3. Back")
+
+        choice = input("Select: ").strip()
+
+        if choice == "1":
+            blacklist_whitelist_menu()
+        elif choice == "2":
+            conversion_settings_menu()
+        elif choice == "3":
+            print("Going back...")
+            return
+        else:
+            print("\nInvalid Choice")
+
+def blacklist_whitelist_menu():
+    """Manages the Blacklist/Whitelist export filters."""
+    while True:
+        mode, album_list = settings_service.get_state()
         backup_loaded = backup_service.current_model is not None
 
         sym_status = "ON" if settings_service.user_set_symlinks else "OFF"
 
-        print("--- SETTINGS ---")
+        print("\033[33m" + "\n--- BLACKLIST/WHITELIST SETTINGS ---" + "\033[0m")
         print(f"Mode: {mode}")
         print(f"List: [{album_list}]")
         print(f"Symlinks: {sym_status}")
@@ -339,15 +349,12 @@ def settings_menu():
                 available_albums = export_service.get_album_list(backup_service.current_model)
                 print(settings_service.toggle_mode(available_albums))
             else:
-                print(
-                    "\033[31m" + "\n[!] Error: You must load a backup before changing settings." + "\033[0m",
-                    file=sys.stderr,
-                )
+                print("\033[31m" + "\n[!] Error: You must load a backup before changing settings." + "\033[0m", file=sys.stderr)
         elif choice == "2":
             if backup_loaded:
                 album_selection_submenu()
             else:
-                print("\033[31m" + "\n[!] Error: You must load a backup before selecting albums." "\033[0m")
+                print("\033[31m" + "\n[!] Error: You must load a backup before selecting albums." + "\033[0m")
         
         elif choice == "3":
             print(settings_service.toggle_symlinks())
@@ -360,6 +367,32 @@ def settings_menu():
         else:
             print("\033[31m\nInvalid input. Please select 1, 2, or 3.\033[0m")
 
+def conversion_settings_menu():
+    """Manages conversion format settings."""
+    while True:
+        print("\033[33m" + "\n--- CONVERSION SETTINGS ---" + "\033[0m")
+        print("Toggle a conversion to enable/disable it. Enabled conversions")
+        print("will automatically convert files during export.\n")
+
+        conversions = ConversionService.SUPPORTED_CONVERSIONS
+        for i, (src, dst) in enumerate(conversions.items(), start=1):
+            status = "ON" if src in conversion_service.enabled else "OFF"
+            print(f"{i}. {src} → {dst}  [{status}]")
+
+        back_num = len(conversions) + 1
+        print(f"{back_num}. Back")
+
+        choice = input("\nSelect: ").strip()
+
+        if choice == str(back_num):
+            return
+        
+        try:
+            idx = int(choice) - 1
+            ext = list(conversions.keys())[idx]
+            print(conversion_service.toggle(ext))
+        except (ValueError, IndexError):
+            print("\nInvalid Choice")
 
 def album_selection_submenu():
     """
@@ -414,27 +447,29 @@ def album_selection_submenu():
             print("\033[31m\nInvalid input. Please select 1, 2, or 3.\033[0m")
 
 def help_user():
-    """Links user to our documentations that explains how our program works."""
+    """Links user to our documentation that explains how our program works."""
     dev_doc = "https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-Developer-Documentation.md"
     user_doc = "https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-User-Documentation.md"
-
 
     while True:
         print("\033[33m" + "========================= Documentation =========================\n" + "\033[0m")
         print("1. User Documentation")
         print("2. Developer Documentation")
         print("3. Back\n")
-        
+
         choice = input("Option: ").strip()
-        
+
         if choice == "1":
-            webbrowser.open_new_tab(dev_doc)
-        elif choice == "2":
             webbrowser.open_new_tab(user_doc)
+        elif choice == "2":
+            webbrowser.open_new_tab(dev_doc)
         elif choice == "3":
             break
         else:
-            print("\033[31m" + "Error: Invalid input. Choose one of the displayed options.\n" + "\033[0m", file=sys.stderr)
+            print(
+                "\033[31m" + "Error: Invalid input. Choose one of the displayed options.\n" + "\033[0m",
+                file=sys.stderr
+            )
 
 def report_bug():
     """Links to github issues if there is a bug found."""
@@ -496,13 +531,7 @@ def feat_photo_caption():
             print("Unsupported file type. Please report bug.")
 
 
-
 # TODO:
-def input_validation():
-    """Placeholder for input validation."""
-    print("")
-
-
 def progress_display():
     """Placeholder for progress display."""
     print("")
