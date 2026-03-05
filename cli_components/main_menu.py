@@ -40,7 +40,7 @@ def gui_pick_folder():
         return folder
     except tk.TclError:
         print(
-            "Error: GUI folder selection is not available on this system.",
+            "\033[31m\n Error: GUI folder selection is not available on this system.[0m",
             file=sys.stderr,
         )
         return None
@@ -66,7 +66,7 @@ def load_backup_menu():
         print(f"\033[33m" + "** Instructions: Enter a number corresponding to the choices below. **\n"+ "\033[0m")
         print("1. Load iPhone Backup Folder Via GUI")
         print("2. Load iPhone Backup Folder By Entering File Path")
-        print("3. Go Back")
+        print("3. Back")
 
         folder_picker_method = input("\nChoose an option: ")
         selected_folder = None
@@ -85,7 +85,7 @@ def load_backup_menu():
             return
         else:
             print(
-                "\nError: Invalid input. Choose one of the displayed options.",
+                "\033[31m\nError: Invalid input. Choose one of the displayed options.\033[0m",
                 file=sys.stderr,
             )
             print("")
@@ -165,38 +165,45 @@ def get_export_destination(item_name):
     Returns:
         str | None: The verified destination path, or None if the user cancels.
     """
-    print(f"\nHow would you like to select the destination folder for {item_name}?")
-    print("1. Select via GUI")
-    print("2. Enter path manually")
-    print("3. Cancel")
 
-    dest_choice = input("\nChoose an option: ").strip()
-    dest_path = None
+    while True: 
+        print(f"\nHow would you like to select the destination folder for {item_name}?")
+        print("1. Select via GUI")
+        print("2. Enter path manually")
+        print("3. Back")
 
-    if dest_choice == "1":
-        dest_path = gui_pick_folder()
-        if not dest_path:
+        dest_choice = input("\nChoose an option: ").strip()
+        dest_path = None
+
+        if dest_choice == "1":
+            dest_path = gui_pick_folder()
+            if not dest_path:
+                print("Export cancelled.")
+                return None
+            break
+        elif dest_choice == "2":
+            dest_path = input("Enter destination folder path: ").strip()
+            if not dest_path:
+                print("Export cancelled.")
+                return None
+            break 
+        elif dest_choice == "3":
             print("Export cancelled.")
             return None
-    elif dest_choice == "2":
-        dest_path = input("Enter destination folder path: ").strip()
-        if not dest_path:
+        else:
+            print("\033[31mInvalid choice. Please choose 1, 2, or 3.\033[0m")
+            
+
+    while True:    
+        print(f"\nPreparing to export {item_name} to: {dest_path}")
+        confirm = input("Proceed? (y/n): ").strip().lower()
+        if confirm == 'y':
+            return dest_path
+        elif confirm == 'n':
             print("Export cancelled.")
             return None
-    elif dest_choice == "3":
-        print("Export cancelled.")
-        return None
-    else:
-        print("Invalid choice. Export cancelled.")
-        return None
-
-    print(f"\nPreparing to export {item_name} to: {dest_path}")
-    confirm = input("Proceed? (y/n): ")
-    if confirm.lower() != "y":
-        print("Export cancelled.")
-        return None
-
-    return dest_path
+        else:
+            print("\033[31mInvalid input. Please enter 'y' or 'n'.\033[0m")
 
 
 def export_all_menu():
@@ -340,7 +347,7 @@ def settings_menu():
             print("Going back...")
             return
         else:
-            print("\nInvalid Choice")
+            print("\033[31m\nInvalid input. Please select 1, 2, or 3.\033[0m")
 
 
 def album_selection_submenu():
@@ -351,46 +358,46 @@ def album_selection_submenu():
     available_albums = sorted(
         export_service.get_album_list(backup_service.current_model)
     )
+    while True:
+        print("\033[33m" + "\n--- ALBUM SELECTION ---" + "\033[0m")
+        print("Available Albums in Backup:")
 
-    print("\033[33m" + "\n--- ALBUM SELECTION ---" + "\033[0m")
-    print("Available Albums in Backup:")
+        for album in available_albums:
+            print(f" - {album}")
 
-    for album in available_albums:
-        print(f" - {album}")
+        print("\nHow would you like to select an album?")
+        print("1. Manual Entry")
+        print("2. Checkbox Style Menu")
+        print("3. Back")
 
-    print("\nHow would you like to select an album?")
-    print("1. Manual Entry")
-    print("2. Checkbox Style Menu")
-    print("3. Go Back")
+        sub_choice = input("\nSelect an option: ").strip()
 
-    sub_choice = input("\nSelect an option: ").strip()
+        if sub_choice == "1":
+            while True:
+                _, current_list = settings_service.get_state()
+                print(f"\nCurrent List: [{current_list}]")
 
-    if sub_choice == "1":
-        while True:
-            _, current_list = settings_service.get_state()
-            print(f"\nCurrent List: [{current_list}]")
+                name = input("Enter exact Album Name (or type 'cancel' or press 'Enter' to finish): ").strip()
 
-            name = input("Enter exact Album Name (or type 'done' to finish): ").strip()
+                # Exit condition
+                if name.lower() == "cancel" or name == "":
+                    break
 
-            # Exit condition
-            if name.lower() == "done" or name == "":
-                break
-
-            # UI Validation
-            if name in available_albums:
-                success, msg = settings_service.toggle_album(name)
-                print(msg)
-            else:
-                print(
-                    f"\033[31m" + "\n[!] Error: Album '{name}' does not exist in the current backup." + "\033[0m",
-                    file=sys.stderr
-                )
-    elif sub_choice == "2":
-        print("\n[!] Checkbox style menu coming soon!")
-    elif sub_choice == "3":
-        return
-    else:
-        print("\nInvalid choice.")
+                # UI Validation
+                if name in available_albums:
+                    success, msg = settings_service.toggle_album(name)
+                    print(msg)
+                else:
+                    print(
+                        f"\033[31m" + f"\n[!] Error: Album '{name}' does not exist in the current backup." + "\033[0m",
+                        file=sys.stderr
+                    )
+        elif sub_choice == "2":
+            print("\n[!] Checkbox style menu coming soon!")
+        elif sub_choice == "3":
+            return
+        else:
+            print("\033[31m\nInvalid input. Please select 1, 2, or 3.\033[0m")
 
 def help_user():
     """Links user to our documentations that explains how our program works."""
