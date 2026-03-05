@@ -395,7 +395,7 @@ def album_selection_submenu():
                     break
                 
                 # making sure that a user can type in a album name and find it even if it has spaces at the end
-                match = next((a for a in available_albums if a.strip().lower == name.lower()),None)
+                match = next((a for a in available_albums if a.strip().lower() == name.lower()), None)
 
                 # UI Validation
                 if match:
