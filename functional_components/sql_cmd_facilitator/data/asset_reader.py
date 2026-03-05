@@ -97,3 +97,20 @@ def get_file_id_for_mov_companion(conn, mov_filename: str):
     if not results:
         raise FileNotFoundError(f"No MOV companion found for: {mov_filename}")
     return results[0]["fileID"]
+
+def get_file_id_fallback(conn, filename: str):
+    """Fallback lookup by filename when primary path resolution fails."""
+    rows = execute_query(
+        conn,
+        """SELECT fileID FROM Files 
+           WHERE relativePath LIKE ? 
+           AND relativePath NOT LIKE '%.pvt%'
+           AND relativePath NOT LIKE '%Thumbnails%'
+           AND relativePath NOT LIKE '%Mutations%'
+           ORDER BY length(relativePath) ASC""",
+        (f"%/{filename}",)
+    )
+    results = map_rows(rows)
+    if not results:
+        raise FileNotFoundError(f"No fallback match found for: {filename}")
+    return results[0]["fileID"]
