@@ -157,18 +157,15 @@ class TestMainMenuUI(unittest.TestCase):
     @patch('cli_components.main_menu.export_service')
     @patch('cli_components.main_menu.backup_service')
     def test_export_specific_menu_flow(self, mock_backup, mock_export, mock_get_dest, mock_input, mock_print):
-       
-       
-        
        # Fake the loaded backup and the available albums list
         mock_backup.current_model = "FakeModelLoaded"
         mock_export.get_album_list.return_value = ["Recents", "Favorites", "Hidden"]
-        
-        export_specific_menu()
-        
-        # Ensure the helper was triggered with the exact formatted string
-        mock_get_dest.assert_called_once_with("'Favorites'")
+        mock_export.export_single_album.return_value = (True, "Export complete!")
 
+        export_specific_menu()
+
+        mock_get_dest.assert_called_once_with("'Favorites'")
+        mock_export.export_single_album.assert_called_once()
 
     """Adding a album to the Blacklist"""
     @patch('builtins.print')
