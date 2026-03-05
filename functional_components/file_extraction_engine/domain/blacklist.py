@@ -22,7 +22,7 @@ class ListEntry:
     _NUAS: ClassVar[set] = {"favorites", "hidden", "selfies", "recently_deleted"}
 
     def __init__(self, name: str):
-        self.name = name
+        self.name = name.strip()
         self.is_NUA = self.name.lower() in self._NUAS
 
     def __eq__(self, other):
