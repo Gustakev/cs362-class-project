@@ -250,6 +250,31 @@ class DummyProgress:
         self.percent = 0
 
 
+class ConversionService:
+    """Manages conversion format settings."""
+
+    SUPPORTED_CONVERSIONS = {
+        "HEIC": "JPG",
+        "MOV": "MP4",
+    }
+
+    def __init__(self):
+        self.enabled = set()  # set of source extensions that are active
+
+    def toggle(self, ext: str):
+        ext = ext.upper()
+        if ext in self.enabled:
+            self.enabled.discard(ext)
+            return f"Conversion {ext} → {self.SUPPORTED_CONVERSIONS[ext]} disabled."
+        else:
+            self.enabled.add(ext)
+            return f"Conversion {ext} → {self.SUPPORTED_CONVERSIONS[ext]} enabled."
+
+    def get_convert_type_dict(self) -> dict:
+        """Returns the dict the extraction engine expects."""
+        return {ext: self.SUPPORTED_CONVERSIONS[ext] for ext in self.enabled}
+    
+
 class ExportService:
     """
     Handles the orchestration of extracting media from the backup and
@@ -298,7 +323,7 @@ class ExportService:
 
         return result
     
-    def export_all(self, backup_model, destination_str, settings_service):
+    def export_all(self, backup_model, destination_str, settings_service, conversion_service):
         """
         Export all function, based on psuedo code of extraction engine. subject to change.
         """
@@ -309,7 +334,7 @@ class ExportService:
             import threading
 
             user_set_symlinks = True
-            convert_type_dict = {}
+            convert_type_dict = conversion_service.get_convert_type_dict()
             progress_tracker = DummyProgress()
 
             try:
@@ -354,7 +379,7 @@ class ExportService:
             return False, f"Extraction Engine Error: {str(e)}"
 
 
-    def export_single_album(self, backup_model, destination_str, album_name, settings_service):
+    def export_single_album(self, backup_model, destination_str, album_name, settings_service, conversion_service):
         """Export a single specific album only."""
         if not backup_model:
             return False, "No backup loaded."
@@ -380,7 +405,7 @@ class ExportService:
         try:
             import threading
             user_set_symlinks = True
-            convert_type_dict = {}
+            convert_type_dict = conversion_service.get_convert_type_dict()
             progress_tracker = DummyProgress()
 
             try:
@@ -421,4 +446,3 @@ class ExportService:
 
         except Exception as e:
             return False, f"Extraction Engine Error: {str(e)}"
-    

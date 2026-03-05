@@ -15,12 +15,14 @@ import webbrowser
 from pathlib import Path
 from PIL import Image
 
-from functional_components.services import BackupService, SettingsService, ExportService
+from functional_components.services import BackupService, SettingsService, \
+    ExportService, ConversionService
 from functional_components.photo_caption.app import photo_captioner
 
 backup_service = BackupService()
 settings_service = SettingsService()
 export_service = ExportService()
+conversion_service = ConversionService()
 
 
 def gui_pick_folder():
@@ -220,7 +222,8 @@ def export_all_menu():
     success, message = export_service.export_all(
         backup_service.current_model,
         dest_path,
-        settings_service
+        settings_service,
+        conversion_service
     )
     if success:
         print(f"\n[SUCCESS] {message}\n")
@@ -284,6 +287,7 @@ def export_specific_menu():
         destination_str=dest_path,
         album_name=selected_album,
         settings_service=settings_service,
+        conversion_service=conversion_service
     )
     if success:
         print(f"\n[SUCCESS] {message}\n")
@@ -430,13 +434,27 @@ def conversion_settings_menu():
     """Manages conversion format settings."""
     while True:
         print("\033[33m" + "\n--- CONVERSION SETTINGS ---" + "\033[0m")
-        print("1. Back")
+        print("Toggle a conversion to enable/disable it. Enabled conversions")
+        print("will automatically convert files during export.\n")
 
-        choice = input("Select: ").strip()
+        conversions = ConversionService.SUPPORTED_CONVERSIONS
+        for i, (src, dst) in enumerate(conversions.items(), start=1):
+            status = "ON" if src in conversion_service.enabled else "OFF"
+            print(f"{i}. {src} → {dst}  [{status}]")
 
-        if choice == "1":
+        back_num = len(conversions) + 1
+        print(f"{back_num}. Back")
+
+        choice = input("\nSelect: ").strip()
+
+        if choice == str(back_num):
             return
-        else:
+        
+        try:
+            idx = int(choice) - 1
+            ext = list(conversions.keys())[idx]
+            print(conversion_service.toggle(ext))
+        except (ValueError, IndexError):
             print("\nInvalid Choice")
 
 def album_selection_submenu():

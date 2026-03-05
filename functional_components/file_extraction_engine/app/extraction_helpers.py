@@ -71,7 +71,8 @@ def maybe_convert(asset, convert_type_dict):
     """Convert the asset according to convert_type_dict if necessary."""
 
     if asset.file_extension.upper() in convert_type_dict:
-        result = convert_asset(AssetToConvert(asset, convert_type_dict))
+        result = convert_asset(AssetToConvert(asset_to_convert=asset, \
+            convert_type_dict=convert_type_dict))
         if result.success:
             return result.converted_asset
         else:
