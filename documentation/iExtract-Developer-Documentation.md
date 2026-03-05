@@ -122,7 +122,7 @@
 
 3. Build the executable using Python (this avoids PATH issues):
 
-   `python -m PyInstaller --onefile iExtract.py`
+   `python -m PyInstaller --onefile --copy-metadata imageio --copy-metadata moviepy --copy-metadata pillow_heif iExtract.py`
 
 4. Wait for the build to finish. PyInstaller will create two folders:  
 * `build/` (temporary files)  
