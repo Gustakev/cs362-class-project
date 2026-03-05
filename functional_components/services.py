@@ -134,7 +134,7 @@ class SettingsService:
         """Returns a Blacklist object for the Extraction Engine to evaluate."""
         return Blacklist(
             current_list=list(self.current_list),
-            is_blacklist=self.is_blacklist_mode
+            is_blacklist=True
         )
     
     def get_state(self):
@@ -199,7 +199,7 @@ class SettingsService:
             message string confirming the action taken.
         """
         # Remove potential suffix indicating smart album.
-        name = album_name.strip().removesuffix(" [Smart Album]")
+        name = album_name.removesuffix(" [Smart Album]")
         if not name:
             return False, "Album name cannot be empty."
 
