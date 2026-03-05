@@ -134,7 +134,7 @@ class SettingsService:
         """Returns a Blacklist object for the Extraction Engine to evaluate."""
         return Blacklist(
             current_list=list(self.current_list),
-            is_blacklist=self.is_blacklist_mode
+            is_blacklist=True  # Always treat as blacklist for engine.
         )
     
     def get_state(self):
@@ -177,9 +177,10 @@ class SettingsService:
                 self.is_blacklist_mode = True
                 return "[!] Error: Cannot create Whitelist without backup data."
      
-        # Fill the blacklist with every album as an ListEntry object
+            # Fill the blacklist with every album as an ListEntry object
             for name in all_available_album_names:
-                entry = ListEntry(name)
+                clean = name.removesuffix(" [Smart Album]")
+                entry = ListEntry(clean)
                 self.current_list.add(entry)
                 self._original_full_list.add(entry)
 
