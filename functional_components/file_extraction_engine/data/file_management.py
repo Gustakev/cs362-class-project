@@ -3,10 +3,15 @@ Author: Sam Daughtry
 Date: 2026-02-28
 Description: Manages file paths and directories for the file extraction engine.
 """
+
 import os
+
 import shutil
+
 from pathlib import Path
+
 from typing import Dict
+
 from datetime import datetime
 
 
@@ -74,5 +79,18 @@ def set_file_times(file_path: Path, modification_date) -> None:
     else:
         dt = modification_date
 
-    mod_time = int(dt.timestamp())
-    os.utime(file_path, (mod_time, mod_time))
+    try:
+        mod_time = dt.timestamp()
+        # Windows requires timestamps between 1970 and 3001
+        # Clamp to a safe range to avoid OSError
+        mod_time = max(0.0, min(mod_time, 32503680000.0))
+        os.utime(file_path, (mod_time, mod_time))
+    except Exception:
+        pass  # If timestamp setting fails, leave the file time as-is
+
+def sanitize_folder_name(name: str) -> str:
+    """Remove or replace characters illegal in Windows folder names."""
+    illegal = r'\/:*?"<>|'
+    for char in illegal:
+        name = name.replace(char, "_")
+    return name.strip()

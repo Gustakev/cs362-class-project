@@ -11,7 +11,7 @@ This program allows users to export their iPhone photo albums locally without re
 * Linux 32-bit or 64-bit  
 * macOS 32-bit or 64-bit
 
-  *Disclaimer:* Whether a system using a certain OS will run this program depends on whether it has a shell and terminal and whether Python 3.14 supports the system. There are no guarantees of functionality offered for rare OSes or rare OS distros.
+  *Disclaimer:* Whether a system using a certain OS will run this program depends on whether it has a shell and terminal and whether Python 3.13 supports the system. There are no guarantees of functionality offered for rare OSes or rare OS distros.
 
 **How to Install**
 
@@ -21,10 +21,10 @@ This program allows users to export their iPhone photo albums locally without re
 2. **Move to repo location**  
    1. In the terminal, run the command:  \`cd cs362-class-project\`  
 3. **Install Python**  
-   1. Install Python 3.14+ for your system from this link: [https://www.python.org/downloads/](https://www.python.org/downloads/)  
+   1. Install Python 3.13+ for your system from this link: [https://www.python.org/downloads/](https://www.python.org/downloads/)  
 4. **Initialize virtual environment**  
    1. In the terminal, run the command: \`python \-m venv venv\`  
-   2. Note: If the above command, or any other command prefixed with ‘python’ fails, ensure that you have a Python path variable set on your system. It may either be ‘python’, ‘python3’, or something more specific like ‘python3.14’, depending on your installation.  
+   2. Note: If the above command, or any other command prefixed with ‘python’ fails, ensure that you have a Python path variable set on your system. It may either be ‘python’, ‘python3’, or something more specific like ‘python3.13’, depending on your installation.  
 5. **Activate virtual environment**  
    1. If your machine is running Mac or Linux, in the terminal, run the command:  
       \`source venv/bin/activate\`   
@@ -85,4 +85,4 @@ Users can report bugs through the in-app “Report Bug” option, which will lin
 - **Bugs:**  
   * No known bugs at this time.  
 - **Limitations:**  
-  * Menu options 2, 3, 4, 5, 6, and 7 aren’t fully functional yet.
+  * Menu options 3, 4, 7, and 8 aren’t fully functional yet.
