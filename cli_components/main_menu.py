@@ -290,7 +290,7 @@ def export_specific_menu():
     else:
         print(f"\n[ERROR] {message}\n", file=sys.stderr)
 
-def settings_menu():
+def blacklist_whitelist_menu():
     """
     Displays and manages the Blacklist/Whitelist export filters.
     Disables access to modification submenus if a backup is not yet loaded.
@@ -341,6 +341,103 @@ def settings_menu():
         else:
             print("\nInvalid Choice")
 
+def settings_menu():
+    """Top-level settings menu. Routes to submenus."""
+    if backup_service.current_model is None:
+        print("\033[31m" + "\n[!] Error: You must load a backup before changing settings." + "\033[0m")
+        return
+
+    while True:
+        print("\033[33m" + "\n--- SETTINGS ---" + "\033[0m")
+        print("1. Blacklist/Whitelist Settings")
+        print("2. Conversion Settings")
+        print("3. Back")
+
+        choice = input("Select: ").strip()
+
+        if choice == "1":
+            blacklist_whitelist_menu()
+        elif choice == "2":
+            conversion_settings_menu()
+        elif choice == "3":
+            print("Going back...")
+            return
+        else:
+            print("\nInvalid Choice")
+
+def settings_menu():
+    """Top-level settings menu. Routes to submenus."""
+    if backup_service.current_model is None:
+        print("\033[31m" + "\n[!] Error: You must load a backup before changing settings." + "\033[0m")
+        return
+
+    while True:
+        print("\033[33m" + "\n--- SETTINGS ---" + "\033[0m")
+        print("1. Blacklist/Whitelist Settings")
+        print("2. Conversion Settings")
+        print("3. Back")
+
+        choice = input("Select: ").strip()
+
+        if choice == "1":
+            blacklist_whitelist_menu()
+        elif choice == "2":
+            conversion_settings_menu()
+        elif choice == "3":
+            print("Going back...")
+            return
+        else:
+            print("\nInvalid Choice")
+
+def blacklist_whitelist_menu():
+    """Manages the Blacklist/Whitelist export filters."""
+    while True:
+        mode, album_list = settings_service.get_state()
+        backup_loaded = backup_service.current_model is not None
+
+        print("\033[33m" + "\n--- BLACKLIST/WHITELIST SETTINGS ---" + "\033[0m")
+        print(f"Mode: {mode}")
+        print(f"List: [{album_list}]")
+
+        if backup_loaded:
+            print("1. Switch Mode (Blacklist/Whitelist)")
+            print("2. Add/Remove Album")
+            print("3. Back")
+        else:
+            print("1. Switch mode (DISABLED - Load a backup first)")
+            print("2. Add/Remove Album (DISABLED - Load a backup first)")
+            print("3. Back")
+
+        choice = input("Select: ")
+
+        if choice == "1":
+            if backup_loaded:
+                available_albums = export_service.get_album_list(backup_service.current_model)
+                print(settings_service.toggle_mode(available_albums))
+            else:
+                print("\033[31m" + "\n[!] Error: You must load a backup before changing settings." + "\033[0m", file=sys.stderr)
+        elif choice == "2":
+            if backup_loaded:
+                album_selection_submenu()
+            else:
+                print("\033[31m" + "\n[!] Error: You must load a backup before selecting albums." + "\033[0m")
+        elif choice == "3":
+            return
+        else:
+            print("\nInvalid Choice")
+
+def conversion_settings_menu():
+    """Manages conversion format settings."""
+    while True:
+        print("\033[33m" + "\n--- CONVERSION SETTINGS ---" + "\033[0m")
+        print("1. Back")
+
+        choice = input("Select: ").strip()
+
+        if choice == "1":
+            return
+        else:
+            print("\nInvalid Choice")
 
 def album_selection_submenu():
     """
