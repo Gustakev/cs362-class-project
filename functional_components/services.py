@@ -351,3 +351,73 @@ class ExportService:
 
         except Exception as e:
             return False, f"Extraction Engine Error: {str(e)}"
+
+
+    def export_single_album(self, backup_model, destination_str, album_name, settings_service):
+        """Export a single specific album only."""
+        if not backup_model:
+            return False, "No backup loaded."
+
+        from functional_components.file_extraction_engine.domain.blacklist import Blacklist, ListEntry
+
+        # Build a whitelist containing only the requested album
+        # Remove the suffix from the name
+        is_nua = album_name.endswith(" [Smart Album]")
+        clean_name = album_name.removesuffix(" [Smart Album]") if is_nua else album_name
+
+        single_album_blacklist = Blacklist(
+            current_list=[
+                entry for entry in
+                [ListEntry(album.title) for album in backup_model.albums
+                    if album.title != album_name]
+                + [ListEntry(nua) for nua in ["favorites", "hidden", "selfies", "recently_deleted"]
+                    if nua != clean_name]
+            ],
+            is_blacklist=True
+        )
+
+        try:
+            import threading
+            user_set_symlinks = True
+            convert_type_dict = {}
+            progress_tracker = DummyProgress()
+
+            try:
+                test = pathlib.Path(tempfile.mkdtemp()) / "test_link"
+                test.symlink_to(pathlib.Path(tempfile.mkdtemp()))
+                os_supports_symlinks = True
+                test.unlink()
+            except (OSError, NotImplementedError):
+                os_supports_symlinks = False
+
+            engine_error = []
+
+            def run():
+                try:
+                    run_extraction_engine(
+                        backup_model=backup_model,
+                        blacklist=single_album_blacklist,
+                        output_root=Path(destination_str),
+                        os_supports_symlinks=os_supports_symlinks,
+                        user_set_symlinks=user_set_symlinks,
+                        convert_type_dict=convert_type_dict,
+                        progress=progress_tracker,
+                        include_unassigned=False,
+                    )
+                except Exception as e:
+                    import traceback
+                    engine_error.append(traceback.format_exc())
+
+            thread = threading.Thread(target=run, daemon=True)
+            thread.start()
+            draw_progress_bar(progress_tracker, thread)
+            thread.join()
+
+            if engine_error:
+                return False, f"Extraction Engine Error: {engine_error[0]}"
+
+            return True, f"Export complete! Files saved to '{destination_str}'."
+
+        except Exception as e:
+            return False, f"Extraction Engine Error: {str(e)}"
+    

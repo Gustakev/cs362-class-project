@@ -273,23 +273,22 @@ def export_specific_menu():
                 f"\033[31m" + "\n[!] Error: Album '{choice}' does not exist." + "\033[0m",
                 file=sys.stderr,
             )
-
+    
+    # Do export of single collection:
     dest_path = get_export_destination(f"'{selected_album}'")
     if not dest_path:
         return
 
-    # TODO:When exporting a single album is implemented
-
-# success, message = export_service.export_single_album(
-#     backup_model=backup_service.current_model,
-#   album_name=selected_album,
-#      destination_str=dest_path
-#  )
-
-# if success:
-#      print(f"\n[SUCCESS] {message}\n")
-#  else:
-#      print(f"\n[ERROR] {message}\n")
+    success, message = export_service.export_single_album(
+        backup_model=backup_service.current_model,
+        destination_str=dest_path,
+        album_name=selected_album,
+        settings_service=settings_service,
+    )
+    if success:
+        print(f"\n[SUCCESS] {message}\n")
+    else:
+        print(f"\n[ERROR] {message}\n", file=sys.stderr)
 
 def settings_menu():
     """

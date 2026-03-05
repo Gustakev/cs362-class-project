@@ -39,6 +39,7 @@ def run_extraction_engine(
     user_set_symlinks: bool,
     convert_type_dict: Dict[str, str],
     progress,
+    include_unassigned: bool = True,
 ) -> None:
     """Perform the full extraction process."""
 
@@ -100,6 +101,11 @@ def run_extraction_engine(
         dest_name = get_dest_name(asset, resolved_asset)
 
         if collection_count == 0 or collection_count > 1:
+            # To prevent non-exclusive assets from being included in the
+            #  extraction if undesired
+            if collection_count == 0 and not include_unassigned:
+                tick()
+                continue
             if use_symlinks:
                 dest_folder = ensure_folder_exists(
                     output_root / "non_exclusive_assets"
@@ -182,6 +188,11 @@ def run_extraction_engine(
             continue
 
         if collection_count == 0 or collection_count > 1:
+            # To prevent non-exclusive assets from being included in the
+            #  extraction if undesired
+            if collection_count == 0 and not include_unassigned:
+                tick()
+                continue
             if use_symlinks:
                 dest_parent = ensure_folder_exists(
                     output_root / "non_exclusive_assets"
