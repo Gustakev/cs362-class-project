@@ -129,6 +129,13 @@ class SettingsService:
         self.current_list = set()
         self._original_full_list = set()
         self.is_blacklist_mode = True
+        self.use_symlinks = True
+
+    def toggle_symlinks(self):
+        """Toggles the global symlink setting."""
+        self.use_symlinks = not self.use_symlinks
+        state = "ENABLED" if self.use_symlinks else "DISABLED"
+        return f"Symlink creation is now {state}."    
 
     def get_engine_blacklist(self):
         """Returns a Blacklist object for the Extraction Engine to evaluate."""
@@ -333,7 +340,7 @@ class ExportService:
         try:
             import threading
 
-            user_set_symlinks = True
+            user_set_symlinks = settings_service.use_symlinks
             convert_type_dict = conversion_service.get_convert_type_dict()
             progress_tracker = DummyProgress()
 
@@ -404,7 +411,7 @@ class ExportService:
 
         try:
             import threading
-            user_set_symlinks = True
+            user_set_symlinks = settings_service.use_symlinks
             convert_type_dict = conversion_service.get_convert_type_dict()
             progress_tracker = DummyProgress()
 
