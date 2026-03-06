@@ -95,7 +95,7 @@ class TestMainMenuUI(unittest.TestCase):
     """Settings menu"""
 
     @patch('builtins.print')
-    @patch('builtins.input', side_effect=['1', '1', '3', '3'])
+    @patch('builtins.input', side_effect=['1', '1', '3', '4'])
     @patch('cli_components.main_menu.export_service')
     @patch('cli_components.main_menu.settings_service')
     @patch('cli_components.main_menu.backup_service')
@@ -108,7 +108,7 @@ class TestMainMenuUI(unittest.TestCase):
           '1' -> enter Blacklist/Whitelist submenu from Settings
           '1' -> trigger toggle mode inside the submenu
           '3' -> go back from the submenu
-          '3' -> go back from Settings
+          '4' -> go back from Settings
         """
         # Setup mock state for the menu to print
         mock_backup.current_model = "FakeModel"
@@ -191,7 +191,7 @@ class TestMainMenuUI(unittest.TestCase):
     """Adding an album to the Blacklist"""
 
     @patch('builtins.print')
-    @patch('builtins.input', side_effect=['1', 'Instagram', 'done', '3'])
+    @patch('builtins.input', side_effect=['1', 'Instagram', 'cancel', '3'])
     @patch('cli_components.main_menu.settings_service')
     @patch('cli_components.main_menu.export_service')
     @patch('cli_components.main_menu.backup_service')
