@@ -1,7 +1,7 @@
 <h1 align="center"><b>iExtract iOS Album to Folder Conversion Tool</b></h1>
 
 <p align="center">
-  <strong>iExtract Version 0.1.0-beta.1</strong>
+  <strong>iExtract Version 0.2.0-beta.1</strong>
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white" />
