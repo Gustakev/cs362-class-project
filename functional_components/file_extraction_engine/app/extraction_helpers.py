@@ -71,15 +71,16 @@ def get_dest_name(asset, resolved_asset) -> str:
         ext = "." + asset.file_extension.lower()
     return sanitize_filename(stem + ext)
 
-def maybe_convert(asset, convert_type_dict):
+def maybe_convert(asset, convert_type_dict, temp_dir=None):
     """Convert the asset according to convert_type_dict if necessary."""
-
     if asset.file_extension.upper() not in convert_type_dict:
         return asset
 
     try:
-        result = convert_asset(AssetToConvert(asset_to_convert=asset,
-            convert_type_dict=convert_type_dict))
+        result = convert_asset(AssetToConvert(
+            asset_to_convert=asset,
+            convert_type_dict=convert_type_dict
+        ), temp_dir=temp_dir)
         if result.success:
             return result.converted_asset
         else:

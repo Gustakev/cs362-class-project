@@ -31,6 +31,13 @@ from .extraction_helpers import (
 )
 
 
+def _cleanup_temp(resolved_asset, original_asset):
+    """Delete the temp file immediately after it has been copied to its destination."""
+    if resolved_asset.backup_relative_path != original_asset.backup_relative_path:
+        temp_file = Path(resolved_asset.backup_relative_path)
+        if temp_file.exists():
+            temp_file.unlink(missing_ok=True)
+
 def run_extraction_engine(
     backup_model,
     blacklist,
@@ -44,6 +51,7 @@ def run_extraction_engine(
     """Perform the full extraction process."""
 
     use_symlinks = os_supports_symlinks and user_set_symlinks
+    conversion_temp_dir = output_root / "iExtract_conversion_temp"
 
     non_excl_assets: Dict[str, Path] = {}
 
@@ -96,7 +104,7 @@ def run_extraction_engine(
             continue
 
         # convert/copy source file
-        resolved_asset = maybe_convert(asset, convert_type_dict)
+        resolved_asset = maybe_convert(asset, convert_type_dict, conversion_temp_dir)
         src_path = Path(resolved_asset.backup_relative_path)
         dest_name = get_dest_name(asset, resolved_asset)
 
@@ -111,6 +119,7 @@ def run_extraction_engine(
                     output_root / "non_exclusive_assets"
                 )
                 dest_path = copy_file(src_path, dest_folder, dest_name, asset)
+                _cleanup_temp(resolved_asset, asset)
                 non_excl_assets[asset.asset_uuid] = dest_path
 
                 for collection in active_collections:
@@ -124,17 +133,20 @@ def run_extraction_engine(
                         output_root / "non_exclusive_assets"
                     )
                     copy_file(src_path, dest_folder, dest_name, asset)
+                    _cleanup_temp(resolved_asset, asset)
                 else:
                     for collection in active_collections:
                         dest_folder = ensure_folder_exists(
                             output_root / sanitize_folder_name(collection.title)
                         )
                         copy_file(src_path, dest_folder, dest_name, asset)
+                        _cleanup_temp(resolved_asset, asset)
         else:  # exactly one collection
             dest_folder = ensure_folder_exists(
                 output_root / sanitize_folder_name(active_collections[0].title)
             )
             copy_file(src_path, dest_folder, dest_name, asset)
+            _cleanup_temp(resolved_asset, asset)
 
         tick()
 
@@ -168,7 +180,7 @@ def run_extraction_engine(
         # build staging folder and populate with converted frames
         staging_folder = ensure_folder_exists(staging_root / burst_uuid)
         for frame in frames:
-            resolved = maybe_convert(frame, convert_type_dict)
+            resolved = maybe_convert(frame, convert_type_dict, conversion_temp_dir)
             dest_name = get_dest_name(frame, resolved)
             copy_file(
                 Path(resolved.backup_relative_path),
@@ -176,6 +188,7 @@ def run_extraction_engine(
                 dest_name,
                 frame,
             )
+            _cleanup_temp(resolved, frame)
 
         # symlink shortcut when already extracted
         if use_symlinks and burst_uuid in non_excl_assets:
@@ -232,5 +245,9 @@ def run_extraction_engine(
     # clean up empty staging root
     if staging_root.exists() and not any(staging_root.iterdir()):
         staging_root.rmdir()
+
+    # clean up temp files
+    if conversion_temp_dir.exists():
+        shutil.rmtree(conversion_temp_dir, ignore_errors=True)
 
     progress.percent = 100
