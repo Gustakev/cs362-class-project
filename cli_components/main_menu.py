@@ -388,8 +388,19 @@ def symlink_settings_menu():
     """Manages symlink creation settings."""
     while True:
         print("\033[33m" + "\n--- SYMLINK SETTINGS ---" + "\033[0m")
-        print("Symlinks save disk space by linking to the original backup files")
-        print("instead of fully copying them. If disabled, files will be copied.\n")
+
+        print(
+            "- Enabling symlinks (symbolic links, or shortcuts) allows\n"
+            "iExtract to save a file to the extraction folder one time and\n"
+            "link to its location in every folder for each collection to\n"
+            "which it belongs. This saves storage space on your system.\n"
+            "- IMPORTANT WARNING: Ensure that the location you store your\n"
+            "extraction in is the permanent location you would like to store\n"
+            "it in. If you move the extraction folder (or rename it), you\n"
+            "will have to run a script to change the path of each symlink to\n"
+            "reflect the new, proper paths of each file in the extraction\n"
+            "folder.\n"
+            )
 
         status = "ON" if settings_service.use_symlinks else "OFF"
         print(f"Current Status: [{status}]")
