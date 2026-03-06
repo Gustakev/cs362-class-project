@@ -94,3 +94,10 @@ def sanitize_folder_name(name: str) -> str:
     for char in illegal:
         name = name.replace(char, "_")
     return name.strip()
+
+def sanitize_filename(name: str) -> str:
+    """Remove or replace characters illegal in Windows filenames."""
+    illegal = r'\/:*?"<>|'
+    for char in illegal:
+        name = name.replace(char, "-")
+    return name.strip()
