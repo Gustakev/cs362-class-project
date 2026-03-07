@@ -87,7 +87,7 @@ def load_backup_menu():
             return
         else:
             print(
-                "\nError: Invalid input. Choose one of the displayed options.",
+                "\033[31m" + "\nError: Invalid input. Choose one of the displayed options." + "\033[0m",
                 file=sys.stderr,
             )
             print("")
@@ -229,7 +229,7 @@ def export_all_menu():
     if success:
         print(f"\n[SUCCESS] {message}\n")
     else:
-        print(f"\n[ERROR] {message}\n", file=sys.stderr)
+        print(f"\033[31m" + "\n[ERROR] {message}\n"+ "\033[0m" , file=sys.stderr)
 
 def export_specific_menu():
     """
@@ -292,7 +292,7 @@ def export_specific_menu():
     if success:
         print(f"\n[SUCCESS] {message}\n")
     else:
-        print(f"\n[ERROR] {message}\n", file=sys.stderr)
+        print(f"\033[31m" + "\n[ERROR] {message}\n" + "\033[0m", file=sys.stderr)
 
 def settings_menu():
     """Top-level settings menu. Routes to submenus."""
