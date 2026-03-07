@@ -8,6 +8,8 @@ import os
 
 import subprocess
 
+import imageio_ffmpeg
+
 from pathlib import Path
 
 from PIL import Image
@@ -24,7 +26,6 @@ def _get_temp_dir(temp_dir) -> Path:
     p.mkdir(parents=True, exist_ok=True)
     return p
 
-
 def convert_image(path: str, target_format: str, temp_dir) -> str:
     """Open an image file and save it in the target format.
     Returns the path to the newly created file.
@@ -35,16 +36,16 @@ def convert_image(path: str, target_format: str, temp_dir) -> str:
     img.save(output_file)
     return output_file
 
-
 def convert_video(path: str, target_format: str, temp_dir) -> str:
     """Transcode a video file using ffmpeg directly.
     Returns the path to the newly created file.
     """
     out_dir = _get_temp_dir(temp_dir)
     output_file = str(out_dir / (Path(path).stem + "." + target_format.lower()))
+    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
     result = subprocess.run(
         [
-            "ffmpeg", "-y",
+            ffmpeg_path, "-y",
             "-i", path,
             "-c:v", "libx264",
             "-c:a", "aac",
@@ -55,5 +56,5 @@ def convert_video(path: str, target_format: str, temp_dir) -> str:
         text=True,
     )
     if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip())
+        raise RuntimeError((result.stderr + result.stdout).strip())
     return output_file
