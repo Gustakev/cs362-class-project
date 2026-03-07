@@ -115,74 +115,80 @@
 * **Effects:**  
   * If we are successful in creating this app in the given timeframe, there will finally be a free (or very inexpensive) tool that may be used by anyone to locally backup their iOS devices’ photos and videos without the friction that currently exists, such as cost and tedium.  
 * **Use Cases (Functional Requirements):**  
-  * User exports a single album (or collection; it will be a similar process) (*Part of **Feature 3***.):  
-    * Actors: Any iphone user  
-    * Triggers: The user wants to export an album to a folder of the same name.  
-    * Preconditions:  
-      1. The user must have an album already saved in their iPhone backup that they want to convert into a folder.  
-      2. The user’s computer must have enough storage to store the extracted items in.  
-    * Postconditions (success scenario): The selected album has been successfully exported to the folder of the same name.  
-    * List of steps (success scenario):  
-      1. The user opens the CLI app.  
-      2. The user enters the proper command necessary to initialize the album export from the backup by using the whitelist feature to select it and export it, as a folder of the same name, to a selected parent folder.  
-      3. The files in the album are successfully located (converted if needed or selected) and exported into the selected folder.  
-      4. The program displays a success message indicating that the same number of files as the user selected have been exported.  
-    * Extensions/variations of the success scenario  
-      1. User enters the full command following the name of the application executable, e.g., “./iExtract \--backup\_location \= \~/myBackup/, \--whitelist \= dogs, \--dest \= \~/extractedAlbums/, \--convert \= heic/jpg, mov/mp4, live\_photo/mp4, \--cq\_img \= 0.8, \--cq\_vid \= 0.75, cq\_live \= 0.9”.  
-         * cq is short for “conversion quality”.  
-         * Note: Real flag system may work differently.  
-      2. The files in the album are successfully located (converted in the specified qualities, since selected) and exported into the selected folder.  
-      3. The program displays a success message indicating that the same number of files as the user selected have been exported.  
-    * Exceptions: failure conditions and scenarios  
-      1. When whitelisting an album to export, the user enters the name of a non-existent folder:  
-         * The program discovers that no such album exists within the specified backup. An error message is printed stating that there is no such album and the program returns to the main menu.  
-      2. When exporting the album, the parent folder for the new folder to be stored within, the destination folder, does not exist:  
-         * The program creates the non-existent folder and tells the user that the folder did not exist, so the program created it.  
-      3. When exporting the album, the user enters an invalid backup folder location:  
-         * As the program cannot extract anything, given it doesn’t know where the backup folder is, it simply fails immediately, tells the user that they have offered an invalid path to a backup, and returns to the main menu.  
-  * User exports all albums (they may contain overlapping items) (*Part of **Feature 1***.):  
-    * Actors: A user with a highly organized album structure where multiple photos exist in multiple albums.  
-    * Triggers: The user wants to preserve their albums but does not want multiple copies taking up data.  
-    * Preconditions:  
-      1. The user must have an album already saved in their iPhone backup that they want to convert into a folder.  
-      2. The user’s computer must have enough storage to store the extracted items in.  
-      3. Either the file system of the OS supports shortcuts, or the computer has enough storage space to store the duplicated items across multiple album folders.  
-    * Postconditions: There is a folder named “nonExclusiveItems” that is created within the main folder of the overall extraction. This folder contains the actual items that are not exclusive to one specific album, while the program provides shortcuts, or symbolic links, to every file in each folder representing an album that that item is supposed to be in, which prevents wasting storage space. If the OS doesn’t support this, the program simply extracts a given file into each folder it belongs in, wasting storage space, as there is no alternative in that situation.  
-    * List of Steps:   
-      1. User initializes a full export of all albums.  
-      2. The system identifies that a certain photo is linked to both album A and album B.  
-      3. The album exports the real file into the “nonExclusiveAlbums” directory and adds a shortcut to that file to the folders representing both album A and album B.  
-    * Exceptions: If the OS does not support shortcuts, then the system copies the full files everywhere they belong, and then it alerts the user that the shortcuts were not created successfully and, instead, the files were duplicated.  
-  * User exports every collection (literally all of them) within their backup (*Part of **Feature 2**.*):  
-    * Actors: An iPhone user  
-    * Triggers: The user wants to back up all their photos and videos.  
-    * Preconditions: The user must have enough free storage on the destination drive partition that they’re trying to save to.  
-    * Postconditions: Files are stored without losing quality, and album/collection structure is preserved in the created folders of the same names within the destination folder.  
-    * List of Steps:  
-      1. The user opens the app.  
-      2. The user selects “Back up the entire camera roll”.  
-      3. The app scans the photo library within the source backup.  
-      4. The app prompts the user to choose a backup destination.  
-         * Connected drive, network drive, cloud location.  
-      5. The user selects a destination.  
-      6. App shows a summary screen:  
-         * Number of photos/albums to back up.  
-         * Chosen destination path.  
-      7. User selects “Start Backup”.  
-      8. The app shows a completion screen when finished.  
-  * Convert proprietary formats to common formats within an extraction (*Part of **Feature 4***.):  
-    * Actors: User  
-    * Triggers: The user needs to view or share proprietary file types on a platform that only supports common formats  
-    * Preconditions: The media files have already been identified and iExtract has access to the local storage  
-    * Postconditions: All selected proprietary files are converted to standard formats  
-    * List of Steps  
-      1. User selects a folder of extracted files within the iExtract interface  
-      2. System scans for proprietary formats  
-      3. User selects the “convert to common format” option  
-      4. System converts all selected files into a standard format  
-      5. System notifies the user that the conversion was successful  
-    * Extensions/Variations: System either archives or replaces files based on the users preference.  
-    * Exceptions: If the file is unreadable, the system will mark it with an error tag before moving on to the next file.  
+1. User exports a single album (or collection; it will be a similar process) (*Part of **Feature 3***.):  
+   * Actors: Any iphone user  
+     * Triggers: The user wants to export an album to a folder of the same name.  
+     * Preconditions:  
+       1. The user must have an album already saved in their iPhone backup that they want to convert into a folder.  
+       2. The user’s computer must have enough storage to store the extracted items in.  
+     * Postconditions (success scenario): The selected album has been successfully exported to the folder of the same name.  
+     * List of steps (success scenario):  
+       1. The user opens the CLI app.  
+       2. The user enters the proper command necessary to initialize the album export from the backup by using the whitelist feature to select it and export it, as a folder of the same name, to a selected parent folder.  
+       3. The files in the album are successfully located (converted if needed or selected) and exported into the selected folder.  
+       4. The program displays a success message indicating that the same number of files as the user selected have been exported.  
+     * Extensions/variations of the success scenario  
+       1. User enters the full command following the name of the application executable, e.g., “./iExtract \--backup\_location \= \~/myBackup/, \--whitelist \= dogs, \--dest \= \~/extractedAlbums/, \--convert \= heic/jpg, mov/mp4, live\_photo/mp4, \--cq\_img \= 0.8, \--cq\_vid \= 0.75, cq\_live \= 0.9”.  
+          * cq is short for “conversion quality”.  
+          * Note: Real flag system may work differently.  
+       2. The files in the album are successfully located (converted in the specified qualities, since selected) and exported into the selected folder.  
+       3. The program displays a success message indicating that the same number of files as the user selected have been exported.  
+     * Exceptions: failure conditions and scenarios  
+       1. When whitelisting an album to export, the user enters the name of a non-existent folder:  
+          * The program discovers that no such album exists within the specified backup. An error message is printed stating that there is no such album and the program returns to the main menu.  
+       2. When exporting the album, the parent folder for the new folder to be stored within, the destination folder, does not exist:  
+          * The program creates the non-existent folder and tells the user that the folder did not exist, so the program created it.  
+       3. When exporting the album, the user enters an invalid backup folder location:  
+          * As the program cannot extract anything, given it doesn’t know where the backup folder is, it simply fails immediately, tells the user that they have offered an invalid path to a backup, and returns to the main menu.
+
+     2\.   User exports all albums (they may contain overlapping items) (*Part of **Feature 1***.):
+
+     * Actors: A user with a highly organized album structure where multiple photos exist in multiple albums.  
+     * Triggers: The user wants to preserve their albums but does not want multiple copies taking up data.  
+     * Preconditions:  
+       1. The user must have an album already saved in their iPhone backup that they want to convert into a folder.  
+       2. The user’s computer must have enough storage to store the extracted items in.  
+       3. Either the file system of the OS supports shortcuts, or the computer has enough storage space to store the duplicated items across multiple album folders.  
+     * Postconditions: There is a folder named “nonExclusiveItems” that is created within the main folder of the overall extraction. This folder contains the actual items that are not exclusive to one specific album, while the program provides shortcuts, or symbolic links, to every file in each folder representing an album that that item is supposed to be in, which prevents wasting storage space. If the OS doesn’t support this, the program simply extracts a given file into each folder it belongs in, wasting storage space, as there is no alternative in that situation.  
+     * List of Steps:   
+       1. User initializes a full export of all albums.  
+       2. The system identifies that a certain photo is linked to both album A and album B.  
+       3. The album exports the real file into the “nonExclusiveAlbums” directory and adds a shortcut to that file to the folders representing both album A and album B.  
+     * Exceptions: If the OS does not support shortcuts, then the system copies the full files everywhere they belong, and then it alerts the user that the shortcuts were not created successfully and, instead, the files were duplicated.
+
+     3\.   User exports every collection (literally all of them) within their backup (*Part of **Feature 2**.*):
+
+     * Actors: An iPhone user  
+     * Triggers: The user wants to back up all their photos and videos.  
+     * Preconditions: The user must have enough free storage on the destination drive partition that they’re trying to save to.  
+     * Postconditions: Files are stored without losing quality, and album/collection structure is preserved in the created folders of the same names within the destination folder.  
+     * List of Steps:  
+       1. The user opens the app.  
+       2. The user selects “Back up the entire camera roll”.  
+       3. The app scans the photo library within the source backup.  
+       4. The app prompts the user to choose a backup destination.  
+          * Connected drive, network drive, cloud location.  
+       5. The user selects a destination.  
+       6. App shows a summary screen:  
+          * Number of photos/albums to back up.  
+          * Chosen destination path.  
+       7. User selects “Start Backup”.  
+       8. The app shows a completion screen when finished.
+
+     4\.   Convert proprietary formats to common formats within an extraction (*Part of **Feature 4***.):
+
+     * Actors: User  
+     * Triggers: The user needs to view or share proprietary file types on a platform that only supports common formats  
+     * Preconditions: The media files have already been identified and iExtract has access to the local storage  
+     * Postconditions: All selected proprietary files are converted to standard formats  
+     * List of Steps  
+       1. User selects a folder of extracted files within the iExtract interface  
+       2. System scans for proprietary formats  
+       3. User selects the “convert to common format” option  
+       4. System converts all selected files into a standard format  
+       5. System notifies the user that the conversion was successful  
+     * Extensions/Variations: System either archives or replaces files based on the users preference.  
+     * Exceptions: If the file is unreadable, the system will mark it with an error tag before moving on to the next file.  
 * **Non-functional Requirements:**  
   * **Portability:**  
     * iExtract must work without a separate codebase for each platform on any machine that:  

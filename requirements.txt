@@ -3,3 +3,4 @@ moviepy>=2.0.0
 pillow>=10.0.0
 pillow-heif>=0.18.0
 requests
+imageio-ffmpeg

@@ -5,6 +5,7 @@ Program Description: Command line interface for iExtract.
 """
 
 import sys
+import os
 
 import tkinter as tk
 from tkinter import filedialog
@@ -12,13 +13,16 @@ from tkinter import filedialog
 import webbrowser
 
 from pathlib import Path
+from PIL import Image
 
-from functional_components.services import BackupService, SettingsService, ExportService
-#from functional_components.photo_captioner import get_caption
+from functional_components.services import BackupService, SettingsService, \
+    ExportService, ConversionService
+from functional_components.photo_caption.app import photo_captioner
 
 backup_service = BackupService()
 settings_service = SettingsService()
 export_service = ExportService()
+conversion_service = ConversionService()
 
 
 
@@ -45,7 +49,6 @@ def gui_pick_folder():
         )
         return None
 
-
 def print_device_metadata():
     """
     Prints device metadata in a nice format.
@@ -55,7 +58,6 @@ def print_device_metadata():
 
     print(device_data)
 
-
 def load_backup_menu():
     """
     Handles the user interaction for locating and loading an iPhone backup folder.
@@ -63,10 +65,7 @@ def load_backup_menu():
     """
 
     while True:
-        print(
-            "** Instructions: Enter a number corresponding to the choices "
-            "below. **\n"
-        )
+        print(f"\033[33m" + "** Instructions: Enter a number corresponding to the choices below. **\n"+ "\033[0m")
         print("1. Load iPhone Backup Folder Via GUI")
         print("2. Load iPhone Backup Folder By Entering File Path")
         print("3. Go Back")
@@ -105,20 +104,14 @@ def load_backup_menu():
         else:
             print(f"\n{message}\n")
 
-
 def main_menu():
     """
     Main program command-line interface loop.
     """
     while True:
-        print(
-            "\n========================= iExtract Main Menu ============="
-            "============"
-        )
-        print(
-            "\n** Instructions: Enter a number corresponding to the "
-            "choices below. **\n"
-        )
+        print("\033[33m" + "=========================== iExtract Menu ============================\n")
+        print(f"** Instructions: Enter a number corresponding to the choices below. **\n"+ "\033[0m")
+
         print("1. Load iPhone Backup Folder")
         print("2. Export All Camera Roll Media")
         print("3. Export Specific Camera Roll Media")
@@ -145,11 +138,7 @@ def main_menu():
         elif main_menu_choice == "6":
             report_bug()
         elif main_menu_choice == "7":
-            # TODO
-            # Needs to get user input still
-            print("AI Photo Caption Feature Status: Feature not yet implemented.")
-            continue # Prevent crash due to unfinished code.
-            get_caption(...)
+            feat_photo_caption()
         elif main_menu_choice == "8":
             print("Restart Feature Status: Feature not yet implemented.")
         elif main_menu_choice == "9":
@@ -161,11 +150,9 @@ def main_menu():
                 file=sys.stderr
             )
 
-
 def backup_menu():
     """Placeholder for backup menu."""
     print("")
-
 
 def get_export_destination(item_name):
     """
@@ -177,39 +164,43 @@ def get_export_destination(item_name):
     Returns:
         str | None: The verified destination path, or None if the user cancels.
     """
-    print(f"\nHow would you like to select the destination folder for {item_name}?")
-    print("1. Select via GUI")
-    print("2. Enter path manually")
-    print("3. Cancel")
+    while True:
+        print(f"\nHow would you like to select the destination folder for {item_name}?")
+        print("1. Select via GUI")
+        print("2. Enter path manually")
+        print("3. Cancel")
 
-    dest_choice = input("\nChoose an option: ").strip()
-    dest_path = None
+        dest_choice = input("\nChoose an option: ").strip()
+        dest_path = None
 
-    if dest_choice == "1":
-        dest_path = gui_pick_folder()
-        if not dest_path:
+        if dest_choice == "1":
+            dest_path = gui_pick_folder()
+            if not dest_path:
+                print("Export cancelled.")
+                return None
+            break
+        elif dest_choice == "2":
+            dest_path = input("Enter destination folder path: ").strip()
+            if not dest_path:
+                print("Export cancelled.")
+                return None
+            break
+        elif dest_choice == "3":
             print("Export cancelled.")
             return None
-    elif dest_choice == "2":
-        dest_path = input("Enter destination folder path: ").strip()
-        if not dest_path:
+        else:
+            print("Invalid choice. Export cancelled.")
+            
+    while True:
+        print(f"\nPreparing to export {item_name} to: {dest_path}")
+        confirm = input("Proceed? (y/n): ").strip().lower()
+        if confirm == 'y':
+            return dest_path
+        elif confirm == 'n':
             print("Export cancelled.")
             return None
-    elif dest_choice == "3":
-        print("Export cancelled.")
-        return None
-    else:
-        print("Invalid choice. Export cancelled.")
-        return None
-
-    print(f"\nPreparing to export {item_name} to: {dest_path}")
-    confirm = input("Proceed? (y/n): ")
-    if confirm.lower() != "y":
-        print("Export cancelled.")
-        return None
-
-    return dest_path
-
+        else:
+            print("\033[31mInvalid input. Please enter 'y' or 'n'.\033[0m")
 
 def export_all_menu():
     """
@@ -219,7 +210,7 @@ def export_all_menu():
 
     # Prevent exporting without a loaded backup
     if backup_service.current_model is None:
-        print("[!] Error: No backup loaded. Please load a backup first.")
+        print("\033[31m" + "[!] Error: No backup loaded. Please load a backup first." "\033[31m")
         return
     
     print("\n--- EXPORT ALL ---")
@@ -228,15 +219,17 @@ def export_all_menu():
     if not dest_path:
         return  # User cancelled somewhere in the helper loop
 
-    # TODO:When export all function is implemented
-    # success, message = export_service.export_all(backup_service.current_model, dest_path)
-
-
-# if success:
-#    print(f"\n[SUCCESS] {message}\n")
-#  else:
-#    print(f"\n[ERROR] {message}\n")
-
+    # Attempt extraction.
+    success, message = export_service.export_all(
+        backup_service.current_model,
+        dest_path,
+        settings_service,
+        conversion_service
+    )
+    if success:
+        print(f"\n[SUCCESS] {message}\n")
+    else:
+        print(f"\n[ERROR] {message}\n", file=sys.stderr)
 
 def export_specific_menu():
     """
@@ -244,11 +237,11 @@ def export_specific_menu():
     Provides alphabetized options and input validation.
     """
 
-    print("\n--- EXPORT SPECIFIC ALBUM ---")
+    print("\033[33m" + "\n--- EXPORT SPECIFIC ALBUM ---" + "\033[0m")
 
     if not backup_service.current_model:
         print(
-            "[!] Error: No backup loaded. Please load a backup first.",
+            "\033[31m" + "[!] Error: No backup loaded. Please load a backup first." + "\033[0m",
             file=sys.stderr,
         )
         return
@@ -257,7 +250,7 @@ def export_specific_menu():
 
     if not available_albums:
         print(
-            "[!] No albums found in backup.",
+            "\033[31m" + "[!] No albums found in backup." + "\033[0m",
             file=sys.stderr,
         )
         return
@@ -280,44 +273,61 @@ def export_specific_menu():
             break
         else:
             print(
-                f"\n[!] Error: Album '{choice}' does not exist.",
+                f"\033[31m" + "\n[!] Error: Album '{choice}' does not exist." + "\033[0m",
                 file=sys.stderr,
             )
-
+    
+    # Do export of single collection:
     dest_path = get_export_destination(f"'{selected_album}'")
     if not dest_path:
         return
 
-    # TODO:When exporting a single album is implemented
-
-# success, message = export_service.export_single_album(
-#     backup_model=backup_service.current_model,
-#   album_name=selected_album,
-#      destination_str=dest_path
-#  )
-
-# if success:
-#      print(f"\n[SUCCESS] {message}\n")
-#  else:
-#      print(f"\n[ERROR] {message}\n")
+    success, message = export_service.export_single_album(
+        backup_model=backup_service.current_model,
+        destination_str=dest_path,
+        album_name=selected_album,
+        settings_service=settings_service,
+        conversion_service=conversion_service
+    )
+    if success:
+        print(f"\n[SUCCESS] {message}\n")
+    else:
+        print(f"\n[ERROR] {message}\n", file=sys.stderr)
 
 def settings_menu():
-    """
-    Displays and manages the Blacklist/Whitelist export filters.
-    Disables access to modification submenus if a backup is not yet loaded.
-    """
-    # Block access if no backup is loaded
+    """Top-level settings menu. Routes to submenus."""
     if backup_service.current_model is None:
-        print("\n[!] Error: You must load a backup before changing settings.")
+        print("\033[31m" + "\n[!] Error: You must load a backup before changing settings." + "\033[0m")
         return
-    
-    while True:
-        # Get data from Service
-        mode, album_list = settings_service.get_state()
 
+    while True:
+        print("\033[33m" + "\n--- SETTINGS ---" + "\033[0m")
+        print("1. Blacklist/Whitelist Settings")
+        print("2. Conversion Settings")
+        print("3. Symlink Settings")
+        print("4. Back")
+
+        choice = input("Select: ").strip()
+
+        if choice == "1":
+            blacklist_whitelist_menu()
+        elif choice == "2":
+            conversion_settings_menu()
+        elif choice == "3":
+            symlink_settings_menu()   
+        elif choice == "4":
+            print("Going back...")
+            return
+        else:
+            print("\nInvalid Choice")
+
+def blacklist_whitelist_menu():
+    """Manages the Blacklist/Whitelist export filters."""
+    while True:
+        mode, album_list = settings_service.get_state()
         backup_loaded = backup_service.current_model is not None
 
-        print("--- SETTINGS ---")
+        print("\033[33m" + "\n--- BLACKLIST/WHITELIST SETTINGS ---" + "\033[0m")
         print(f"Mode: {mode}")
         print(f"List: [{album_list}]")
 
@@ -334,23 +344,80 @@ def settings_menu():
 
         if choice == "1":
             if backup_loaded:
-                print(settings_service.toggle_mode())
+                available_albums = export_service.get_album_list(backup_service.current_model)
+                print(settings_service.toggle_mode(available_albums))
             else:
-                print(
-                    "\n[!] Error: You must load a backup before changing settings.",
-                    file=sys.stderr,
-                )
+                print("\033[31m" + "\n[!] Error: You must load a backup before changing settings." + "\033[0m", file=sys.stderr)
         elif choice == "2":
             if backup_loaded:
                 album_selection_submenu()
             else:
-                print("\n[!] Error: You must load a backup before selecting albums.")
+                print("\033[31m" + "\n[!] Error: You must load a backup before selecting albums." + "\033[0m")
         elif choice == "3":
-            print("Going back...")
             return
         else:
             print("\nInvalid Choice")
 
+def conversion_settings_menu():
+    """Manages conversion format settings."""
+    while True:
+        print("\033[33m" + "\n--- CONVERSION SETTINGS ---" + "\033[0m")
+        print("Toggle a conversion to enable/disable it. Enabled conversions")
+        print("will automatically convert files during export.\n")
+
+        conversions = ConversionService.SUPPORTED_CONVERSIONS
+        for i, (src, dst) in enumerate(conversions.items(), start=1):
+            status = "ON" if src in conversion_service.enabled else "OFF"
+            print(f"{i}. {src} → {dst}  [{status}]")
+
+        back_num = len(conversions) + 1
+        print(f"{back_num}. Back")
+
+        choice = input("\nSelect: ").strip()
+
+        if choice == str(back_num):
+            return
+        
+        try:
+            idx = int(choice) - 1
+            ext = list(conversions.keys())[idx]
+            print(conversion_service.toggle(ext))
+        except (ValueError, IndexError):
+            print("\nInvalid Choice")
+
+
+def symlink_settings_menu():
+    """Manages symlink creation settings."""
+    while True:
+        print("\033[33m" + "\n--- SYMLINK SETTINGS ---" + "\033[0m")
+
+        print(
+            "- Enabling symlinks (symbolic links, or shortcuts) allows\n"
+            "iExtract to save a file to the extraction folder one time and\n"
+            "link to its location in every folder for each collection to\n"
+            "which it belongs. This saves storage space on your system.\n"
+            "- IMPORTANT WARNING: Ensure that the location you store your\n"
+            "extraction in is the permanent location you would like to store\n"
+            "it in. If you move the extraction folder (or rename it), you\n"
+            "will have to run a script to change the path of each symlink to\n"
+            "reflect the new, proper paths of each file in the extraction\n"
+            "folder.\n"
+            )
+
+        status = "ON" if settings_service.use_symlinks else "OFF"
+        print(f"Current Status: [{status}]")
+        print("1. Toggle Symlinks")
+        print("2. Back")
+
+        choice = input("\nSelect: ").strip()
+
+        if choice == "1":
+            print("\n" + settings_service.toggle_symlinks())
+        elif choice == "2":
+            return
+        else:
+            print("\nInvalid Choice")
+                
 
 def album_selection_submenu():
     """
@@ -361,68 +428,69 @@ def album_selection_submenu():
         export_service.get_album_list(backup_service.current_model)
     )
 
-    print("\n--- ALBUM SELECTION ---")
+    print("\033[33m" + "\n--- ALBUM SELECTION ---" + "\033[0m")
     print("Available Albums in Backup:")
 
     for album in available_albums:
         print(f" - {album}")
+    while True:
+        print("\nHow would you like to select an album?")
+        print("1. Manual Entry")
+        print("2. Checkbox Style Menu")
+        print("3. Go Back")
 
-    print("\nHow would you like to select an album?")
-    print("1. Manual Entry")
-    print("2. Checkbox Style Menu")
-    print("3. Go Back")
+        sub_choice = input("\nSelect an option: ").strip()
 
-    sub_choice = input("\nSelect an option: ").strip()
+        if sub_choice == "1":
+            while True:
+                _, current_list = settings_service.get_state()
+                print(f"\nCurrent List: [{current_list}]")
 
-    if sub_choice == "1":
-        while True:
-            _, current_list = settings_service.get_state()
-            print(f"\nCurrent List: [{current_list}]")
+                name = input("Enter exact Album Name (or type 'cancel' to finish): ").strip()
 
-            name = input("Enter exact Album Name (or type 'done' to finish): ").strip()
+                # Exit condition
+                if name.lower() == "cancel":
+                    break
 
-            # Exit condition
-            if name.lower() == "done" or name == "":
-                break
-
-            # UI Validation
-            if name in available_albums:
-                success, msg = settings_service.toggle_album(name)
-                print(msg)
-            else:
-                print(
-                    f"\n[!] Error: Album '{name}' does not exist in the current backup.",
-                    file=sys.stderr
-                )
-    elif sub_choice == "2":
-        print("\n[!] Checkbox style menu coming soon!")
-    elif sub_choice == "3":
-        return
-    else:
-        print("\nInvalid choice.")
+                # UI Validation
+                if name in available_albums:
+                    success, msg = settings_service.toggle_album(name)
+                    print(msg)
+                else:
+                    print(
+                        f"\033[31m" + f"\n[!] Error: Album '{name}' does not exist in the current backup." + "\033[0m",
+                        file=sys.stderr
+                    )
+        elif sub_choice == "2":
+            print("\n[!] Checkbox style menu coming soon!")
+        elif sub_choice == "3":
+            return
+        else:
+            print("\nInvalid choice.")
 
 def help_user():
-    """Links user to our documentations that explains how our program works."""
+    """Links user to our documentation that explains how our program works."""
     dev_doc = "https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-Developer-Documentation.md"
     user_doc = "https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-User-Documentation.md"
 
     while True:
+        print("\033[33m" + "========================= Documentation =========================\n" + "\033[0m")
         print("1. User Documentation")
         print("2. Developer Documentation")
         print("3. Back\n")
-        
-        choice = int(input("Option: "))
-        
-        if choice == 1:
-            webbrowser.open_new_tab(dev_doc)
-        elif choice == 2:
+
+        choice = input("Option: ").strip()
+
+        if choice == "1":
             webbrowser.open_new_tab(user_doc)
-        elif choice == 3:
+        elif choice == "2":
+            webbrowser.open_new_tab(dev_doc)
+        elif choice == "3":
             break
         else:
             print(
                 "\033[31m" + "Error: Invalid input. Choose one of the displayed options.\n" + "\033[0m",
-                file=sys.stderr,
+                file=sys.stderr
             )
 
 def report_bug():
@@ -432,13 +500,60 @@ def report_bug():
     webbrowser.open_new_tab(issues_url)
     return
 
+def feat_photo_caption():
+    """"""
+    file_dir = Path("functional_components/photo_caption/data/")
+    root_dir = file_dir
+
+    print("\033[33m" + "=========================== iExtract Menu ===========================\n")
+    print(f"** Instructions: Enter a number corresponding to the choices below. **\n"+ "\033[0m")
+    
+    while True:
+
+        folders = [p for p in file_dir.iterdir() if p.is_dir()]
+        files = [p for p in file_dir.iterdir() if p.is_file()]
+        entries = folders + files
+
+        for i, p in enumerate(entries, start=1):
+            print(f"{i}. {p.name}")
+
+        back_option = len(entries) + 1
+        print(f"{back_option}. Back\n")
+
+        try:
+            choice = int(input("Choice: "))
+        except ValueError:
+            print("\033[31mInvalid input. Enter a number.\033[0m\n")
+            continue
+
+        if choice == back_option:
+            if file_dir == root_dir:
+                break
+            file_dir = file_dir.parent
+            continue
+
+        if not (1 <= choice <= len(entries)):
+            print("\033[31m" + "Error: Choose one of the displayed options." + "\033[0m\n")
+            continue
+
+        selected = entries[choice - 1]
+
+        if selected.is_dir():
+            file_dir = selected
+            continue
+
+        ext = selected.suffix.lower()
+        if ext in {".jpg", ".jpeg", ".png"}:
+            caption = photo_captioner.get_caption(str(selected))
+            image = Image.open(Path(selected))
+            image.show()
+            print("Loading...")
+            print(f"\nCaption: {caption}\n")
+        else:
+            print("Unsupported file type. Please report bug.")
+
 
 # TODO:
-def input_validation():
-    """Placeholder for input validation."""
-    print("")
-
-
 def progress_display():
     """Placeholder for progress display."""
     print("")

@@ -1,6 +1,6 @@
 """
 Author: Kevin Gustafson
-Date: 2026-02-23
+Date: 2026-03-05
 Description: Builds Album domain objects from raw Photos.sqlite data.
 """
 
@@ -19,14 +19,13 @@ def _get_sort_order(row: dict) -> str:
         return "date"
     return "none"
 
-
 def build_albums(raw_albums: List[dict]) -> List[Album]:
     """Converts raw album rows into Album domain objects."""
     albums = []
     for row in raw_albums:
         albums.append(Album(
             album_uuid=row["ZUUID"],
-            title=row["ZTITLE"] or "",
+            title=(row["ZTITLE"] or "").strip(),
             type="user",
             sort_order=_get_sort_order(row),
             asset_count=row["ZCACHEDCOUNT"] or 0,

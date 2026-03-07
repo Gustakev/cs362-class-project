@@ -14,6 +14,7 @@ from functional_components.backup_locator_and_validator.domain.backup_model impo
     Relationships,
 )
 
+
 # Seconds between Unix epoch (1970-01-01) and Apple epoch (2001-01-01)
 APPLE_EPOCH_OFFSET = 978307200
 
@@ -43,18 +44,15 @@ def _convert_apple_epoch(apple_time: float) -> str:
     unix_time = apple_time + APPLE_EPOCH_OFFSET
     return datetime.fromtimestamp(unix_time, tz=timezone.utc).isoformat()
 
-
 def _get_subtype(zkindsubtype: int) -> str:
     """Maps ZKINDSUBTYPE integer to a subtype literal."""
     if zkindsubtype is None:
         return "standard"
     return SUBTYPE_MAP.get(zkindsubtype, "standard")
 
-
 def _get_media_type(zkind: int) -> str:
     """Maps ZKIND integer to a media_type literal."""
     return MEDIA_TYPE_MAP.get(zkind, "photo")
-
 
 def _build_flags(row: dict) -> Flags:
     """Builds a Flags object from raw asset row data."""
@@ -62,9 +60,9 @@ def _build_flags(row: dict) -> Flags:
         is_favorite=bool(row.get("ZFAVORITE", 0)),
         is_hidden=bool(row.get("ZHIDDEN", 0)),
         is_recently_deleted=bool(row.get("ZTRASHEDSTATE", 0)),
-        is_selfie=False,  # derived from smart album membership, set later
+        # Correctly find selfies.
+        is_selfie=row.get("ZDERIVEDCAMERACAPTUREDEVICE") == 1
     )
-
 
 def _build_relationships(
     asset_pk: int,
@@ -73,7 +71,6 @@ def _build_relationships(
     """Builds a Relationships object for an asset."""
     user_albums = membership_lookup.get(asset_pk, [])
     return Relationships(user_albums=user_albums)
-
 
 def _derive_smart_folders(flags: Flags) -> list:
     """Derives smart_folders list from flags."""
@@ -87,7 +84,6 @@ def _derive_smart_folders(flags: Flags) -> list:
     if flags.is_selfie:
         smart_folders.append("selfies")
     return smart_folders
-
 
 def build_membership_lookup(raw_memberships: List[dict]) -> dict:
     """Builds a dict mapping asset Z_PK to a list of album UUIDs.
@@ -104,7 +100,6 @@ def build_membership_lookup(raw_memberships: List[dict]) -> dict:
         lookup[asset_pk].append(album_uuid)
     return lookup
 
-
 def build_assets(
     raw_assets: List[dict],
     membership_lookup: dict,
@@ -114,6 +109,8 @@ def build_assets(
     """Converts raw asset rows into Asset domain objects."""
     from functional_components.sql_cmd_facilitator.data.asset_reader import (
         get_file_id_for_asset,
+        get_file_id_for_mov_companion,
+        get_file_id_fallback,
     )
 
     assets = []
@@ -127,15 +124,17 @@ def build_assets(
 
         try:
             file_id = get_file_id_for_asset(manifest_conn, relative_path)
-            backup_relative_path = str(
-                backup_root / file_id[:2] / file_id
-            )
+            backup_relative_path = str(backup_root / file_id[:2] / file_id)
             backup_hashed_filename = file_id
         except FileNotFoundError:
-            # Skip assets that can't be resolved to a file in the backup
-            skipped += 1
-            # print(f"SKIPPED: {relative_path}")
-            continue
+            try:
+                file_id = get_file_id_fallback(manifest_conn, original_filename)
+                backup_relative_path = str(backup_root / file_id[:2] / file_id)
+                backup_hashed_filename = file_id
+            except FileNotFoundError:
+                skipped += 1
+                # print(f"SKIPPED: {relative_path}")
+                continue
 
         # Derive file extension from original filename
         file_extension = (
@@ -171,7 +170,7 @@ def build_assets(
             media_type=_get_media_type(row.get("ZKIND")),
             subtype=_get_subtype(row.get("ZKINDSUBTYPE")),
             live_photo_group_uuid=row.get("ZMEDIAGROUPUUID"),
-            burst_uuid=None,
+            burst_uuid=row.get("ZAVALANCHEUUID"),
             is_primary_burst_frame=bool(
                 row.get("ZAVALANCHEPICKTYPE") == 2
             ),
@@ -179,7 +178,52 @@ def build_assets(
             relationships=relationships,
         ))
 
+    # Add the index to make the LIKE query fast
+    try:
+        manifest_conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_files_path ON Files(relativePath)"
+        )
+    except Exception:
+        pass
+
     # Debug print
     # print(f"Assets skipped (unresolvable in Manifest.db): {skipped}")
+
+    # Second pass: synthesize live_photo_video assets for iOS 26+
+    # where companion MOV files exist in Manifest.db but have no ZASSET row.
+    live_stills = [
+        a for a in assets
+        if a.subtype == "live_photo_still"
+        and a.live_photo_group_uuid is not None
+        and Path(a.original_filename).stem.upper().startswith("IMG_")
+    ]
+    for still in live_stills:
+        stem = Path(still.original_filename).stem
+        mov_filename = stem + ".MOV"
+        try:
+            file_id = get_file_id_for_mov_companion(manifest_conn, mov_filename)
+            mov_backup_path = str(backup_root / file_id[:2] / file_id)
+        except FileNotFoundError:
+            continue
+
+        assets.append(Asset(
+            asset_uuid=still.asset_uuid + "_mov",
+            local_identifier=still.local_identifier + "_mov",
+            original_filename=mov_filename,
+            file_extension="MOV",
+            uti_type="com.apple.quicktime-movie",
+            creation_date=still.creation_date,
+            modification_date=still.modification_date,
+            timezone_offset=still.timezone_offset,
+            backup_relative_path=mov_backup_path,
+            backup_hashed_filename=file_id,
+            media_type="video",
+            subtype="live_photo_video",
+            live_photo_group_uuid=still.live_photo_group_uuid,
+            burst_uuid=None,
+            is_primary_burst_frame=False,
+            flags=still.flags,
+            relationships=still.relationships,
+        ))
 
     return assets
