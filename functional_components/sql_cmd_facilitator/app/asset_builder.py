@@ -133,7 +133,7 @@ def build_assets(
                 backup_hashed_filename = file_id
             except FileNotFoundError:
                 skipped += 1
-                # print(f"SKIPPED: {relative_path}")
+                print(f"SKIPPED: {relative_path}")
                 continue
 
         # Derive file extension from original filename
@@ -155,6 +155,14 @@ def build_assets(
             user_albums=relationships.user_albums,
             smart_folders=smart_folders,
         )
+
+        # TEMP DEBUG - remove after investigation
+        if row.get("ZAVALANCHEUUID") is not None:
+            print(
+                f"BURST ROW: ZKINDSUBTYPE={row.get('ZKINDSUBTYPE')} "
+                f"ZAVALANCHEPICKTYPE={row.get('ZAVALANCHEPICKTYPE')} "
+                f"FILE={row.get('ZFILENAME')}"
+            )
 
         assets.append(Asset(
             asset_uuid=row["ZUUID"],
@@ -195,7 +203,6 @@ def build_assets(
         a for a in assets
         if a.subtype == "live_photo_still"
         and a.live_photo_group_uuid is not None
-        and Path(a.original_filename).stem.upper().startswith("IMG_")
     ]
     for still in live_stills:
         stem = Path(still.original_filename).stem

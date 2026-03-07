@@ -1,5 +1,5 @@
 """
-Author: Sam Daughtry
+Author: Sam Daughtry (Edited by Kevin Gustafson)
 Date: 2026-03-01
 Description: Main extraction entry point for the file‑extraction engine.
 """
@@ -140,7 +140,7 @@ def run_extraction_engine(
                             output_root / sanitize_folder_name(collection.title)
                         )
                         copy_file(src_path, dest_folder, dest_name, asset)
-                        _cleanup_temp(resolved_asset, asset)
+                    _cleanup_temp(resolved_asset, asset)
         else:  # exactly one collection
             dest_folder = ensure_folder_exists(
                 output_root / sanitize_folder_name(active_collections[0].title)
