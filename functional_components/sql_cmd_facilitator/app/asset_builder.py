@@ -136,7 +136,7 @@ def build_assets(
                 backup_hashed_filename = file_id
             except FileNotFoundError:
                 skipped += 1
-                print(f"SKIPPED: {relative_path}")
+                print(f"\nSKIPPED ASSET: {relative_path}\n")
                 continue
 
         # Derive file extension from original filename
@@ -160,12 +160,12 @@ def build_assets(
         )
 
         # TEMP DEBUG - remove after investigation
-        if row.get("ZAVALANCHEUUID") is not None:
-            print(
-                f"BURST ROW: ZKINDSUBTYPE={row.get('ZKINDSUBTYPE')} "
-                f"ZAVALANCHEPICKTYPE={row.get('ZAVALANCHEPICKTYPE')} "
-                f"FILE={row.get('ZFILENAME')}"
-            )
+        # if row.get("ZAVALANCHEUUID") is not None:
+        #     print(
+        #         f"BURST ROW: ZKINDSUBTYPE={row.get('ZKINDSUBTYPE')} "
+        #         f"ZAVALANCHEPICKTYPE={row.get('ZAVALANCHEPICKTYPE')} "
+        #         f"FILE={row.get('ZFILENAME')}"
+        #     )
 
         assets.append(Asset(
             asset_uuid=row["ZUUID"],
