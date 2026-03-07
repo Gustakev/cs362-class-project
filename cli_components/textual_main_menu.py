@@ -1,7 +1,7 @@
 """
-Author: Kevin Gustafson (Brendon Wong worked on 2026-02-26)
+Author: Noah Gregie
 Date: 2026-01-29
-Program Description: Command line interface for iExtract.
+Program Description: Textual GUI interface for iExtract.
 """
 
 import sys
@@ -15,6 +15,9 @@ from pathlib import Path
 
 from functional_components.services import BackupService, SettingsService, ExportService, ConversionService
 from cli_components.main_menu import gui_pick_folder
+
+from functional_components.photo_caption.app import photo_captioner
+from PIL import Image
 #from functional_components.photo_captioner import get_caption
 
 
@@ -27,6 +30,8 @@ from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import ProgressBar
 from textual import work
+from textual import on, work
+from textual.widgets import DirectoryTree
 
 
 
@@ -54,68 +59,122 @@ class iExtractApp(App):
        
         yield Header()
         yield Footer()
+        with Horizontal(id="app_grid"):
+            #Main menu navigation
+            with Vertical(id = "side_bar"):
+                yield Label("[b]MAIN MENU[/b]", id="lbl_menu_title")
+                with Vertical(id = "main_menu"):
+                    yield Button("1. Load iPhone Backup Folder", id = "btn_load")
+                    yield Button("2. Export All Camera Roll Media", id = "btn_export_all")
+                    yield Button("3. Export Specific Camera Roll Media", id = "btn_specific")
+                    yield Button("4. Settings", id= "btn_settings")
+                    yield Button("5. Help", id="btn_help")
+                    yield Button("6. Report Bug", id="btn_bug")
+                    yield Button("7. Photo Descriptor (Beta)", id="btn_photo_beta")
+                    yield Button("8. Restart", id="btn_restart")
+                    yield Button("9. Exit", id="btn_exit")
+                #Load options
+                with Vertical(id = "backup_options", classes="hidden"):
+                    yield ProgressBar(id="pb_loading", classes="hidden")
+                    yield Button("1. Load via GUI", id="btn_load_gui", variant="primary")
+                    yield Button("2. Load via Path", id="btn_load_path")
+                    yield Input(placeholder="Enter folder path...", id="input_path", classes="hidden")
+                    yield Button("Submit Path", id="btn_submit_path", classes="hidden", variant="success")
+                    yield Button("Go Back", id="btn_back_load")
 
-        #Main menu navigation
-        with Vertical(id = "side_bar"):
-            yield Label("[b]MAIN MENU[/b]", id="lbl_menu_title")
-            with Vertical(id = "main_menu"):
-                yield Button("1. Load iPhone Backup Folder", id = "btn_load")
-                yield Button("2. Export All Camera Roll Media", id = "btn_export_all")
-                yield Button("3. Export Specific Camera Roll Media", id = "btn_specific")
-                yield Button("4. Settings", id= "btn_settings")
-                yield Button("5. Help", id="btn_help")
-                yield Button("6. Report Bug", id="btn_bug")
-                yield Button("7. Photo Descriptor (Beta)", id="btn_photo_beta")
-                yield Button("8. Exit", id="btn_exit", variant="error")
-            #Load options
-            with Vertical(id = "backup_options", classes="hidden"):
-                yield ProgressBar(id="pb_loading", classes="hidden",show_percentage=True)
-                yield Button("1. Load via GUI", id="btn_load_gui", variant="primary")
-                yield Button("2. Load via Path", id="btn_load_path")
-                yield Input(placeholder="Enter folder path...", id="input_path", classes="hidden")
-                yield Button("Submit Path", id="btn_submit_path", classes="hidden", variant="success")
-                yield Button("Go Back", id="btn_back_load")
+                #Settings options     
+                with Vertical(id="settings_options", classes="hidden"):
+                    yield Button("1. Blacklist/Whitelist Settings", id="btn_menu_bw")
+                    yield Button("2. Conversion Settings", id="btn_menu_conv")
+                    yield Button("3. Symlink Settings", id="btn_menu_symlink")
+                    yield Button("4. Go Back", id="btn_back_settings")
 
-            #Settings options     
-            with Vertical(id="settings_options", classes="hidden"):
-                yield Label("Mode: Unknown", id="lbl_settings_mode")
-                yield Button("Toggle Whitelist/Blacklist", id="btn_toggle_mode")
-                yield Button("Manage Album List", id="btn_manage_albums")
-                yield Button("Go Back", id="btn_back_settings")
+                # --- 2. BLACKLIST / WHITELIST MENU ---
+                with Vertical(id="bw_options", classes="hidden"):
+                    yield Label("Mode: Unknown", id="lbl_bw_mode")
+                    yield Label("List: []", id="lbl_bw_list")
+                    yield Button("1. Switch Mode", id="btn_bw_switch")
+                    yield Button("2. Add/Remove Album", id="btn_bw_manage")
+                    yield Button("3. Go Back", id="btn_back_bw")
 
-            # HELP OPTIONS
-            with Vertical(id="help_options", classes="hidden"):
-                yield Button("User Documentation", id="btn_help_user")
-                yield Button("Developer Documentation", id="btn_help_dev")
-                yield Button("Go Back", id="btn_back_help")
+                # --- 3. ALBUM SELECTION (MANUAL ENTRY) ---
+                with Vertical(id="album_selection_options", classes="hidden"):
+                    yield Label("Available Albums:\n", id="lbl_album_avail")
+                    yield Label("Current List: []", id="lbl_album_current")
+                    yield Input(placeholder="Enter exact Album Name ", id="input_manage_album")
+                    yield Button("Submit Album", id="btn_submit_managed_album", variant="success")
+                    yield Button("Go Back", id="btn_back_album_manage")
 
-            #  EXPORT OPTIONS
-            with Vertical(id="export_options", classes="hidden"):
-                yield Label("Destination for: all albums", id="lbl_export_item")
-                yield Button("1. Select via GUI", id="btn_export_gui", variant="primary")
-                yield Button("2. Enter path manually", id="btn_export_path")
-                yield Input(placeholder="Enter destination folder path...", id="input_export_path", classes="hidden")
-                yield Button("Submit Path", id="btn_submit_export_path", classes="hidden", variant="success")
-                
-                # Confirmation step 
-                yield Label("", id="lbl_export_confirm", classes="hidden")
-                yield Button("Proceed (Yes)", id="btn_export_confirm_yes", classes="hidden", variant="success")
-                yield Button("Cancel", id="btn_export_cancel", variant="error")
+                # --- 4. CONVERSION SETTINGS ---
+                with Vertical(id="conversion_options", classes="hidden"):
+                    yield Label("Toggle a conversion to enable/disable it. Enabled conversions\nwill automatically convert files during export.\n")
+                    yield Button("1. HEIC → JPG  [OFF]", id="btn_toggle_heic")
+                    yield Button("2. MOV → MP4  [OFF]", id="btn_toggle_mov")
+                    yield Button("3. Go Back", id="btn_back_conv")
+
+                # --- 5. SYMLINK SETTINGS ---
+                with Vertical(id="symlink_options", classes="hidden"):
+                    yield Label("- Enabling symlinks (symbolic links, or shortcuts) allows\niExtract to save a file to the extraction folder one time and\nlink to its location... This saves storage space.\n")
+                    yield Label("Current Status: [Unknown]", id="lbl_symlink_status")
+                    yield Button("1. Toggle Symlinks", id="btn_toggle_symlink")
+                    yield Button("2. Go Back", id="btn_back_symlink")
+
+                # HELP OPTIONS
+                with Vertical(id="help_options", classes="hidden"):
+                    yield Button("User Documentation", id="btn_help_user")
+                    yield Button("Developer Documentation", id="btn_help_dev")
+                    yield Button("Go Back", id="btn_back_help")
+
+                #  EXPORT OPTIONS
+                with Vertical(id="export_options", classes="hidden"):
+                    yield Label("Destination for: all albums", id="lbl_export_item")
+                    yield Button("1. Select via GUI", id="btn_export_gui", variant="primary")
+                    yield Button("2. Enter path manually", id="btn_export_path")
+                    yield Input(placeholder="Enter destination folder path...", id="input_export_path", classes="hidden")
+                    yield Button("Submit Path", id="btn_submit_export_path", classes="hidden", variant="success")
+                    yield ProgressBar(id="pb_export", classes="hidden")
+                    # Confirmation step 
+                    yield Label("", id="lbl_export_confirm", classes="hidden")
+                    yield Button("Proceed (Yes)", id="btn_export_confirm_yes", classes="hidden", variant="success")
+                    yield Button("Cancel", id="btn_export_cancel", variant="error")
 
 
-            # SPECIFIC EXPORT OPTIONS 
-            with Vertical(id="specific_export_options", classes="hidden"):
-                yield Label("Available Albums:", id="lbl_available_albums")
-                yield Input(placeholder="Enter exact Album Name (or type 'cancel')...", id="input_specific_album")
-                yield Button("Submit Album", id="btn_submit_specific_album", variant="success")
-                yield Button("Go Back", id="btn_back_specific")   
+                # SPECIFIC EXPORT OPTIONS 
+                with Vertical(id="specific_export_options", classes="hidden"):
+                    yield Label("Available Albums:", id="lbl_available_albums")
+                    yield Input(placeholder="Enter exact Album Name (or type 'cancel')...", id="input_specific_album")
+                    yield Button("Submit Album", id="btn_submit_specific_album", variant="success")
+                    yield Button("Go Back", id="btn_back_specific")   
+
+                # --- PHOTO DESCRIPTOR (BETA) ---
+                with Vertical(id="photo_beta_options", classes="hidden"):
+                    yield Label("Select an image (.jpg, .png) to generate a caption:", id="lbl_photo_instructions")
+                    yield DirectoryTree("functional_components/photo_caption/data/", id="photo_tree")
+                    yield Label("", id="lbl_photo_caption")
+                    yield Button("Go Back", id="btn_back_photo")    
 
 
 
 
-        with Vertical (id = "main_content"):
-            yield Label("System Log:")
-            yield Log(id = "log_window",highlight= True)    
+            with Vertical (id = "main_content"):
+                yield Label("System Log:")
+                yield Log(id = "log_window",highlight= True)    
+
+
+    def reset_export_menu(self):
+            """Resets the export menu UI to its initial state."""
+            # Show the starting buttons
+            self.query_one("#btn_export_gui").remove_class("hidden")
+            self.query_one("#btn_export_path").remove_class("hidden")
+            
+            # Hide the manual input and confirmation buttons
+            self.query_one("#input_export_path").add_class("hidden")
+            self.query_one("#btn_submit_export_path").add_class("hidden")
+            self.query_one("#lbl_export_confirm").add_class("hidden")
+            self.query_one("#btn_export_confirm_yes").add_class("hidden")
+            
+            # Clear any typed text
+            self.query_one("#input_export_path", Input).value = ""             
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
 
@@ -127,6 +186,9 @@ class iExtractApp(App):
 
         if btn_id == "btn_exit":
             self.exit()
+
+        if btn_id == "btn_restart":
+            log.write_line("Restart Feature Status: Feature not yet implemented.")    
 
         """Navigation logic"""
 
@@ -144,21 +206,6 @@ class iExtractApp(App):
             self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
             log.write_line("[MENU] Returned to Main Menu...") 
                   
-        # Hiding main menu and showing settings options 
-        if btn_id == "btn_settings_options":
-            self.query_one("#main_menu").add_class("hidden")
-            self.query_one("#settings_options").remove_class("hidden")
-            self.query_one("#lbl_menu_title").update("[b]SETTINGS[/b]")
-            # Update settings label from service
-            mode, albums = self.settings_service.get_state()
-            self.query_one("#lbl_settings_mode").update(f"Current Mode: {mode}") 
-
-        # Returning from settings menu to main menu
-        if btn_id == "btn_back_settings":
-            self.query_one("#settings_options").add_class("hidden")
-            self.query_one("#main_menu").remove_class("hidden")
-            self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
-            log.write_line("[MENU] Returned to Main Menu...") 
 
         #Help menu
         if btn_id == "btn_help":
@@ -173,12 +220,7 @@ class iExtractApp(App):
             log.write_line("[MENU] Returned to Main Menu...") 
 
 
-         # Route to the export options menu
-        if btn_id == "btn_export_all":
-            self.query_one("#main_menu").add_class("hidden")
-            self.query_one("#export_options").remove_class("hidden")
-            self.query_one("#lbl_menu_title").update("[b]EXPORT DESTINATION[/b]")
-            self.query_one("#lbl_export_item").update("Destination for: all albums")
+        
                 
            
          
@@ -224,6 +266,7 @@ class iExtractApp(App):
         # --- EXPORT DESTINATION HELPER LOGIC ---
         if btn_id == "btn_export_cancel":
             log.write_line("Export cancelled.")
+            self.reset_export_menu()
             self.query_one("#export_options").add_class("hidden")
             self.query_one("#main_menu").remove_class("hidden")
             self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
@@ -279,32 +322,7 @@ class iExtractApp(App):
             
             log.write_line(f"[INFO] Executing export for {target} to {dest_path}")
             
-            # Execute the correct service method based on the tracked target
-            if target == "all albums":
-                success, message = self.export_service.export_all(
-                    self.backup_service.current_model, 
-                    dest_path, 
-                    self.settings_service, 
-                    self.conversion_service
-                )
-            else:
-                success, message = self.export_service.export_single_album(
-                    backup_model=self.backup_service.current_model,
-                    destination_str=dest_path,
-                    album_name=target,
-                    settings_service=self.settings_service,
-                    conversion_service=self.conversion_service
-                )
-            
-            if success:
-                log.write_line(f"\n[SUCCESS] {message}\n")
-            else:
-                log.write_line(f"\n[ERROR] {message}\n")
-            
-            # Return to main menu
-            self.query_one("#export_options").add_class("hidden")
-            self.query_one("#main_menu").remove_class("hidden")
-            self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
+            self.run_export(target, dest_path)
 
 
 
@@ -342,10 +360,10 @@ class iExtractApp(App):
                 self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
                 return
 
-            # Strict 1:1 check as written in the CLI
+            
             if choice in available_albums:
-                self.query_one("#input_specific_album", Input).value = "" # Clear input
-                self.current_export_target = choice # Track target for execution step
+                self.query_one("#input_specific_album", Input).value = "" 
+                self.current_export_target = choice 
                 
                 # Hand off to the destination path picker (get_export_destination equivalent)
                 self.query_one("#specific_export_options").add_class("hidden")
@@ -355,6 +373,191 @@ class iExtractApp(App):
             else:
                 log.write_line(f"[!] Error: Album '{choice}' does not exist.")
 
+
+
+
+    #-- Settings Logic --
+
+    # Enter Settings Main Menu 
+        if btn_id == "btn_settings":
+            if self.backup_service.current_model is None:
+                log.write_line("[!] Error: You must load a backup before changing settings.")
+            else:
+                self.query_one("#main_menu").add_class("hidden")
+                self.query_one("#settings_options").remove_class("hidden")
+                self.query_one("#lbl_menu_title").update("[b]SETTINGS[/b]")
+
+        # Back out of Settings
+        if btn_id == "btn_back_settings":
+            self.query_one("#settings_options").add_class("hidden")
+            self.query_one("#main_menu").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
+            log.write_line("[MENU] Returned to Main Menu...")
+
+
+
+    # --- BLACKLIST/WHITELIST SUBMENU ---
+        if btn_id == "btn_menu_bw":
+            self.query_one("#settings_options").add_class("hidden")
+            self.query_one("#bw_options").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]BLACKLIST / WHITELIST[/b]")
+            # Refresh Labels
+            mode, albums = self.settings_service.get_state()
+            self.query_one("#lbl_bw_mode").update(f"Mode: {mode}")
+            self.query_one("#lbl_bw_list").update(f"List: [{albums}]")
+
+        if btn_id == "btn_bw_switch":
+            available_albums = self.export_service.get_album_list(self.backup_service.current_model)
+            msg = self.settings_service.toggle_mode(available_albums)
+            log.write_line(msg)
+            # Refresh Labels after toggle
+            mode, albums = self.settings_service.get_state()
+            self.query_one("#lbl_bw_mode").update(f"Mode: {mode}")
+            self.query_one("#lbl_bw_list").update(f"List: [{albums}]")
+
+        if btn_id == "btn_back_bw":
+            self.query_one("#bw_options").add_class("hidden")
+            self.query_one("#settings_options").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]SETTINGS[/b]")
+
+
+    # --- ALBUM MANAGEMENT  ---
+        if btn_id == "btn_bw_manage":
+            self.query_one("#bw_options").add_class("hidden")
+            self.query_one("#album_selection_options").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]ALBUM SELECTION[/b]")
+            
+            # Setup dynamic data
+            available = self.export_service.get_album_list(self.backup_service.current_model)
+            album_text = "Available Albums in Backup:\n" + "\n".join([f" - {a}" for a in available])
+            self.query_one("#lbl_album_avail").update(album_text)
+            
+            _, albums = self.settings_service.get_state()
+            self.query_one("#lbl_album_current").update(f"Current List: [{albums}]")
+
+
+        if btn_id == "btn_submit_managed_album":
+            name = self.query_one("#input_manage_album", Input).value.strip()
+            available = self.export_service.get_album_list(self.backup_service.current_model)
+
+            
+            if name in available:
+                success, msg = self.settings_service.toggle_album(name)
+                log.write_line(msg)
+                self.query_one("#input_manage_album", Input).value = "" # Clear input
+                # Update the visual list
+                _, albums = self.settings_service.get_state()
+                self.query_one("#lbl_album_current").update(f"Current List: [{albums}]")
+            elif name == "":
+                log.write_line("[!] Error: Album name cannot be empty.")    
+            else:
+                log.write_line(f"[!] Error: Album '{name}' does not exist in the current backup.")
+
+        if btn_id == "btn_back_album_manage":
+            self.query_one("#album_selection_options").add_class("hidden")
+            self.query_one("#bw_options").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]BLACKLIST / WHITELIST[/b]")
+            # Refresh the list on the previous page just in case
+            mode, albums = self.settings_service.get_state()
+            self.query_one("#lbl_bw_list").update(f"List: [{albums}]")
+
+    # --- CONVERSION SETTINGS ---
+        if btn_id == "btn_menu_conv":
+            self.query_one("#settings_options").add_class("hidden")
+            self.query_one("#conversion_options").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]CONVERSION SETTINGS[/b]")
+            
+            # Update initial button text
+            heic_on = "HEIC" in self.conversion_service.enabled
+            heic_btn = self.query_one("#btn_toggle_heic", Button)
+            heic_btn.label = "1. HEIC → JPG  [✓ ON]" if heic_on else "1. HEIC → JPG  [OFF]"
+            heic_btn.variant = "success" if heic_on else "default"
+
+            mov_on = "MOV" in self.conversion_service.enabled
+            mov_btn = self.query_one("#btn_toggle_mov", Button)
+            mov_btn.label = "2. MOV → MP4  [✓ ON]" if mov_on else "2. MOV → MP4  [OFF]"
+            mov_btn.variant = "success" if mov_on else "default"
+
+        if btn_id == "btn_toggle_heic":
+            msg = self.conversion_service.toggle("HEIC")
+            log.write_line(msg)
+            is_on = "HEIC" in self.conversion_service.enabled
+            btn = self.query_one("#btn_toggle_heic", Button)
+            btn.label = "1. HEIC → JPG  [✓ ON]" if is_on else "1. HEIC → JPG  [OFF]"
+            btn.variant = "success" if is_on else "default"
+
+        if btn_id == "btn_toggle_mov":
+            msg = self.conversion_service.toggle("MOV")
+            log.write_line(msg)
+            is_on = "MOV" in self.conversion_service.enabled
+            btn = self.query_one("#btn_toggle_mov", Button)
+            btn.label = "2. MOV → MP4  [✓ ON]" if is_on else "2. MOV → MP4  [OFF]"
+            btn.variant = "success" if is_on else "default"
+
+        if btn_id == "btn_back_conv":
+            self.query_one("#conversion_options").add_class("hidden")
+            self.query_one("#settings_options").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]SETTINGS[/b]")
+
+    # --- SYMLINK SETTINGS ---
+        if btn_id == "btn_menu_symlink":
+            self.query_one("#settings_options").add_class("hidden")
+            self.query_one("#symlink_options").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]SYMLINK SETTINGS[/b]")
+
+            is_on = self.settings_service.use_symlinks
+            status = "✓ ON" if is_on else "OFF"
+            
+            
+            self.query_one("#lbl_symlink_status", Label).update(f"Current Status: [{status}]")
+            self.query_one("#btn_toggle_symlink", Button).variant = "success" if is_on else "default"
+
+        if btn_id == "btn_toggle_symlink":
+            msg = self.settings_service.toggle_symlinks()
+            log.write_line(msg)
+
+            is_on = self.settings_service.use_symlinks
+            status = "✓ ON" if is_on else "OFF"
+            
+            self.query_one("#lbl_symlink_status", Label).update(f"Current Status: [{status}]")
+            self.query_one("#btn_toggle_symlink", Button).variant = "success" if is_on else "default"
+
+        if btn_id == "btn_back_symlink":
+            self.query_one("#symlink_options").add_class("hidden")
+            self.query_one("#settings_options").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]SETTINGS[/b]")
+
+
+    #--Help Menu ----
+
+        if btn_id == "btn_help_user":
+                user_doc = "https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-User-Documentation.md"
+                log.write_line("[INFO] Opening User Documentation in browser...")
+                webbrowser.open_new_tab(user_doc)
+
+        if btn_id == "btn_help_dev":
+                dev_doc = "https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-Developer-Documentation.md"
+                log.write_line("[INFO] Opening Developer Documentation in browser...")
+                webbrowser.open_new_tab(dev_doc)
+
+        if btn_id == "btn_bug":
+                
+                issues_url = "https://github.com/Gustakev/cs362-class-project/issues/new"
+                log.write_line("[INFO] Opening GitHub Issues for bug report...")
+                webbrowser.open_new_tab(issues_url)    
+
+
+    # --- PHOTO DESCRIPTOR ROUTING ---
+        if btn_id == "btn_photo_beta":
+            self.query_one("#main_menu").add_class("hidden")
+            self.query_one("#photo_beta_options").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]PHOTO DESCRIPTOR[/b]")
+
+        if btn_id == "btn_back_photo":
+            self.query_one("#photo_beta_options").add_class("hidden")
+            self.query_one("#main_menu").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
+            self.query_one("#lbl_photo_caption").update("") 
 
 
     @work(thread=True)
@@ -382,7 +585,86 @@ class iExtractApp(App):
         else:
             log.write_line(f"[ERROR] {message}")
 
+    @work(thread=True)
+    def run_export(self, target, dest_path):
+        """Background worker for asset export"""
+        log = self.query_one("#log_window")
+        pb = self.query_one("#pb_export")
+        export_menu = self.query_one("#export_options")
+        
+        # Show  progress bar and freeze the menu
+        pb.remove_class("hidden")
+        export_menu.disabled = True 
+        log.write_line(f"[EXPORTING] Executing export for {target} to {dest_path}...")
 
+        # 2. Call the synchronous service 
+        if target == "all albums":
+            success, message = self.export_service.export_all(
+                self.backup_service.current_model, 
+                dest_path, 
+                self.settings_service, 
+                self.conversion_service
+            )
+        else:
+            success, message = self.export_service.export_single_album(
+                backup_model=self.backup_service.current_model,
+                destination_str=dest_path,
+                album_name=target,
+                settings_service=self.settings_service,
+                conversion_service=self.conversion_service
+            )
+        
+        #  Re-enable the menu and hide the progress bar
+        export_menu.disabled = False
+        pb.add_class("hidden")
+        
+       
+        if success:
+            log.write_line(f"\n[SUCCESS] {message}\n")
+        else:
+            log.write_line(f"\n[ERROR] {message}\n")
+            
+        self.call_from_thread(self.reset_export_menu)
+        self.call_from_thread(export_menu.add_class, "hidden")
+        self.call_from_thread(self.query_one("#main_menu").remove_class, "hidden")
+        self.call_from_thread(self.query_one("#lbl_menu_title").update, "[b]MAIN MENU[/b]")
+
+
+    @on(DirectoryTree.FileSelected, "#photo_tree")
+    def handle_file_selected(self, event: DirectoryTree.FileSelected):
+        """Triggered automatically when a file is clicked in the DirectoryTree."""
+        selected_path = event.path
+        ext = selected_path.suffix.lower()
+        
+        
+        if ext in {".jpg", ".jpeg", ".png"}:
+            self.query_one("#lbl_photo_caption").update("[b]Loading caption...[/b] (Please wait)")
+            
+            self.run_photo_captioner(str(selected_path))
+        else:
+            self.query_one("#lbl_photo_caption").update(f"[!] Unsupported file type: {ext}. Please pick an image.")
+
+    @work(thread=True)
+    def run_photo_captioner(self, path_str):
+        """Background worker to process the image without freezing the TUI."""
+        log = self.query_one("#log_window")
+        self.call_from_thread(log.write_line, f"[INFO] Processing image: {path_str}")
+        
+        try:
+            
+            caption = photo_captioner.get_caption(path_str)
+            
+            
+            self.call_from_thread(self.query_one("#lbl_photo_caption").update, f"[b]Caption:[/b] {caption}")
+            self.call_from_thread(log.write_line, f"[SUCCESS] Caption generated.")
+            
+           
+            image = Image.open(path_str)
+            image.show()
+            
+        except Exception as e:
+            self.call_from_thread(self.query_one("#lbl_photo_caption").update, f"[!] Error generating caption.")
+            self.call_from_thread(log.write_line, f"[ERROR] Caption failed: {str(e)}")
 def main():
     """
     Program entrypoint.
