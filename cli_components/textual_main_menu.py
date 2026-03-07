@@ -54,15 +54,21 @@ class iExtractApp(App):
 
     def compose(self) -> ComposeResult:
         """
-        Main program command-line interface loop.
+        Constructs the UI layout. 
+        Hidden classes are used to store submenus that will be toggled on/off 
+        during user navigation.
         """
        
         yield Header()
         yield Footer()
+        #Main wrapper dividing between menu and log output
         with Horizontal(id="app_grid"):
-            #Main menu navigation
+            
+            # LEFT SIDEBAR: Interactive Menus
+            
             with Vertical(id = "side_bar"):
                 yield Label("[b]MAIN MENU[/b]", id="lbl_menu_title")
+                # --- 1. Main Menu Options ---
                 with Vertical(id = "main_menu"):
                     yield Button("1. Load iPhone Backup Folder", id = "btn_load")
                     yield Button("2. Export All Camera Roll Media", id = "btn_export_all")
@@ -73,7 +79,7 @@ class iExtractApp(App):
                     yield Button("7. Photo Descriptor (Beta)", id="btn_photo_beta")
                     yield Button("8. Restart", id="btn_restart")
                     yield Button("9. Exit", id="btn_exit")
-                #Load options
+                # --- 2. Load Backup Submenu ---
                 with Vertical(id = "backup_options", classes="hidden"):
                     yield ProgressBar(id="pb_loading", classes="hidden")
                     yield Button("1. Load via GUI", id="btn_load_gui", variant="primary")
@@ -82,14 +88,14 @@ class iExtractApp(App):
                     yield Button("Submit Path", id="btn_submit_path", classes="hidden", variant="success")
                     yield Button("Go Back", id="btn_back_load")
 
-                #Settings options     
+                # --- 4. Main Settings Submenu ---     
                 with Vertical(id="settings_options", classes="hidden"):
                     yield Button("1. Blacklist/Whitelist Settings", id="btn_menu_bw")
                     yield Button("2. Conversion Settings", id="btn_menu_conv")
                     yield Button("3. Symlink Settings", id="btn_menu_symlink")
                     yield Button("4. Go Back", id="btn_back_settings")
 
-                # --- 2. BLACKLIST / WHITELIST MENU ---
+                # --- 5. BLACKLIST / WHITELIST MENU ---
                 with Vertical(id="bw_options", classes="hidden"):
                     yield Label("Mode: Unknown", id="lbl_bw_mode")
                     yield Label("List: []", id="lbl_bw_list")
@@ -97,7 +103,7 @@ class iExtractApp(App):
                     yield Button("2. Add/Remove Album", id="btn_bw_manage")
                     yield Button("3. Go Back", id="btn_back_bw")
 
-                # --- 3. ALBUM SELECTION (MANUAL ENTRY) ---
+                # --- 6. ALBUM SELECTION (MANUAL ENTRY) ---
                 with Vertical(id="album_selection_options", classes="hidden"):
                     yield Label("Available Albums:\n", id="lbl_album_avail")
                     yield Label("Current List: []", id="lbl_album_current")
@@ -105,14 +111,14 @@ class iExtractApp(App):
                     yield Button("Submit Album", id="btn_submit_managed_album", variant="success")
                     yield Button("Go Back", id="btn_back_album_manage")
 
-                # --- 4. CONVERSION SETTINGS ---
+                # --- 7. CONVERSION SETTINGS ---
                 with Vertical(id="conversion_options", classes="hidden"):
                     yield Label("Toggle a conversion to enable/disable it. Enabled conversions\nwill automatically convert files during export.\n")
                     yield Button("1. HEIC → JPG  [OFF]", id="btn_toggle_heic")
                     yield Button("2. MOV → MP4  [OFF]", id="btn_toggle_mov")
                     yield Button("3. Go Back", id="btn_back_conv")
 
-                # --- 5. SYMLINK SETTINGS ---
+                # --- 8. SYMLINK SETTINGS ---
                 with Vertical(id="symlink_options", classes="hidden"):
                     yield Label("- Enabling symlinks (symbolic links, or shortcuts) allows\niExtract to save a file to the extraction folder one time and\nlink to its location... This saves storage space.\n")
                     yield Label("Current Status: [Unknown]", id="lbl_symlink_status")
@@ -125,7 +131,7 @@ class iExtractApp(App):
                     yield Button("Developer Documentation", id="btn_help_dev")
                     yield Button("Go Back", id="btn_back_help")
 
-                #  EXPORT OPTIONS
+                #  EXPORT DESTINATION PICKER
                 with Vertical(id="export_options", classes="hidden"):
                     yield Label("Destination for: all albums", id="lbl_export_item")
                     yield Button("1. Select via GUI", id="btn_export_gui", variant="primary")
@@ -154,8 +160,9 @@ class iExtractApp(App):
                     yield Button("Go Back", id="btn_back_photo")    
 
 
-
-
+           
+            # RIGHT SIDEBAR: System Log Output
+            
             with Vertical (id = "main_content"):
                 yield Label("System Log:")
                 yield Log(id = "log_window",highlight= True)    
@@ -177,29 +184,33 @@ class iExtractApp(App):
             self.query_one("#input_export_path", Input).value = ""             
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-
-        """Handles all button clicks"""
+        """
+        Master event router for the application. Catches every button click 
+        and routes it to the appropriate navigation or action logic based on the Button's ID.
+        """
      
         log = self.query_one("#log_window",Log)
-
         btn_id = event.button.id
 
+        # --- Application Exit & Reset ---
         if btn_id == "btn_exit":
             self.exit()
 
         if btn_id == "btn_restart":
             log.write_line("Restart Feature Status: Feature not yet implemented.")    
 
-        """Navigation logic"""
+       
+        # NAVIGATION LOGIC (Menu Swapping)
+        
 
-        # Loading backup buttons
+       # Main Menu -> Load Backup
         if btn_id == "btn_load":
             self.query_one("#main_menu").add_class("hidden")
             self.query_one("#backup_options").remove_class("hidden")
             self.query_one("#lbl_menu_title").update("[b]LOAD BACKUP[/b]")
             log.write_line("[MENU] Select load method...")  
 
-        # Returning from the backup loading menu to the main menu
+        # Load Backup -> Main Menu
         if btn_id == "btn_back_load":
             self.query_one("#backup_options").add_class("hidden")
             self.query_one("#main_menu").remove_class("hidden")
@@ -207,12 +218,13 @@ class iExtractApp(App):
             log.write_line("[MENU] Returned to Main Menu...") 
                   
 
-        #Help menu
+       # Main Menu -> Help Options
         if btn_id == "btn_help":
                 self.query_one("#main_menu").add_class("hidden")
                 self.query_one("#help_options").remove_class("hidden")
                 self.query_one("#lbl_menu_title").update("[b]HELP & DOCS[/b]")
 
+        # Help Options -> Main Menu
         if btn_id == "btn_back_help":
             self.query_one("#help_options").add_class("hidden")
             self.query_one("#main_menu").remove_class("hidden")
@@ -225,10 +237,12 @@ class iExtractApp(App):
            
          
 
-        """Action Logic"""
+        # ==========================================
+        # ACTION LOGIC (Executing Features)
+        # ==========================================
 
-         # --- Getting Backup location logic -- 
-
+        
+        # --- Backup Loading ---
         if btn_id == "btn_load_gui":
             selected_folder = gui_pick_folder()
             
@@ -247,14 +261,14 @@ class iExtractApp(App):
                 self.run_backup_load(selected_folder)
 
         
-        #Export all logic 
+       
 
         # --- EXPORT ALL ---
         if btn_id == "btn_export_all":
             if self.backup_service.current_model is None:
                 log.write_line("[!] Error: No backup loaded. Please load a backup first.")
             else:
-                self.current_export_target = "all albums" # Track the target
+                self.current_export_target = "all albums" 
                 log.write_line("\n--- EXPORT ALL ---")
                 self.query_one("#main_menu").add_class("hidden")
                 self.query_one("#export_options").remove_class("hidden")
@@ -264,6 +278,7 @@ class iExtractApp(App):
               
 
         # --- EXPORT DESTINATION HELPER LOGIC ---
+        
         if btn_id == "btn_export_cancel":
             log.write_line("Export cancelled.")
             self.reset_export_menu()
@@ -562,7 +577,10 @@ class iExtractApp(App):
 
     @work(thread=True)
     def run_backup_load(self, selected_folder):
-        """Background worker for backup loading."""
+        """
+        Loads the SQLite backup database in a background thread.
+        Prevents the UI from freezing during the parsing process.
+        """
         log = self.query_one("#log_window")
         pb = self.query_one("#pb_loading")
         options_menu = self.query_one("#backup_options")
@@ -574,7 +592,7 @@ class iExtractApp(App):
 
         #  Call the service 
         success, message = self.backup_service.attempt_load_backup(selected_folder)
-        
+        #Disables menu options while loading backup
         options_menu.disabled = False
         pb.add_class("hidden")
         if success:
@@ -587,7 +605,10 @@ class iExtractApp(App):
 
     @work(thread=True)
     def run_export(self, target, dest_path):
-        """Background worker for asset export"""
+        """
+        Executes the file extraction and conversion logic in a background thread.
+        Utilizes `call_from_thread` for all UI updates to guarantee thread safety.
+        """
         log = self.query_one("#log_window")
         pb = self.query_one("#pb_export")
         export_menu = self.query_one("#export_options")
@@ -597,7 +618,7 @@ class iExtractApp(App):
         export_menu.disabled = True 
         log.write_line(f"[EXPORTING] Executing export for {target} to {dest_path}...")
 
-        # 2. Call the synchronous service 
+    
         if target == "all albums":
             success, message = self.export_service.export_all(
                 self.backup_service.current_model, 

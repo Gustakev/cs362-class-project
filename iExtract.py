@@ -7,6 +7,7 @@ Program Description: Starts the iExtract program.
 import sys
 
 
+
 from cli_components.main_menu import main as cli_main
 
 from cli_components.textual_main_menu import iExtractApp
