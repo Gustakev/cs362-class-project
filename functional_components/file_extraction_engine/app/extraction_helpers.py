@@ -9,11 +9,17 @@ from pathlib import Path
 from typing import Dict, List
 
 from functional_components.conversion_engine.app.convert_file import convert_asset
+
 from functional_components.conversion_engine.domain.asset_to_convert import (
     AssetToConvert,
 )
+
 from functional_components.file_extraction_engine.domain.collection_ref import (
     CollectionRef,
+)
+
+from functional_components.file_extraction_engine.data.file_management import (
+    sanitize_filename,
 )
 
 
@@ -55,7 +61,6 @@ def get_active_collections(asset, blacklist, album_title_by_uuid) -> List[Collec
 
     return result
 
-
 def get_dest_name(asset, resolved_asset) -> str:
     """Return the filename to use when placing a copied/converted asset."""
 
@@ -64,15 +69,18 @@ def get_dest_name(asset, resolved_asset) -> str:
         ext = Path(resolved_asset.backup_relative_path).suffix
     else:
         ext = "." + asset.file_extension.lower()
-    return stem + ext
+    return sanitize_filename(stem + ext)
 
-
-def maybe_convert(asset, convert_type_dict):
+def maybe_convert(asset, convert_type_dict, temp_dir=None):
     """Convert the asset according to convert_type_dict if necessary."""
+    if asset.file_extension.upper() not in convert_type_dict:
+        return asset
 
-    if asset.file_extension.upper() in convert_type_dict:
-        result = convert_asset(AssetToConvert(asset_to_convert=asset, \
-            convert_type_dict=convert_type_dict))
+    try:
+        result = convert_asset(AssetToConvert(
+            asset_to_convert=asset,
+            convert_type_dict=convert_type_dict
+        ), temp_dir=temp_dir)
         if result.success:
             return result.converted_asset
         else:
@@ -81,4 +89,10 @@ def maybe_convert(asset, convert_type_dict):
                 file=sys.stderr,
             )
             return asset
-    return asset
+    except Exception as e:
+        print(
+            f"Conversion failed for {asset.original_filename}: {e}",
+            file=sys.stderr,
+        )
+        return asset
+    

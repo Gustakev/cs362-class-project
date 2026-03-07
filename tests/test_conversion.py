@@ -1,19 +1,25 @@
 """
 Author: Sam Daughtry (Edited by Kevin Gustafson)
-Date: 2026-02-23
+Date: 2026-03-06
 Description: Tests the conversion feature.
 """
 
 import unittest
+
 from unittest.mock import patch, MagicMock
 
+from pathlib import Path
+
 from functional_components.conversion_engine.app.convert_file import convert_asset
+
 from functional_components.conversion_engine.domain.asset_to_convert import (
     AssetToConvert,
 )
+
 from functional_components.conversion_engine.domain.converted_asset import (
     ConvertedAsset,
 )
+
 from functional_components.backup_locator_and_validator.domain.backup_model import (
     Asset,
     Flags,
@@ -43,53 +49,35 @@ def _make_asset(file_extension: str, backup_relative_path: str) -> Asset:
 
 class TestConvertAsset(unittest.TestCase):
 
-    @patch(
-        "functional_components.conversion_engine.app.convert_file.store_temp_file"
-    )
-    @patch(
-        "functional_components.conversion_engine.data.media_converter.Image"
-    )
-    def test_convert_heic_success(self, mock_image_module, mock_store_temp_file):
+    @patch("functional_components.conversion_engine.data.media_converter.Image")
+    @patch("functional_components.conversion_engine.data.media_converter.Path.mkdir")
+    def test_convert_heic_success(self, mock_mkdir, mock_image_module):
         mock_img = MagicMock()
         mock_image_module.open.return_value = mock_img
-        mock_store_temp_file.return_value = "/tmp/iconvert_xyz/test.png"
 
         asset = _make_asset("HEIC", "/backup/abc123")
         asset_to_convert = AssetToConvert(
             asset_to_convert=asset,
-            convert_type_dict={"HEIC": "PNG"},
+            convert_type_dict={"HEIC": "JPG"},
         )
 
-        result = convert_asset(asset_to_convert)
+        result = convert_asset(asset_to_convert, temp_dir="/tmp/iExtract_conversion_temp")
 
         mock_image_module.open.assert_called_once_with("/backup/abc123")
-        mock_img.save.assert_called_once_with("/backup/abc123.png")
-        mock_store_temp_file.assert_called_once_with("/backup/abc123.png")
+        self.assertTrue(mock_img.save.called)
+        saved_path = mock_img.save.call_args[0][0]
+        self.assertTrue(saved_path.endswith(".jpg"))
 
         self.assertTrue(result.success)
         self.assertIsNotNone(result.converted_asset)
-        self.assertEqual(
-            result.converted_asset.backup_relative_path,
-            "/tmp/iconvert_xyz/test.png",
-        )
-        self.assertEqual(
-            result.converted_asset.original_filename, asset.original_filename
-        )
-        self.assertEqual(
-            result.converted_asset.backup_hashed_filename,
-            asset.backup_hashed_filename,
-        )
+        self.assertTrue(result.converted_asset.backup_relative_path.endswith(".jpg"))
+        self.assertEqual(result.converted_asset.original_filename, asset.original_filename)
+        self.assertEqual(result.converted_asset.backup_hashed_filename, asset.backup_hashed_filename)
 
-    @patch(
-        "functional_components.conversion_engine.app.convert_file.store_temp_file"
-    )
-    @patch(
-        "functional_components.conversion_engine.data.media_converter.VideoFileClip"
-    )
-    def test_convert_mov_success(self, mock_video_clip, mock_store_temp_file):
-        mock_video = MagicMock()
-        mock_video_clip.return_value = mock_video
-        mock_store_temp_file.return_value = "/tmp/iconvert_xyz/test.mp4"
+    @patch("functional_components.conversion_engine.data.media_converter.subprocess.run")
+    @patch("functional_components.conversion_engine.data.media_converter.Path.mkdir")
+    def test_convert_mov_success(self, mock_mkdir, mock_subprocess_run):
+        mock_subprocess_run.return_value = MagicMock(returncode=0, stderr="")
 
         asset = _make_asset("MOV", "/backup/abc123")
         asset_to_convert = AssetToConvert(
@@ -97,27 +85,36 @@ class TestConvertAsset(unittest.TestCase):
             convert_type_dict={"MOV": "MP4"},
         )
 
-        result = convert_asset(asset_to_convert)
+        result = convert_asset(asset_to_convert, temp_dir="/tmp/iExtract_conversion_temp")
 
-        mock_video_clip.assert_called_once_with("/backup/abc123")
-        mock_video.write_videofile.assert_called_once_with(
-            "/backup/abc123.mp4", codec="libx264"
-        )
-        mock_store_temp_file.assert_called_once_with("/backup/abc123.mp4")
+        self.assertTrue(mock_subprocess_run.called)
+        call_args = mock_subprocess_run.call_args[0][0]
+        self.assertIn("ffmpeg", call_args[0].lower())
+        self.assertIn("/backup/abc123", call_args)
+        self.assertTrue(call_args[-1].endswith(".mp4"))
 
         self.assertTrue(result.success)
         self.assertIsNotNone(result.converted_asset)
-        self.assertEqual(
-            result.converted_asset.backup_relative_path,
-            "/tmp/iconvert_xyz/test.mp4",
+        self.assertTrue(result.converted_asset.backup_relative_path.endswith(".mp4"))
+        self.assertEqual(result.converted_asset.original_filename, asset.original_filename)
+        self.assertEqual(result.converted_asset.backup_hashed_filename, asset.backup_hashed_filename)
+
+    @patch("functional_components.conversion_engine.data.media_converter.subprocess.run")
+    @patch("functional_components.conversion_engine.data.media_converter.Path.mkdir")
+    def test_convert_mov_ffmpeg_failure_returns_failure(self, mock_mkdir, mock_subprocess_run):
+        mock_subprocess_run.return_value = MagicMock(returncode=1, stderr="ffmpeg error: codec not supported", stdout="")
+
+        asset = _make_asset("MOV", "/backup/abc123")
+        asset_to_convert = AssetToConvert(
+            asset_to_convert=asset,
+            convert_type_dict={"MOV": "MP4"},
         )
-        self.assertEqual(
-            result.converted_asset.original_filename, asset.original_filename
-        )
-        self.assertEqual(
-            result.converted_asset.backup_hashed_filename,
-            asset.backup_hashed_filename,
-        )
+
+        result = convert_asset(asset_to_convert, temp_dir="/tmp/iExtract_conversion_temp")
+
+        self.assertFalse(result.success)
+        self.assertIsNone(result.converted_asset)
+        self.assertIn("ffmpeg error", result.error)
 
     def test_no_conversion_rule_returns_failure(self):
         asset = _make_asset("HEIC", "/backup/abc123")
@@ -145,21 +142,20 @@ class TestConvertAsset(unittest.TestCase):
         self.assertIsNone(result.converted_asset)
         self.assertIn("PNG", result.error)
 
-    @patch(
-        "functional_components.conversion_engine.data.media_converter.Image"
-    )
+    @patch("functional_components.conversion_engine.data.media_converter.Image")
+    @patch("functional_components.conversion_engine.data.media_converter.Path.mkdir")
     def test_convert_heic_image_open_exception_returns_failure(
-        self, mock_image_module
+        self, mock_mkdir, mock_image_module
     ):
         mock_image_module.open.side_effect = OSError("File not found")
 
         asset = _make_asset("HEIC", "/backup/abc123")
         asset_to_convert = AssetToConvert(
             asset_to_convert=asset,
-            convert_type_dict={"HEIC": "PNG"},
+            convert_type_dict={"HEIC": "JPG"},
         )
 
-        result = convert_asset(asset_to_convert)
+        result = convert_asset(asset_to_convert, temp_dir="/tmp/iExtract_conversion_temp")
 
         self.assertFalse(result.success)
         self.assertIsNone(result.converted_asset)
@@ -168,4 +164,3 @@ class TestConvertAsset(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-    
