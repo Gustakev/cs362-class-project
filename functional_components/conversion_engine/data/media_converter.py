@@ -21,9 +21,13 @@ register_heif_opener()
 
 
 def _get_temp_dir(temp_dir) -> Path:
-    """Use provided temp_dir, creating it if necessary."""
-    p = Path(temp_dir)
-    p.mkdir(parents=True, exist_ok=True)
+    """Use provided temp_dir, or fall back to system temp if none given."""
+    if temp_dir is None:
+        import tempfile
+        p = Path(tempfile.mkdtemp(prefix="iconvert_"))
+    else:
+        p = Path(temp_dir)
+        p.mkdir(parents=True, exist_ok=True)
     return p
 
 def convert_image(path: str, target_format: str, temp_dir) -> str:

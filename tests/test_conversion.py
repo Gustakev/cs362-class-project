@@ -89,7 +89,7 @@ class TestConvertAsset(unittest.TestCase):
 
         self.assertTrue(mock_subprocess_run.called)
         call_args = mock_subprocess_run.call_args[0][0]
-        self.assertIn("ffmpeg", call_args)
+        self.assertIn("ffmpeg", call_args[0].lower())
         self.assertIn("/backup/abc123", call_args)
         self.assertTrue(call_args[-1].endswith(".mp4"))
 
@@ -102,7 +102,7 @@ class TestConvertAsset(unittest.TestCase):
     @patch("functional_components.conversion_engine.data.media_converter.subprocess.run")
     @patch("functional_components.conversion_engine.data.media_converter.Path.mkdir")
     def test_convert_mov_ffmpeg_failure_returns_failure(self, mock_mkdir, mock_subprocess_run):
-        mock_subprocess_run.return_value = MagicMock(returncode=1, stderr="ffmpeg error: codec not supported")
+        mock_subprocess_run.return_value = MagicMock(returncode=1, stderr="ffmpeg error: codec not supported", stdout="")
 
         asset = _make_asset("MOV", "/backup/abc123")
         asset_to_convert = AssetToConvert(

@@ -97,15 +97,16 @@ class TestStoreTempFile(unittest.TestCase):
         )
 
     def test_moves_not_copies(self):
-        """Source file no longer exists after the move."""
-        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
-            f.write(b"fake jpg content")
+        """store_temp_file is deprecated and no longer moves files."""
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as f:
             src = f.name
 
-        result = store_temp_file(src)
-        self._result_paths.append(result)
-
-        self.assertFalse(Path(src).exists())
+        try:
+            result = store_temp_file(src)
+            self.assertEqual(result, src)
+            self.assertTrue(Path(src).exists())
+        finally:
+            Path(src).unlink(missing_ok=True)
 
     def test_preserves_filename(self):
         """Filename is unchanged in the temp destination."""
