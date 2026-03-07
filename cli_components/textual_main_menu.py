@@ -13,13 +13,10 @@ import webbrowser
 
 from pathlib import Path
 
-from functional_components.services import BackupService, SettingsService, ExportService
+from functional_components.services import BackupService, SettingsService, ExportService, ConversionService
 from cli_components.main_menu import gui_pick_folder
 #from functional_components.photo_captioner import get_caption
 
-backup_service = BackupService()
-settings_service = SettingsService()
-export_service = ExportService()
 
 
 
@@ -28,6 +25,8 @@ from textual.containers import Container, Vertical, Horizontal, Center
 from textual.widgets import Header, Footer, Button, Static, Input, Log, Label
 from textual.reactive import reactive
 from textual.screen import Screen
+from textual.widgets import ProgressBar
+from textual import work
 
 
 
@@ -45,7 +44,7 @@ class iExtractApp(App):
         self.backup_service = BackupService()
         self.settings_service = SettingsService()
         self.export_service = ExportService()
-
+        self.conversion_service = ConversionService()
 
 
     def compose(self) -> ComposeResult:
@@ -70,6 +69,7 @@ class iExtractApp(App):
                 yield Button("8. Exit", id="btn_exit", variant="error")
             #Load options
             with Vertical(id = "backup_options", classes="hidden"):
+                yield ProgressBar(id="pb_loading", classes="hidden",show_percentage=True)
                 yield Button("1. Load via GUI", id="btn_load_gui", variant="primary")
                 yield Button("2. Load via Path", id="btn_load_path")
                 yield Input(placeholder="Enter folder path...", id="input_path", classes="hidden")
@@ -101,6 +101,14 @@ class iExtractApp(App):
                 yield Label("", id="lbl_export_confirm", classes="hidden")
                 yield Button("Proceed (Yes)", id="btn_export_confirm_yes", classes="hidden", variant="success")
                 yield Button("Cancel", id="btn_export_cancel", variant="error")
+
+
+            # SPECIFIC EXPORT OPTIONS 
+            with Vertical(id="specific_export_options", classes="hidden"):
+                yield Label("Available Albums:", id="lbl_available_albums")
+                yield Input(placeholder="Enter exact Album Name (or type 'cancel')...", id="input_specific_album")
+                yield Button("Submit Album", id="btn_submit_specific_album", variant="success")
+                yield Button("Go Back", id="btn_back_specific")   
 
 
 
@@ -177,29 +185,14 @@ class iExtractApp(App):
 
         """Action Logic"""
 
-        # Logic for picking backup location using folder gui
+         # --- Getting Backup location logic -- 
 
         if btn_id == "btn_load_gui":
             selected_folder = gui_pick_folder()
             
             if selected_folder:
                 log.write_line(f"\nYou chose: {selected_folder}")
-                
-            
-                success, message = backup_service.attempt_load_backup(selected_folder)
-                
-                if success:
-                    log.write_line(f"\n{message}")
-                    log.write_line(backup_service.get_formatted_device_metadata())
-                    log.write_line("")
-                    
-                    # Returning to the main menu
-                    self.query_one("#backup_options").add_class("hidden")
-                    self.query_one("#main_menu").remove_class("hidden")
-                    self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
-                else:
-                    #  staying on the menu
-                    log.write_line(f"\n[ERROR]{message}\n")
+                self.run_backup_load(selected_folder)
 
         # Logic for picking backup using a direct path
         if btn_id == "btn_load_path":
@@ -208,37 +201,23 @@ class iExtractApp(App):
             
         if btn_id == "btn_submit_path":
             selected_folder = self.query_one("#input_path", Input).value
-            
             if selected_folder:
-                log.write_line(f"\nYou chose: {selected_folder}")
-                
-                
-                success, message = backup_service.attempt_load_backup(selected_folder)
-                
-                if success:
-                    log.write_line(f"\n{message}")
-                    log.write_line(backup_service.get_formatted_device_metadata())
-                    log.write_line("")
-                    
-                    # Clean up the input box
-                    self.query_one("#input_path", Input).value = ""
-                    
-                    #  the user back to the Main Menu
-                    self.query_one("#backup_options").add_class("hidden")
-                    self.query_one("#main_menu").remove_class("hidden")
-                    self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
-                else:
-                    log.write_line(f"\n[ERROR]{message}\n")
+                self.run_backup_load(selected_folder)
 
         
         #Export all logic 
 
         # --- EXPORT ALL ---
         if btn_id == "btn_export_all":
-            if backup_service.current_model is None:
+            if self.backup_service.current_model is None:
                 log.write_line("[!] Error: No backup loaded. Please load a backup first.")
             else:
+                self.current_export_target = "all albums" # Track the target
                 log.write_line("\n--- EXPORT ALL ---")
+                self.query_one("#main_menu").add_class("hidden")
+                self.query_one("#export_options").remove_class("hidden")
+                self.query_one("#lbl_menu_title").update("[b]EXPORT DESTINATION[/b]")
+                self.query_one("#lbl_export_item").update("Destination for: all albums")
                 
               
 
@@ -295,24 +274,114 @@ class iExtractApp(App):
                 self.query_one("#btn_export_confirm_yes").tooltip = dest_path
 
         if btn_id == "btn_export_confirm_yes":
-            # Retrieve the path we stored during the selection step
             dest_path = self.query_one("#btn_export_confirm_yes").tooltip
-            item_name = str(self.query_one("#lbl_export_item", Label).renderable)
+            target = getattr(self, 'current_export_target', 'all albums')
             
-            # Execute the export
-            log.write_line(f"[INFO] Executing export for {item_name} to {dest_path}")
+            log.write_line(f"[INFO] Executing export for {target} to {dest_path}")
             
-            # TODO: When export all function is implemented
-            # success, message = export_service.export_all(backup_service.current_model, dest_path)
-            # if success:
-            #     log.write_line(f"\n[SUCCESS] {message}\n")
-            # else:
-            #     log.write_line(f"\n[ERROR] {message}\n")
+            # Execute the correct service method based on the tracked target
+            if target == "all albums":
+                success, message = self.export_service.export_all(
+                    self.backup_service.current_model, 
+                    dest_path, 
+                    self.settings_service, 
+                    self.conversion_service
+                )
+            else:
+                success, message = self.export_service.export_single_album(
+                    backup_model=self.backup_service.current_model,
+                    destination_str=dest_path,
+                    album_name=target,
+                    settings_service=self.settings_service,
+                    conversion_service=self.conversion_service
+                )
+            
+            if success:
+                log.write_line(f"\n[SUCCESS] {message}\n")
+            else:
+                log.write_line(f"\n[ERROR] {message}\n")
             
             # Return to main menu
             self.query_one("#export_options").add_class("hidden")
             self.query_one("#main_menu").remove_class("hidden")
             self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
+
+
+
+    # --- EXPORT SPECIFIC LOGIC ---
+        if btn_id == "btn_specific":
+            if not self.backup_service.current_model:
+                log.write_line("[!] Error: No backup loaded. Please load a backup first.")
+            else:
+                available_albums = self.export_service.get_album_list(self.backup_service.current_model)
+                if not available_albums:
+                    log.write_line("[!] No albums found in backup.")
+                else:
+                    self.query_one("#main_menu").add_class("hidden")
+                    self.query_one("#specific_export_options").remove_class("hidden")
+                    self.query_one("#lbl_menu_title").update("[b]EXPORT SPECIFIC ALBUM[/b]")
+
+                    # Display the list of albums 
+                    album_text = f"Found {len(available_albums)} albums:\n" + "\n".join([f" - {a}" for a in available_albums])
+                    self.query_one("#lbl_available_albums").update(album_text)
+
+        if btn_id == "btn_back_specific":
+            self.query_one("#specific_export_options").add_class("hidden")
+            self.query_one("#main_menu").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
+
+        if btn_id == "btn_submit_specific_album":
+            choice = self.query_one("#input_specific_album", Input).value.strip()
+            available_albums = self.export_service.get_album_list(self.backup_service.current_model)
+
+            if choice.lower() == "cancel":
+                log.write_line("Export cancelled.")
+                self.query_one("#input_specific_album", Input).value = ""
+                self.query_one("#specific_export_options").add_class("hidden")
+                self.query_one("#main_menu").remove_class("hidden")
+                self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
+                return
+
+            # Strict 1:1 check as written in the CLI
+            if choice in available_albums:
+                self.query_one("#input_specific_album", Input).value = "" # Clear input
+                self.current_export_target = choice # Track target for execution step
+                
+                # Hand off to the destination path picker (get_export_destination equivalent)
+                self.query_one("#specific_export_options").add_class("hidden")
+                self.query_one("#export_options").remove_class("hidden")
+                self.query_one("#lbl_menu_title").update("[b]EXPORT DESTINATION[/b]")
+                self.query_one("#lbl_export_item").update(f"Destination for: '{choice}'")
+            else:
+                log.write_line(f"[!] Error: Album '{choice}' does not exist.")
+
+
+
+    @work(thread=True)
+    def run_backup_load(self, selected_folder):
+        """Background worker for backup loading."""
+        log = self.query_one("#log_window")
+        pb = self.query_one("#pb_loading")
+        options_menu = self.query_one("#backup_options")
+        
+        # Show  progress bar
+        pb.remove_class("hidden")
+        options_menu.disabled = True 
+        log.write_line("[LOADING] Parsing backup database...")
+
+        #  Call the service 
+        success, message = self.backup_service.attempt_load_backup(selected_folder)
+        
+        options_menu.disabled = False
+        pb.add_class("hidden")
+        if success:
+            log.write_line(f"[SUCCESS] {message}")
+            log.write_line(self.backup_service.get_formatted_device_metadata())
+            self.query_one("#backup_options").add_class("hidden")
+            self.query_one("#main_menu").remove_class("hidden")
+        else:
+            log.write_line(f"[ERROR] {message}")
+
 
 def main():
     """

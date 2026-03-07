@@ -9,3 +9,8 @@ Button{
 
 
 }
+
+#pb_loading {
+    width: 100%;
+    margin: 1 0;
+}
