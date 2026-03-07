@@ -136,7 +136,7 @@ def build_assets(
                 backup_hashed_filename = file_id
             except FileNotFoundError:
                 skipped += 1
-                print(f"\nSKIPPED ASSET: {relative_path}\n")
+                print(f"\nSKIPPED ASSET: {relative_path}")
                 continue
 
         # Derive file extension from original filename
