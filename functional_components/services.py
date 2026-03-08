@@ -114,9 +114,9 @@ class BackupService:
 
         if result.success:
             self.current_model = result.backup_model
-            return True, "Backup loaded successfully!"
+            return True, "Backup loaded successfully!", result.icloud_warning
         else:
-            return False, f"Error loading backup: {result.error}"
+            return False, f"Error loading backup: {result.error}", None
 
 
 class SettingsService:

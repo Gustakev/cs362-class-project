@@ -91,12 +91,16 @@ def load_backup_menu():
             print("")
             continue
 
-        success, message = backup_service.attempt_load_backup(selected_folder)
+        success, message, warning = backup_service.attempt_load_backup(selected_folder)
 
         if success:
             print(f"\n{message}")
-            # Fetch formatted metadata from services.py and print
             print(backup_service.get_formatted_device_metadata())
+            if warning:
+                print(
+                    "\033[31m" + f"\n{warning}" + "\033[0m",
+                    file=sys.stderr
+                )
             print("")
             return
         else:
