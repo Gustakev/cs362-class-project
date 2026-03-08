@@ -24,6 +24,19 @@ settings_service = SettingsService()
 export_service = ExportService()
 conversion_service = ConversionService()
 
+def restart_program():
+    """
+    Resets global state to mimic a fresh application start.
+
+    """
+    global backup_service, settings_service, export_service, conversion_service
+
+    backup_service = BackupService()
+    settings_service = SettingsService()
+    export_service = ExportService()
+    conversion_service = ConversionService()
+    print("\nApplication state has been reset. Restarting...\n")
+
 
 def gui_pick_folder():
     """
@@ -38,6 +51,7 @@ def gui_pick_folder():
         root.attributes("-topmost", True)
         root.update()
 
+        print("Window opened. Please select a folder.")
         folder = filedialog.askdirectory(title="Select a folder")
         return folder
     except tk.TclError:
@@ -142,7 +156,8 @@ def main_menu():
         elif main_menu_choice == "7":
             feat_photo_caption()
         elif main_menu_choice == "8":
-            print("Restart Feature Status: Feature not yet implemented.")
+            restart_program()
+            return
         elif main_menu_choice == "9":
             print("Thank you for using this program. Goodbye.")
             sys.exit()
