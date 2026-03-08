@@ -1,5 +1,5 @@
 """
-Author: Sam Daughtry
+Author: Sam Daughtry (Edited by Kevin Gustafson)
 Date: 2026-03-01
 Description: Main extraction entry point for the file‑extraction engine.
 """
@@ -140,7 +140,7 @@ def run_extraction_engine(
                             output_root / sanitize_folder_name(collection.title)
                         )
                         copy_file(src_path, dest_folder, dest_name, asset)
-                        _cleanup_temp(resolved_asset, asset)
+                    _cleanup_temp(resolved_asset, asset)
         else:  # exactly one collection
             dest_folder = ensure_folder_exists(
                 output_root / sanitize_folder_name(active_collections[0].title)
@@ -165,10 +165,18 @@ def run_extraction_engine(
         )
         collection_count = len(active_collections)
 
-        # Determine if the asset has any collections before blacklist filtering
-        has_any_collections = (
-            len(key_frame.relationships.user_albums) > 0
-            or len(key_frame.relationships.smart_folders) > 0
+        # DEBUG FIGURE OUT WHY BURSTS ARE GOING INTO STAGING PERMANENTLY
+        # print(
+        #     f"BURST {burst_uuid[:8]}: collection_count={collection_count} "
+        #     f"key_frame_albums={key_frame.relationships.user_albums} "
+        #     f"is_primary={key_frame.is_primary_burst_frame}"
+        # )
+
+        # Determine if the burst has any collections before blacklist filtering
+        has_any_collections = any(
+            len(f.relationships.user_albums) > 0
+            or len(f.relationships.smart_folders) > 0
+            for f in frames
         )
 
         # If the asset had collections but all were blacklisted, skip it
@@ -204,6 +212,7 @@ def run_extraction_engine(
             # To prevent non-exclusive assets from being included in the
             #  extraction if undesired
             if collection_count == 0 and not include_unassigned:
+                shutil.rmtree(staging_folder)
                 tick()
                 continue
             if use_symlinks:

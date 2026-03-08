@@ -15,6 +15,7 @@ from functional_components.file_extraction_engine.app.extract_files import (
     run_extraction_engine
 )
 
+import json
 import os
 
 import tempfile, pathlib
@@ -49,11 +50,28 @@ class BackupService:
     """
     Manages the state of the loaded iPhone backup in memory.
     Serves as the bridge between the UI and the backup model builder.
+
+    This class loads iPhone model mappings from a JSON file to avoid
+    hardcoding each model in the code.
     """
 
     def __init__(self):
         # Holds the fully constructed BackupModel object once successfully loaded.
         self.current_model = None
+
+        # Load the technical -> branded mapping from JSON file
+        self._load_model_mappings()
+
+    def _load_model_mappings(self):
+        """Load iPhone model mappings from JSON file."""
+        json_path = os.path.join(os.path.dirname(__file__), 'iphone_models.json')
+        try:
+            with open(json_path, 'r') as f:
+                self.technical_to_branded = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            # Fallback to empty dict if file is missing or invalid
+            self.technical_to_branded = {}
+            print(f"Warning: Could not load iPhone model mappings: {e}")
 
     def get_formatted_device_metadata(self):
         """
@@ -74,6 +92,9 @@ class BackupService:
         formatted_model = raw_model.replace("e", "e ")
         submodel = device.model.split(",")[1]
 
+        # Get the branded name from the loaded mappings
+        brand_name = self.technical_to_branded.get(device.model)
+
         # Access the backup_metadata fields regarding backup info specifically
         device_metadata = self.current_model.backup_metadata
 
@@ -85,8 +106,8 @@ class BackupService:
         return (
             f"Device:\n"
             f"- Device Name: ............... {device.name}\n"
-            f"- Device Model: .............. {formatted_model}\n"
-            f"- Device Submodel: ........... {submodel}\n"
+            f"- Device Model: .............. {brand_name if brand_name else 'N/A'}\n"
+            f"- Model Identifier: .......... {formatted_model},{submodel}\n"
             f"- iOS Version: ............... {device.ios_version}\n"
             f"Backup:\n"
             f"- Backup Encryption Status: .. {device_metadata.is_encrypted}\n"
@@ -107,16 +128,16 @@ class BackupService:
             tuple: A boolean indicating success, and a corresponding message string.
         """
         if not path_str:
-            return False, "No folder selected. Please try again."
+            return False, "No folder selected. Please try again.", None
 
         # Call the Backup Locator & Validator
         result = build_backup_model(Path(path_str))
 
         if result.success:
             self.current_model = result.backup_model
-            return True, "Backup loaded successfully!"
+            return True, "Backup loaded successfully!", result.icloud_warning
         else:
-            return False, f"Error loading backup: {result.error}"
+            return False, f"Error loading backup: {result.error}", None
 
 
 class SettingsService:
@@ -130,12 +151,19 @@ class SettingsService:
         self._original_full_list = set()
         self.is_blacklist_mode = True
         self.use_symlinks = True
+        self.exclude_hidden_album = False
 
     def toggle_symlinks(self):
         """Toggles the global symlink setting."""
         self.use_symlinks = not self.use_symlinks
         state = "ENABLED" if self.use_symlinks else "DISABLED"
         return f"Symlink creation is now {state}."    
+    
+    def toggle_exclude_hidden_album(self):
+        """Toggles the hidden album exclusion setting."""
+        self.exclude_hidden_album = not self.exclude_hidden_album
+        state = "ENABLED" if self.exclude_hidden_album else "DISABLED"
+        return f"Hidden album exclusion is now {state}."    
 
     def get_engine_blacklist(self):
         """Returns a Blacklist object for the Extraction Engine to evaluate."""
@@ -344,6 +372,16 @@ class ExportService:
             convert_type_dict = conversion_service.get_convert_type_dict()
             progress_tracker = DummyProgress()
 
+            blacklist = settings_service.get_engine_blacklist()
+            if settings_service.exclude_hidden_album:
+                blacklist.current_list.append(ListEntry("hidden"))
+
+            # Compute present NUAs for folder creation
+            present_nuas = set()
+            for asset in backup_model.assets:
+                for nua in asset.relationships.smart_folders:
+                    present_nuas.add(nua)
+
             try:
                 test = pathlib.Path(tempfile.mkdtemp()) / "test_link"
                 test.symlink_to(pathlib.Path(tempfile.mkdtemp()))
@@ -358,7 +396,7 @@ class ExportService:
                 try:
                     run_extraction_engine(
                         backup_model=backup_model,
-                        blacklist=settings_service.get_engine_blacklist(),
+                        blacklist=blacklist,
                         output_root=Path(destination_str),
                         os_supports_symlinks=os_supports_symlinks,
                         user_set_symlinks=user_set_symlinks,
@@ -376,6 +414,11 @@ class ExportService:
             draw_progress_bar(progress_tracker, thread)
 
             thread.join()
+
+            if settings_service.exclude_hidden_album and "hidden" in present_nuas:
+                from functional_components.file_extraction_engine.data.file_management import ensure_folder_exists
+                ensure_folder_exists(Path(destination_str) / "nua_hidden")
+
 
             if engine_error:
                 return False, f"Extraction Engine Error: {engine_error[0]}"
@@ -408,6 +451,12 @@ class ExportService:
             ],
             is_blacklist=True
         )
+
+        # Album UUID Debugging:
+        # print(f"Target album: {album_name}")
+        # for album in backup_model.albums:
+        #     if album.title == album_name:
+        #         print(f"Album UUID: {album.album_uuid}")
 
         try:
             import threading

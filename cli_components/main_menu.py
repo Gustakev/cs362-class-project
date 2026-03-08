@@ -24,6 +24,19 @@ settings_service = SettingsService()
 export_service = ExportService()
 conversion_service = ConversionService()
 
+def restart_program():
+    """
+    Resets global state to mimic a fresh application start.
+
+    """
+    global backup_service, settings_service, export_service, conversion_service
+
+    backup_service = BackupService()
+    settings_service = SettingsService()
+    export_service = ExportService()
+    conversion_service = ConversionService()
+    print("\nApplication state has been reset. Restarting...\n")
+
 
 def gui_pick_folder():
     """
@@ -38,6 +51,7 @@ def gui_pick_folder():
         root.attributes("-topmost", True)
         root.update()
 
+        print("Window opened. Please select a folder.")
         folder = filedialog.askdirectory(title="Select a folder")
         return folder
     except tk.TclError:
@@ -91,12 +105,16 @@ def load_backup_menu():
             print("")
             continue
 
-        success, message = backup_service.attempt_load_backup(selected_folder)
+        success, message, warning = backup_service.attempt_load_backup(selected_folder)
 
         if success:
             print(f"\n{message}")
-            # Fetch formatted metadata from services.py and print
             print(backup_service.get_formatted_device_metadata())
+            if warning:
+                print(
+                    "\033[31m" + f"\n{warning}" + "\033[0m",
+                    file=sys.stderr
+                )
             print("")
             return
         else:
@@ -138,7 +156,8 @@ def main_menu():
         elif main_menu_choice == "7":
             feat_photo_caption()
         elif main_menu_choice == "8":
-            print("Restart Feature Status: Feature not yet implemented.")
+            restart_program()
+            return
         elif main_menu_choice == "9":
             print("Thank you for using this program. Goodbye.")
             sys.exit()
@@ -303,7 +322,8 @@ def settings_menu():
         print("1. Blacklist/Whitelist Settings")
         print("2. Conversion Settings")
         print("3. Symlink Settings")
-        print("4. Back")
+        print("4. Hidden Album Settings")
+        print("5. Back")
 
         choice = input("Select: ").strip()
 
@@ -312,8 +332,10 @@ def settings_menu():
         elif choice == "2":
             conversion_settings_menu()
         elif choice == "3":
-            symlink_settings_menu()   
+            symlink_settings_menu()
         elif choice == "4":
+            hidden_album_settings_menu()
+        elif choice == "5":
             print("Going back...")
             return
         else:
@@ -417,6 +439,31 @@ def symlink_settings_menu():
             print("\nInvalid Choice")
                 
 
+def hidden_album_settings_menu():
+    """Manages hidden album exclusion settings."""
+    while True:
+        print("\033[33m" + "\n--- HIDDEN ALBUM SETTINGS ---" + "\033[0m")
+
+        print(
+            "- Enabling hidden album exclusion prevents the export of any\n"
+            "media included in the hidden album.\n"
+            )
+
+        status = "ON" if settings_service.exclude_hidden_album else "OFF"
+        print(f"Current Status: [{status}]")
+        print("1. Toggle Hidden Album Exclusion")
+        print("2. Back")
+
+        choice = input("\nSelect: ").strip()
+
+        if choice == "1":
+            print("\n" + settings_service.toggle_exclude_hidden_album())
+        elif choice == "2":
+            return
+        else:
+            print("\nInvalid Choice")
+
+
 def album_selection_submenu():
     """
     Submenu to handle how users pick albums to filter.
@@ -500,7 +547,11 @@ def report_bug():
 
 def feat_photo_caption():
     """"""
-    file_dir = Path("functional_components/photo_caption/data/")
+    if getattr(sys, 'frozen', False):
+        base = Path(sys._MEIPASS)
+    else:
+        base = Path(".")
+    file_dir = base / "functional_components/photo_caption/data"
     root_dir = file_dir
 
     print("\033[33m" + "=========================== iExtract Menu ===========================\n")
