@@ -322,7 +322,8 @@ def settings_menu():
         print("1. Blacklist/Whitelist Settings")
         print("2. Conversion Settings")
         print("3. Symlink Settings")
-        print("4. Back")
+        print("4. Hidden Album Settings")
+        print("5. Back")
 
         choice = input("Select: ").strip()
 
@@ -331,8 +332,10 @@ def settings_menu():
         elif choice == "2":
             conversion_settings_menu()
         elif choice == "3":
-            symlink_settings_menu()   
+            symlink_settings_menu()
         elif choice == "4":
+            hidden_album_settings_menu()
+        elif choice == "5":
             print("Going back...")
             return
         else:
@@ -435,6 +438,31 @@ def symlink_settings_menu():
         else:
             print("\nInvalid Choice")
                 
+
+def hidden_album_settings_menu():
+    """Manages hidden album exclusion settings."""
+    while True:
+        print("\033[33m" + "\n--- HIDDEN ALBUM SETTINGS ---" + "\033[0m")
+
+        print(
+            "- Enabling hidden album exclusion prevents the export of any\n"
+            "media included in the hidden album.\n"
+            )
+
+        status = "ON" if settings_service.exclude_hidden_album else "OFF"
+        print(f"Current Status: [{status}]")
+        print("1. Toggle Hidden Album Exclusion")
+        print("2. Back")
+
+        choice = input("\nSelect: ").strip()
+
+        if choice == "1":
+            print("\n" + settings_service.toggle_exclude_hidden_album())
+        elif choice == "2":
+            return
+        else:
+            print("\nInvalid Choice")
+
 
 def album_selection_submenu():
     """

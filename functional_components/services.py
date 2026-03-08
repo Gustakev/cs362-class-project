@@ -151,12 +151,19 @@ class SettingsService:
         self._original_full_list = set()
         self.is_blacklist_mode = True
         self.use_symlinks = True
+        self.exclude_hidden_album = False
 
     def toggle_symlinks(self):
         """Toggles the global symlink setting."""
         self.use_symlinks = not self.use_symlinks
         state = "ENABLED" if self.use_symlinks else "DISABLED"
         return f"Symlink creation is now {state}."    
+    
+    def toggle_exclude_hidden_album(self):
+        """Toggles the hidden album exclusion setting."""
+        self.exclude_hidden_album = not self.exclude_hidden_album
+        state = "ENABLED" if self.exclude_hidden_album else "DISABLED"
+        return f"Hidden album exclusion is now {state}."    
 
     def get_engine_blacklist(self):
         """Returns a Blacklist object for the Extraction Engine to evaluate."""
@@ -365,6 +372,16 @@ class ExportService:
             convert_type_dict = conversion_service.get_convert_type_dict()
             progress_tracker = DummyProgress()
 
+            blacklist = settings_service.get_engine_blacklist()
+            if settings_service.exclude_hidden_album:
+                blacklist.current_list.append(ListEntry("hidden"))
+
+            # Compute present NUAs for folder creation
+            present_nuas = set()
+            for asset in backup_model.assets:
+                for nua in asset.relationships.smart_folders:
+                    present_nuas.add(nua)
+
             try:
                 test = pathlib.Path(tempfile.mkdtemp()) / "test_link"
                 test.symlink_to(pathlib.Path(tempfile.mkdtemp()))
@@ -379,7 +396,7 @@ class ExportService:
                 try:
                     run_extraction_engine(
                         backup_model=backup_model,
-                        blacklist=settings_service.get_engine_blacklist(),
+                        blacklist=blacklist,
                         output_root=Path(destination_str),
                         os_supports_symlinks=os_supports_symlinks,
                         user_set_symlinks=user_set_symlinks,
@@ -397,6 +414,11 @@ class ExportService:
             draw_progress_bar(progress_tracker, thread)
 
             thread.join()
+
+            if settings_service.exclude_hidden_album and "hidden" in present_nuas:
+                from functional_components.file_extraction_engine.data.file_management import ensure_folder_exists
+                ensure_folder_exists(Path(destination_str) / "nua_hidden")
+
 
             if engine_error:
                 return False, f"Extraction Engine Error: {engine_error[0]}"
