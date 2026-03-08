@@ -98,21 +98,27 @@ def get_file_id_for_mov_companion(conn, mov_filename: str):
         raise FileNotFoundError(f"No MOV companion found for: {mov_filename}")
     return results[0]["fileID"]
 
-def get_file_id_fallback(conn, filename: str):
+def get_file_id_fallback(conn, original_filename: str, zfilename: str = None):
     """Fallback lookup by filename stem when primary path resolution fails."""
-    stem = filename.rsplit(".", 1)[0]
-    rows = execute_query(
-        conn,
-        """SELECT fileID FROM Files 
-           WHERE relativePath LIKE ?
-           AND relativePath NOT LIKE '%.pvt%'
-           AND relativePath NOT LIKE '%Thumbnails%'
-           AND relativePath NOT LIKE '%Mutations%'
-           AND relativePath NOT LIKE '%.AAE%'
-           ORDER BY length(relativePath) ASC""",
-        (f"%/{stem}.%",)
-    )
-    results = map_rows(rows)
-    if not results:
-        raise FileNotFoundError(f"No fallback match found for: {filename}")
-    return results[0]["fileID"]
+    candidates = []
+    if zfilename:
+        candidates.append(zfilename.rsplit(".", 1)[0])
+    candidates.append(original_filename.rsplit(".", 1)[0])
+    
+    for stem in candidates:
+        rows = execute_query(
+            conn,
+            """SELECT fileID FROM Files 
+               WHERE relativePath LIKE ?
+               AND relativePath NOT LIKE '%.pvt%'
+               AND relativePath NOT LIKE '%Thumbnails%'
+               AND relativePath NOT LIKE '%Mutations%'
+               AND relativePath NOT LIKE '%.AAE%'
+               ORDER BY length(relativePath) ASC""",
+            (f"%/{stem}.%",)
+        )
+        results = map_rows(rows)
+        if results:
+            return results[0]["fileID"]
+    
+    raise FileNotFoundError(f"No fallback match found for: {original_filename}")

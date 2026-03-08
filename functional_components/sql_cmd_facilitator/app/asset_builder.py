@@ -124,8 +124,9 @@ def build_assets(
     for row in raw_assets:
         # Resolve the hashed file path from Manifest.db
         original_filename = row.get("ZORIGINALFILENAME") or row.get("ZFILENAME", "")
+        zfilename = row.get("ZFILENAME") or original_filename
         directory = row.get("ZDIRECTORY", "")
-        relative_path = f"Media/{directory}/{original_filename}"
+        relative_path = f"Media/{directory}/{zfilename}"
 
         try:
             file_id = get_file_id_for_asset(manifest_conn, relative_path)
@@ -133,7 +134,7 @@ def build_assets(
             backup_hashed_filename = file_id
         except FileNotFoundError:
             try:
-                file_id = get_file_id_fallback(manifest_conn, original_filename)
+                file_id = get_file_id_fallback(manifest_conn, original_filename, zfilename)
                 backup_relative_path = str(backup_root / file_id[:2] / file_id)
                 backup_hashed_filename = file_id
             except FileNotFoundError:
