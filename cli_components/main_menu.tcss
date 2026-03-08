@@ -1,0 +1,49 @@
+#app_grid {
+    layout: horizontal;
+    height: 100%;
+    width: 100%;
+}
+
+
+#side_bar {
+    width: 55;
+    height: 100%;
+    border-right: vkey $accent; 
+    padding: 1 2;
+}
+
+
+#main_content {
+    width: 1fr; 
+    height: 100%;
+    padding: 1 1;
+}
+
+Button {
+    width: 50;
+    margin-bottom: 1;
+}
+
+#log_window {
+    width: 100%;
+    height: 1fr; 
+    border: round $secondary;
+    background: $boost;
+}
+
+.hidden {
+    display: none;
+}
+
+#lbl_photo_caption {
+    height: auto;
+    width: 100%;
+    margin-top: 1;
+}
+
+#lbl_export_confirm{
+     height: auto;
+    width: 100%;
+    margin-top: 1;
+
+}

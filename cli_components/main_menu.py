@@ -38,6 +38,8 @@ def restart_program():
     print("\nApplication state has been reset. Restarting...\n")
 
 
+
+
 def gui_pick_folder():
     """
     Opens a GUI folder picker dialog and returns the selected folder path.
