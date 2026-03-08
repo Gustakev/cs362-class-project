@@ -47,5 +47,11 @@ def launch_prompt():
 
 
 if __name__ == "__main__":
+    try :
+        print("Starting iExtract... Press Ctrl+C to exit at any time.")
+        while True:
+            launch_prompt()
+    except KeyboardInterrupt:
+        print("\nThank you for using this program. Goodbye.")
+        sys.exit(0)
     
-    launch_prompt()

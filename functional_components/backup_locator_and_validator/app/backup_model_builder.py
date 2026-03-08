@@ -154,7 +154,7 @@ def build_backup_model(backup_root: Path) -> BackupModelResult:
             )
             membership_lookup = build_membership_lookup(raw_memberships)
 
-            assets = build_assets(
+            assets, skipped = build_assets(
                 raw_assets,
                 membership_lookup,
                 backup_root,
@@ -199,6 +199,16 @@ def build_backup_model(backup_root: Path) -> BackupModelResult:
     # for a in live_videos:
     #     print(f"  {a.original_filename}  group={a.live_photo_group_uuid}")
 
+    icloud_warning = None
+    if skipped > 0:
+        icloud_warning = (
+            f"[!] Warning: {skipped} assets in this backup's Photos library "
+            f"could not be located in the backup files. They may be stored in "
+            f"iCloud and excluded from the local backup."
+        )
+
     return BackupModelResult(
-        success=True, backup_model=backup_model
+        success=True,
+        backup_model=backup_model,
+        icloud_warning=icloud_warning
     )
