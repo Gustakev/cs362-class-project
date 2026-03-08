@@ -15,6 +15,7 @@ from functional_components.file_extraction_engine.app.extract_files import (
     run_extraction_engine
 )
 
+import json
 import os
 
 import tempfile, pathlib
@@ -49,11 +50,28 @@ class BackupService:
     """
     Manages the state of the loaded iPhone backup in memory.
     Serves as the bridge between the UI and the backup model builder.
+
+    This class loads iPhone model mappings from a JSON file to avoid
+    hardcoding each model in the code.
     """
 
     def __init__(self):
         # Holds the fully constructed BackupModel object once successfully loaded.
         self.current_model = None
+
+        # Load the technical -> branded mapping from JSON file
+        self._load_model_mappings()
+
+    def _load_model_mappings(self):
+        """Load iPhone model mappings from JSON file."""
+        json_path = os.path.join(os.path.dirname(__file__), 'iphone_models.json')
+        try:
+            with open(json_path, 'r') as f:
+                self.technical_to_branded = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            # Fallback to empty dict if file is missing or invalid
+            self.technical_to_branded = {}
+            print(f"Warning: Could not load iPhone model mappings: {e}")
 
     def get_formatted_device_metadata(self):
         """
@@ -74,6 +92,9 @@ class BackupService:
         formatted_model = raw_model.replace("e", "e ")
         submodel = device.model.split(",")[1]
 
+        # Get the branded name from the loaded mappings
+        brand_name = self.technical_to_branded.get(device.model)
+
         # Access the backup_metadata fields regarding backup info specifically
         device_metadata = self.current_model.backup_metadata
 
@@ -85,8 +106,8 @@ class BackupService:
         return (
             f"Device:\n"
             f"- Device Name: ............... {device.name}\n"
-            f"- Device Model: .............. {formatted_model}\n"
-            f"- Device Submodel: ........... {submodel}\n"
+            f"- Device Model: .............. {brand_name if brand_name else 'N/A'}\n"
+            f"- Model Identifier: .......... {formatted_model},{submodel}\n"
             f"- iOS Version: ............... {device.ios_version}\n"
             f"Backup:\n"
             f"- Backup Encryption Status: .. {device_metadata.is_encrypted}\n"
