@@ -165,10 +165,18 @@ def run_extraction_engine(
         )
         collection_count = len(active_collections)
 
-        # Determine if the asset has any collections before blacklist filtering
-        has_any_collections = (
-            len(key_frame.relationships.user_albums) > 0
-            or len(key_frame.relationships.smart_folders) > 0
+        # DEBUG FIGURE OUT WHY BURSTS ARE GOING INTO STAGING PERMANENTLY
+        print(
+            f"BURST {burst_uuid[:8]}: collection_count={collection_count} "
+            f"key_frame_albums={key_frame.relationships.user_albums} "
+            f"is_primary={key_frame.is_primary_burst_frame}"
+        )
+
+        # Determine if the burst has any collections before blacklist filtering
+        has_any_collections = any(
+            len(f.relationships.user_albums) > 0
+            or len(f.relationships.smart_folders) > 0
+            for f in frames
         )
 
         # If the asset had collections but all were blacklisted, skip it
@@ -204,6 +212,7 @@ def run_extraction_engine(
             # To prevent non-exclusive assets from being included in the
             #  extraction if undesired
             if collection_count == 0 and not include_unassigned:
+                shutil.rmtree(staging_folder)
                 tick()
                 continue
             if use_symlinks:
