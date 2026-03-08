@@ -504,7 +504,11 @@ def report_bug():
 
 def feat_photo_caption():
     """"""
-    file_dir = Path("functional_components/photo_caption/data/")
+    if getattr(sys, 'frozen', False):
+        base = Path(sys._MEIPASS)
+    else:
+        base = Path(".")
+    file_dir = base / "functional_components/photo_caption/data"
     root_dir = file_dir
 
     print("\033[33m" + "=========================== iExtract Menu ===========================\n")

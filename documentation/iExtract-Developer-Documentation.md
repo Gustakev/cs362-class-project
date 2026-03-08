@@ -122,7 +122,13 @@
 
 3. Build the executable using Python (this avoids PATH issues):
 
-   `python -m PyInstaller --onefile --copy-metadata imageio --copy-metadata moviepy --copy-metadata pillow_heif iExtract.py`
+   `macOS Terminal/Linux Bash or ZSH:`
+
+   `python -m PyInstaller --onefile --copy-metadata imageio --copy-metadata pillow_heif --add-data "functional_components/photo_caption/data:functional_components/photo_caption/data" --hidden-import PIL --hidden-import PIL.Image --hidden-import pillow_heif --hidden-import tkinter --collect-all imageio_ffmpeg iExtract.py`
+
+   `Windows Command Prompt/PowerShell:`
+
+   `python -m PyInstaller --onefile --copy-metadata imageio --copy-metadata pillow_heif --add-data "functional_components/photo_caption/data;functional_components/photo_caption/data" --hidden-import PIL --hidden-import PIL.Image --hidden-import pillow_heif --hidden-import tkinter --collect-all imageio_ffmpeg iExtract.py`
 
 4. Wait for the build to finish. PyInstaller will create two folders:  
 * `build/` (temporary files)  

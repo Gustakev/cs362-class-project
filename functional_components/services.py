@@ -107,7 +107,7 @@ class BackupService:
             tuple: A boolean indicating success, and a corresponding message string.
         """
         if not path_str:
-            return False, "No folder selected. Please try again."
+            return False, "No folder selected. Please try again.", None
 
         # Call the Backup Locator & Validator
         result = build_backup_model(Path(path_str))
