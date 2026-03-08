@@ -4,15 +4,15 @@
     width: 100%;
 }
 
-/* Fix: Define the Sidebar width to match your buttons */
+
 #side_bar {
-    width: 55; /* Slightly wider than the buttons for padding */
+    width: 55;
     height: 100%;
-    border-right: vkey $accent; /* Adds a nice divider line */
+    border-right: vkey $accent; 
     padding: 1 2;
 }
 
-/* Fix: Tell the content area to take up all REMAINING space */
+
 #main_content {
     width: 1fr; 
     height: 100%;
@@ -33,4 +33,17 @@ Button {
 
 .hidden {
     display: none;
+}
+
+#lbl_photo_caption {
+    height: auto;
+    width: 100%;
+    margin-top: 1;
+}
+
+#lbl_export_confirm{
+     height: auto;
+    width: 100%;
+    margin-top: 1;
+
 }

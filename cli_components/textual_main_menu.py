@@ -92,7 +92,8 @@ class iExtractApp(App):
                     yield Button("1. Blacklist/Whitelist Settings", id="btn_menu_bw")
                     yield Button("2. Conversion Settings", id="btn_menu_conv")
                     yield Button("3. Symlink Settings", id="btn_menu_symlink")
-                    yield Button("4. Go Back", id="btn_back_settings")
+                    yield Button("4. Hidden Album Settings", id="btn_menu_hidden")
+                    yield Button("5. Go Back", id="btn_back_settings") 
 
                 # --- 5. BLACKLIST / WHITELIST MENU ---
                 with Vertical(id="bw_options", classes="hidden"):
@@ -156,7 +157,14 @@ class iExtractApp(App):
                     yield Label("Select an image (.jpg, .png) to generate a caption:", id="lbl_photo_instructions")
                     yield DirectoryTree("functional_components/photo_caption/data/", id="photo_tree")
                     yield Label("", id="lbl_photo_caption")
-                    yield Button("Go Back", id="btn_back_photo")    
+                    yield Button("Go Back", id="btn_back_photo") 
+
+                # ---  HIDDEN ALBUM SETTINGS --- 
+                with Vertical(id="hidden_album_options", classes="hidden"):
+                    yield Label("- Enabling hidden album exclusion prevents the export of any media included in the hidden album.\n")
+                    yield Label("Current Status: [Unknown]", id="lbl_hidden_status")
+                    yield Button("1. Toggle Hidden Album Exclusion", id="btn_toggle_hidden")
+                    yield Button("2. Go Back", id="btn_back_hidden")       
 
 
            
@@ -196,7 +204,7 @@ class iExtractApp(App):
             self.exit()
 
         if btn_id == "btn_restart":
-            log.write_line("Restart Feature Status: Feature not yet implemented.")    
+            self.preform_restart()    
 
        
         # NAVIGATION LOGIC (Menu Swapping)
@@ -236,17 +244,18 @@ class iExtractApp(App):
            
          
 
-        # ==========================================
+    
         # ACTION LOGIC (Executing Features)
-        # ==========================================
+        
 
         
         # --- Backup Loading ---
         if btn_id == "btn_load_gui":
             selected_folder = gui_pick_folder()
+            log.write_line("[INFO] Window opened. Please select a folder.")
             
             if selected_folder:
-                log.write_line(f"\nYou chose: {selected_folder}")
+                log.write_line(f"\n[USER CHOICE] You chose: {selected_folder}")
                 self.run_backup_load(selected_folder)
 
         # Logic for picking backup using a direct path
@@ -279,7 +288,7 @@ class iExtractApp(App):
         # --- EXPORT DESTINATION HELPER LOGIC ---
         
         if btn_id == "btn_export_cancel":
-            log.write_line("Export cancelled.")
+            log.write_line("[INFO] Export cancelled.")
             self.reset_export_menu()
             self.query_one("#export_options").add_class("hidden")
             self.query_one("#main_menu").remove_class("hidden")
@@ -288,7 +297,7 @@ class iExtractApp(App):
         if btn_id == "btn_export_gui":
             dest_path = gui_pick_folder()
             if not dest_path:
-                log.write_line("Export cancelled.")
+                log.write_line("[INFO] Export cancelled.")
                 self.query_one("#export_options").add_class("hidden")
                 self.query_one("#main_menu").remove_class("hidden")
                 self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
@@ -312,7 +321,7 @@ class iExtractApp(App):
         if btn_id == "btn_submit_export_path":
             dest_path = self.query_one("#input_export_path", Input).value
             if not dest_path:
-                log.write_line("Export cancelled.")
+                log.write_line("[INFO] Export cancelled.")
                 self.query_one("#export_options").add_class("hidden")
                 self.query_one("#main_menu").remove_class("hidden")
                 self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
@@ -347,7 +356,7 @@ class iExtractApp(App):
             else:
                 available_albums = self.export_service.get_album_list(self.backup_service.current_model)
                 if not available_albums:
-                    log.write_line("[!] No albums found in backup.")
+                    log.write_line("[!] Error: No albums found in backup.")
                 else:
                     self.query_one("#main_menu").add_class("hidden")
                     self.query_one("#specific_export_options").remove_class("hidden")
@@ -367,7 +376,7 @@ class iExtractApp(App):
             available_albums = self.export_service.get_album_list(self.backup_service.current_model)
 
             if choice.lower() == "cancel":
-                log.write_line("Export cancelled.")
+                log.write_line("[INFO] Export cancelled.")
                 self.query_one("#input_specific_album", Input).value = ""
                 self.query_one("#specific_export_options").add_class("hidden")
                 self.query_one("#main_menu").remove_class("hidden")
@@ -423,7 +432,7 @@ class iExtractApp(App):
         if btn_id == "btn_bw_switch":
             available_albums = self.export_service.get_album_list(self.backup_service.current_model)
             msg = self.settings_service.toggle_mode(available_albums)
-            log.write_line(msg)
+            log.write_line(f"[BLACKLIST/WHITELIST] {msg}")
             # Refresh Labels after toggle
             mode, albums = self.settings_service.get_state()
             self.query_one("#lbl_bw_mode").update(f"Mode: {mode}")
@@ -457,7 +466,7 @@ class iExtractApp(App):
             
             if name in available:
                 success, msg = self.settings_service.toggle_album(name)
-                log.write_line(msg)
+                log.write_line(f"[ALBUM MANAGMENT] {msg}")
                 self.query_one("#input_manage_album", Input).value = "" # Clear input
                 # Update the visual list
                 _, albums = self.settings_service.get_state()
@@ -471,6 +480,7 @@ class iExtractApp(App):
             self.query_one("#album_selection_options").add_class("hidden")
             self.query_one("#bw_options").remove_class("hidden")
             self.query_one("#lbl_menu_title").update("[b]BLACKLIST / WHITELIST[/b]")
+
             # Refresh the list on the previous page just in case
             mode, albums = self.settings_service.get_state()
             self.query_one("#lbl_bw_list").update(f"List: [{albums}]")
@@ -494,7 +504,7 @@ class iExtractApp(App):
 
         if btn_id == "btn_toggle_heic":
             msg = self.conversion_service.toggle("HEIC")
-            log.write_line(msg)
+            log.write_line(f"[CONVERSION]{msg}")
             is_on = "HEIC" in self.conversion_service.enabled
             btn = self.query_one("#btn_toggle_heic", Button)
             btn.label = "1. HEIC → JPG  [✓ ON]" if is_on else "1. HEIC → JPG  [OFF]"
@@ -502,7 +512,7 @@ class iExtractApp(App):
 
         if btn_id == "btn_toggle_mov":
             msg = self.conversion_service.toggle("MOV")
-            log.write_line(msg)
+            log.write_line(f"[CONVERSION]{msg}")
             is_on = "MOV" in self.conversion_service.enabled
             btn = self.query_one("#btn_toggle_mov", Button)
             btn.label = "2. MOV → MP4  [✓ ON]" if is_on else "2. MOV → MP4  [OFF]"
@@ -528,7 +538,7 @@ class iExtractApp(App):
 
         if btn_id == "btn_toggle_symlink":
             msg = self.settings_service.toggle_symlinks()
-            log.write_line(msg)
+            log.write_line(f"[SYMLINK] {msg}]")
 
             is_on = self.settings_service.use_symlinks
             status = "✓ ON" if is_on else "OFF"
@@ -540,6 +550,38 @@ class iExtractApp(App):
             self.query_one("#symlink_options").add_class("hidden")
             self.query_one("#settings_options").remove_class("hidden")
             self.query_one("#lbl_menu_title").update("[b]SETTINGS[/b]")
+
+    # Hidden Album settings
+
+        if btn_id == "btn_menu_hidden":
+            self.query_one("#settings_options").add_class("hidden")
+            self.query_one("#hidden_album_options").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]HIDDEN ALBUM SETTINGS[/b]")
+
+            is_on = self.settings_service.exclude_hidden_album
+            status = "✓ ON" if is_on else "OFF"
+            
+            self.query_one("#lbl_hidden_status", Label).update(f"Current Status: [{status}]")
+            self.query_one("#btn_toggle_hidden", Button).variant = "success" if is_on else "default"
+
+        if btn_id == "btn_toggle_hidden":
+            # Toggle it in the backend
+            msg = self.settings_service.toggle_exclude_hidden_album()
+            log.write_line("[HIDDEN ALBUM] {msg}")
+
+            # Update the UI
+            is_on = self.settings_service.exclude_hidden_album
+            status = "✓ ON" if is_on else "OFF"
+            
+            self.query_one("#lbl_hidden_status", Label).update(f"Current Status: [{status}]")
+            self.query_one("#btn_toggle_hidden", Button).variant = "success" if is_on else "default"
+
+        if btn_id == "btn_back_hidden":
+            self.query_one("#hidden_album_options").add_class("hidden")
+            self.query_one("#settings_options").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]SETTINGS[/b]")
+
+
 
 
     #--Help Menu ----
@@ -590,15 +632,18 @@ class iExtractApp(App):
         log.write_line("[LOADING] Parsing backup database...")
 
         #  Call the service 
-        success, message = self.backup_service.attempt_load_backup(selected_folder)
+        success, message, icloud_warning = self.backup_service.attempt_load_backup(selected_folder)
         #Disables menu options while loading backup
         options_menu.disabled = False
         pb.add_class("hidden")
         if success:
-            log.write_line(f"[SUCCESS] {message}")
-            log.write_line(self.backup_service.get_formatted_device_metadata())
-            self.query_one("#backup_options").add_class("hidden")
-            self.query_one("#main_menu").remove_class("hidden")
+            self.call_from_thread(log.write_line, f"[SUCCESS] {message}")
+            self.call_from_thread(log.write_line, self.backup_service.get_formatted_device_metadata())
+            self.call_from_thread(self.query_one("#backup_options").add_class, "hidden")
+            self.call_from_thread(self.query_one("#main_menu").remove_class, "hidden")
+
+            if icloud_warning:
+                self.call_from_thread(log.write_line, f"[WARNING] {icloud_warning}")  
         else:
             log.write_line(f"[ERROR] {message}")
     @work(thread=True)
@@ -643,6 +688,8 @@ class iExtractApp(App):
             self.call_from_thread(log.write_line, f"\n[SUCCESS] {message}\n")
         else:
             self.call_from_thread(log.write_line, f"\n[ERROR] {message}\n")
+
+        
             
         self.call_from_thread(self.reset_export_menu)
         self.call_from_thread(export_menu.add_class, "hidden")
@@ -676,8 +723,10 @@ class iExtractApp(App):
             
             
             self.call_from_thread(self.query_one("#lbl_photo_caption").update, f"[b]Caption:[/b] {caption}")
-            self.call_from_thread(log.write_line, f"[SUCCESS] Caption generated.")
+    
             
+            self.call_from_thread(log.write_line, f"[SUCCESS] Caption generated for {path_str}:")
+            self.call_from_thread(log.write_line, f"[CAPTION]  {caption}\n")
            
             image = Image.open(path_str)
             image.show()
@@ -687,6 +736,34 @@ class iExtractApp(App):
             self.call_from_thread(log.write_line, f"[ERROR] Caption failed: {str(e)}")
 
     
+    def preform_restart(self):
+        self.backup_service = BackupService()
+        self.settings_service = SettingsService()
+        self.export_service = ExportService()
+        self.conversion_service = ConversionService()
+
+        # Deleting user input in input boxes
+        for input_id in ["#input_path", "#input_manage_album", "#input_export_path", "#input_specific_album"]:
+            self.query_one(input_id, Input).value = ""
+
+        menus_to_hide = [
+            "#backup_options", "#settings_options", "#bw_options", 
+            "#album_selection_options", "#conversion_options", 
+            "#symlink_options", "#help_options", "#export_options", 
+            "#specific_export_options", "#photo_beta_options", "#hidden_album_options"
+        ]
+        for menu in menus_to_hide:
+            self.query_one(menu).add_class("hidden")
+
+        self.query_one("#main_menu").remove_class("hidden")
+        self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
+        
+        log = self.query_one("#log_window", Log)
+        log.clear()
+        log.write_line("[SUCCESS] Application state has been completely restarted.")
+
+
+
 def main():
     """
     Program entrypoint.
