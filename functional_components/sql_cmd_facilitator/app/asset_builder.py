@@ -5,7 +5,9 @@ Description: Builds Asset domain objects from raw Photos.sqlite data.
 """
 
 from datetime import datetime, timezone
+
 from pathlib import Path
+
 from typing import List
 
 from functional_components.backup_locator_and_validator.domain.backup_model import (
@@ -44,8 +46,11 @@ def _convert_apple_epoch(apple_time: float) -> str:
     unix_time = apple_time + APPLE_EPOCH_OFFSET
     return datetime.fromtimestamp(unix_time, tz=timezone.utc).isoformat()
 
-def _get_subtype(zkindsubtype: int) -> str:
-    """Maps ZKINDSUBTYPE integer to a subtype literal."""
+def _get_subtype(row: dict) -> str:
+    """Maps row data to a subtype literal."""
+    if row.get("ZAVALANCHEUUID") is not None:
+        return "burst_frame"
+    zkindsubtype = row.get("ZKINDSUBTYPE")
     if zkindsubtype is None:
         return "standard"
     return SUBTYPE_MAP.get(zkindsubtype, "standard")
@@ -105,7 +110,7 @@ def build_assets(
     membership_lookup: dict,
     backup_root: Path,
     manifest_conn,
-) -> List[Asset]:
+) -> tuple[List[Asset], int]:
     """Converts raw asset rows into Asset domain objects."""
     from functional_components.sql_cmd_facilitator.data.asset_reader import (
         get_file_id_for_asset,
@@ -119,8 +124,9 @@ def build_assets(
     for row in raw_assets:
         # Resolve the hashed file path from Manifest.db
         original_filename = row.get("ZORIGINALFILENAME") or row.get("ZFILENAME", "")
+        zfilename = row.get("ZFILENAME") or original_filename
         directory = row.get("ZDIRECTORY", "")
-        relative_path = f"Media/{directory}/{original_filename}"
+        relative_path = f"Media/{directory}/{zfilename}"
 
         try:
             file_id = get_file_id_for_asset(manifest_conn, relative_path)
@@ -128,12 +134,11 @@ def build_assets(
             backup_hashed_filename = file_id
         except FileNotFoundError:
             try:
-                file_id = get_file_id_fallback(manifest_conn, original_filename)
+                file_id = get_file_id_fallback(manifest_conn, original_filename, zfilename)
                 backup_relative_path = str(backup_root / file_id[:2] / file_id)
                 backup_hashed_filename = file_id
             except FileNotFoundError:
                 skipped += 1
-                # print(f"SKIPPED: {relative_path}")
                 continue
 
         # Derive file extension from original filename
@@ -156,6 +161,14 @@ def build_assets(
             smart_folders=smart_folders,
         )
 
+        # TEMP DEBUG - remove after investigation
+        # if row.get("ZAVALANCHEUUID") is not None:
+        #     print(
+        #         f"BURST ROW: ZKINDSUBTYPE={row.get('ZKINDSUBTYPE')} "
+        #         f"ZAVALANCHEPICKTYPE={row.get('ZAVALANCHEPICKTYPE')} "
+        #         f"FILE={row.get('ZFILENAME')}"
+        #     )
+
         assets.append(Asset(
             asset_uuid=row["ZUUID"],
             local_identifier=row["ZUUID"],
@@ -168,11 +181,11 @@ def build_assets(
             backup_relative_path=backup_relative_path,
             backup_hashed_filename=backup_hashed_filename,
             media_type=_get_media_type(row.get("ZKIND")),
-            subtype=_get_subtype(row.get("ZKINDSUBTYPE")),
+            subtype=_get_subtype(row),
             live_photo_group_uuid=row.get("ZMEDIAGROUPUUID"),
             burst_uuid=row.get("ZAVALANCHEUUID"),
             is_primary_burst_frame=bool(
-                row.get("ZAVALANCHEPICKTYPE") == 2
+                row.get("ZAVALANCHEPICKTYPE") in (2, 52)
             ),
             flags=flags,
             relationships=relationships,
@@ -195,7 +208,6 @@ def build_assets(
         a for a in assets
         if a.subtype == "live_photo_still"
         and a.live_photo_group_uuid is not None
-        and Path(a.original_filename).stem.upper().startswith("IMG_")
     ]
     for still in live_stills:
         stem = Path(still.original_filename).stem
@@ -226,4 +238,4 @@ def build_assets(
             relationships=still.relationships,
         ))
 
-    return assets
+    return assets, skipped

@@ -33,6 +33,37 @@ class TestMainMenuUI(unittest.TestCase):
         mock_print.assert_any_call("Thank you for using this program. Goodbye.")
 
     @patch('builtins.print')
+    @patch('builtins.input', side_effect=['8'])
+    @patch('cli_components.main_menu.restart_program')
+    def test_main_menu_restart(self, mock_restart, mock_input, mock_print):
+        """Selecting '8' should invoke restart and return from the menu."""
+        # run the menu; should return normally without SystemExit
+        main_menu()
+
+        mock_restart.assert_called_once()
+        # when restart_program is patched, its own print statement is skipped
+
+    def test_restart_program_resets_state(self):
+        """Calling restart_program should recreate all service objects."""
+        # mutate the globals to something distinct
+        from cli_components import main_menu as mm
+        mm.backup_service.current_model = "dummy"
+        mm.settings_service.use_symlinks = False
+
+        old_backup = mm.backup_service
+        old_settings = mm.settings_service
+        old_export = mm.export_service
+        old_conversion = mm.conversion_service
+
+        mm.restart_program()
+
+        self.assertIsNot(mm.backup_service, old_backup)
+        self.assertIsNone(mm.backup_service.current_model)
+        self.assertIsNot(mm.settings_service, old_settings)
+        self.assertIsNot(mm.export_service, old_export)
+        self.assertIsNot(mm.conversion_service, old_conversion)
+
+    @patch('builtins.print')
     @patch('builtins.input', side_effect=['1', '9'])
     @patch('cli_components.main_menu.load_backup_menu')
     def test_main_menu_routes_to_load_backup(
@@ -81,7 +112,7 @@ class TestMainMenuUI(unittest.TestCase):
         self, mock_backup_service, mock_input, mock_print
     ):
         # Setup the mock service to pretend it succeeded
-        mock_backup_service.attempt_load_backup.return_value = (True, "Mock Loaded")
+        mock_backup_service.attempt_load_backup.return_value = (True, "Mock Loaded", None)
         mock_backup_service.get_formatted_device_metadata.return_value = "Mock Data"
 
         # Run the menu
@@ -95,7 +126,7 @@ class TestMainMenuUI(unittest.TestCase):
     """Settings menu"""
 
     @patch('builtins.print')
-    @patch('builtins.input', side_effect=['1', '1', '3', '3'])
+    @patch('builtins.input', side_effect=['1', '1', '3', '5'])
     @patch('cli_components.main_menu.export_service')
     @patch('cli_components.main_menu.settings_service')
     @patch('cli_components.main_menu.backup_service')
@@ -108,7 +139,7 @@ class TestMainMenuUI(unittest.TestCase):
           '1' -> enter Blacklist/Whitelist submenu from Settings
           '1' -> trigger toggle mode inside the submenu
           '3' -> go back from the submenu
-          '3' -> go back from Settings
+          '5' -> go back from Settings
         """
         # Setup mock state for the menu to print
         mock_backup.current_model = "FakeModel"
@@ -191,7 +222,7 @@ class TestMainMenuUI(unittest.TestCase):
     """Adding an album to the Blacklist"""
 
     @patch('builtins.print')
-    @patch('builtins.input', side_effect=['1', 'Instagram', 'done', '3'])
+    @patch('builtins.input', side_effect=['1', 'Instagram', 'cancel', '3'])
     @patch('cli_components.main_menu.settings_service')
     @patch('cli_components.main_menu.export_service')
     @patch('cli_components.main_menu.backup_service')

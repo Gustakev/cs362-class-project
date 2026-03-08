@@ -24,6 +24,19 @@ settings_service = SettingsService()
 export_service = ExportService()
 conversion_service = ConversionService()
 
+def restart_program():
+    """
+    Resets global state to mimic a fresh application start.
+
+    """
+    global backup_service, settings_service, export_service, conversion_service
+
+    backup_service = BackupService()
+    settings_service = SettingsService()
+    export_service = ExportService()
+    conversion_service = ConversionService()
+    print("\nApplication state has been reset. Restarting...\n")
+
 
 def gui_pick_folder():
     """
@@ -38,6 +51,7 @@ def gui_pick_folder():
         root.attributes("-topmost", True)
         root.update()
 
+        print("Window opened. Please select a folder.")
         folder = filedialog.askdirectory(title="Select a folder")
         return folder
     except tk.TclError:
@@ -85,18 +99,22 @@ def load_backup_menu():
             return
         else:
             print(
-                "\033[31m\nError: Invalid input. Choose one of the displayed options.\033[0m",
+                "\033[31m" + "\nError: Invalid input. Choose one of the displayed options." + "\033[0m",
                 file=sys.stderr,
             )
             print("")
             continue
 
-        success, message = backup_service.attempt_load_backup(selected_folder)
+        success, message, warning = backup_service.attempt_load_backup(selected_folder)
 
         if success:
             print(f"\n{message}")
-            # Fetch formatted metadata from services.py and print
             print(backup_service.get_formatted_device_metadata())
+            if warning:
+                print(
+                    "\033[31m" + f"\n{warning}" + "\033[0m",
+                    file=sys.stderr
+                )
             print("")
             return
         else:
@@ -138,7 +156,8 @@ def main_menu():
         elif main_menu_choice == "7":
             feat_photo_caption()
         elif main_menu_choice == "8":
-            print("Restart Feature Status: Feature not yet implemented.")
+            restart_program()
+            return
         elif main_menu_choice == "9":
             print("Thank you for using this program. Goodbye.")
             sys.exit()
@@ -162,12 +181,11 @@ def get_export_destination(item_name):
     Returns:
         str | None: The verified destination path, or None if the user cancels.
     """
-
-    while True: 
+    while True:
         print(f"\nHow would you like to select the destination folder for {item_name}?")
         print("1. Select via GUI")
         print("2. Enter path manually")
-        print("3. Back")
+        print("3. Cancel")
 
         dest_choice = input("\nChoose an option: ").strip()
         dest_path = None
@@ -183,15 +201,14 @@ def get_export_destination(item_name):
             if not dest_path:
                 print("Export cancelled.")
                 return None
-            break 
+            break
         elif dest_choice == "3":
             print("Export cancelled.")
             return None
         else:
-            print("\033[31mInvalid choice. Please choose 1, 2, or 3.\033[0m")
+            print("Invalid choice. Export cancelled.")
             
-
-    while True:    
+    while True:
         print(f"\nPreparing to export {item_name} to: {dest_path}")
         confirm = input("Proceed? (y/n): ").strip().lower()
         if confirm == 'y':
@@ -229,7 +246,7 @@ def export_all_menu():
     if success:
         print(f"\n[SUCCESS] {message}\n")
     else:
-        print(f"\n[ERROR] {message}\n", file=sys.stderr)
+        print(f"\033[31m" + "\n[ERROR] {message}\n"+ "\033[0m" , file=sys.stderr)
 
 def export_specific_menu():
     """
@@ -292,7 +309,7 @@ def export_specific_menu():
     if success:
         print(f"\n[SUCCESS] {message}\n")
     else:
-        print(f"\n[ERROR] {message}\n", file=sys.stderr)
+        print(f"\033[31m" + "\n[ERROR] {message}\n" + "\033[0m", file=sys.stderr)
 
 def settings_menu():
     """Top-level settings menu. Routes to submenus."""
@@ -304,7 +321,9 @@ def settings_menu():
         print("\033[33m" + "\n--- SETTINGS ---" + "\033[0m")
         print("1. Blacklist/Whitelist Settings")
         print("2. Conversion Settings")
-        print("3. Back")
+        print("3. Symlink Settings")
+        print("4. Hidden Album Settings")
+        print("5. Back")
 
         choice = input("Select: ").strip()
 
@@ -313,6 +332,10 @@ def settings_menu():
         elif choice == "2":
             conversion_settings_menu()
         elif choice == "3":
+            symlink_settings_menu()
+        elif choice == "4":
+            hidden_album_settings_menu()
+        elif choice == "5":
             print("Going back...")
             return
         else:
@@ -392,6 +415,65 @@ def conversion_settings_menu():
         except (ValueError, IndexError):
             print("\nInvalid Choice")
 
+
+def symlink_settings_menu():
+    """Manages symlink creation settings."""
+    while True:
+        print("\033[33m" + "\n--- SYMLINK SETTINGS ---" + "\033[0m")
+
+        print(
+            "- Enabling symlinks (symbolic links, or shortcuts) allows\n"
+            "iExtract to save a file to the extraction folder one time and\n"
+            "link to its location in every folder for each collection to\n"
+            "which it belongs. This saves storage space on your system.\n"
+            "- IMPORTANT WARNING: Ensure that the location you store your\n"
+            "extraction in is the permanent location you would like to store\n"
+            "it in. If you move the extraction folder (or rename it), you\n"
+            "will have to run a script to change the path of each symlink to\n"
+            "reflect the new, proper paths of each file in the extraction\n"
+            "folder.\n"
+            )
+
+        status = "ON" if settings_service.use_symlinks else "OFF"
+        print(f"Current Status: [{status}]")
+        print("1. Toggle Symlinks")
+        print("2. Back")
+
+        choice = input("\nSelect: ").strip()
+
+        if choice == "1":
+            print("\n" + settings_service.toggle_symlinks())
+        elif choice == "2":
+            return
+        else:
+            print("\nInvalid Choice")
+                
+
+def hidden_album_settings_menu():
+    """Manages hidden album exclusion settings."""
+    while True:
+        print("\033[33m" + "\n--- HIDDEN ALBUM SETTINGS ---" + "\033[0m")
+
+        print(
+            "- Enabling hidden album exclusion prevents the export of any\n"
+            "media included in the hidden album.\n"
+            )
+
+        status = "ON" if settings_service.exclude_hidden_album else "OFF"
+        print(f"Current Status: [{status}]")
+        print("1. Toggle Hidden Album Exclusion")
+        print("2. Back")
+
+        choice = input("\nSelect: ").strip()
+
+        if choice == "1":
+            print("\n" + settings_service.toggle_exclude_hidden_album())
+        elif choice == "2":
+            return
+        else:
+            print("\nInvalid Choice")
+
+
 def album_selection_submenu():
     """
     Submenu to handle how users pick albums to filter.
@@ -404,13 +486,13 @@ def album_selection_submenu():
         print("\033[33m" + "\n--- ALBUM SELECTION ---" + "\033[0m")
         print("Available Albums in Backup:")
 
-        for album in available_albums:
-            print(f" - {album}")
-
+    for album in available_albums:
+        print(f" - {album}")
+    while True:
         print("\nHow would you like to select an album?")
         print("1. Manual Entry")
         print("2. Checkbox Style Menu")
-        print("3. Back")
+        print("3. Go Back")
 
         sub_choice = input("\nSelect an option: ").strip()
 
@@ -419,18 +501,15 @@ def album_selection_submenu():
                 _, current_list = settings_service.get_state()
                 print(f"\nCurrent List: [{current_list}]")
 
-                name = input("Enter exact Album Name (or type 'cancel' or press 'Enter' to finish): ").strip()
+                name = input("Enter exact Album Name (or type 'cancel' to finish): ").strip()
 
                 # Exit condition
-                if name.lower() == "cancel" or name == "":
+                if name.lower() == "cancel":
                     break
-                
-                # making sure that a user can type in a album name and find it even if it has spaces at the end
-                match = next((a for a in available_albums if a.strip().lower() == name.lower()), None)
 
                 # UI Validation
-                if match:
-                    success, msg = settings_service.toggle_album(match)
+                if name in available_albums:
+                    success, msg = settings_service.toggle_album(name)
                     print(msg)
                 else:
                     print(
@@ -442,7 +521,7 @@ def album_selection_submenu():
         elif sub_choice == "3":
             return
         else:
-            print("\033[31m\nInvalid input. Please select 1, 2, or 3.\033[0m")
+            print("\nInvalid choice.")
 
 def help_user():
     """Links user to our documentation that explains how our program works."""
@@ -478,7 +557,11 @@ def report_bug():
 
 def feat_photo_caption():
     """"""
-    file_dir = Path("functional_components/photo_caption/data/")
+    if getattr(sys, 'frozen', False):
+        base = Path(sys._MEIPASS)
+    else:
+        base = Path(".")
+    file_dir = base / "functional_components/photo_caption/data"
     root_dir = file_dir
 
     print("\033[33m" + "=========================== iExtract Menu ===========================\n")
