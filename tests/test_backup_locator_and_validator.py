@@ -127,7 +127,7 @@ class TestBuildBackupModel(unittest.TestCase):
         mock_get_assets.return_value = []
         mock_get_asset_album_memberships.return_value = []
         mock_build_membership_lookup.return_value = {}
-        mock_build_assets.return_value = []
+        mock_build_assets.return_value = ([], 0)
 
         result = build_backup_model(self.backup_root)
 

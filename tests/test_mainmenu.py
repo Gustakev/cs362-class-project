@@ -81,7 +81,7 @@ class TestMainMenuUI(unittest.TestCase):
         self, mock_backup_service, mock_input, mock_print
     ):
         # Setup the mock service to pretend it succeeded
-        mock_backup_service.attempt_load_backup.return_value = (True, "Mock Loaded")
+        mock_backup_service.attempt_load_backup.return_value = (True, "Mock Loaded", None)
         mock_backup_service.get_formatted_device_metadata.return_value = "Mock Data"
 
         # Run the menu
