@@ -166,11 +166,11 @@ def run_extraction_engine(
         collection_count = len(active_collections)
 
         # DEBUG FIGURE OUT WHY BURSTS ARE GOING INTO STAGING PERMANENTLY
-        print(
-            f"BURST {burst_uuid[:8]}: collection_count={collection_count} "
-            f"key_frame_albums={key_frame.relationships.user_albums} "
-            f"is_primary={key_frame.is_primary_burst_frame}"
-        )
+        # print(
+        #     f"BURST {burst_uuid[:8]}: collection_count={collection_count} "
+        #     f"key_frame_albums={key_frame.relationships.user_albums} "
+        #     f"is_primary={key_frame.is_primary_burst_frame}"
+        # )
 
         # Determine if the burst has any collections before blacklist filtering
         has_any_collections = any(

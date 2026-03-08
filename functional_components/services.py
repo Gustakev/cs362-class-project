@@ -409,10 +409,11 @@ class ExportService:
             is_blacklist=True
         )
 
-        print(f"Target album: {album_name}")
-        for album in backup_model.albums:
-            if album.title == album_name:
-                print(f"Album UUID: {album.album_uuid}")
+        # Album UUID Debugging:
+        # print(f"Target album: {album_name}")
+        # for album in backup_model.albums:
+        #     if album.title == album_name:
+        #         print(f"Album UUID: {album.album_uuid}")
 
         try:
             import threading
