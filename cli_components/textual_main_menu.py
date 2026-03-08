@@ -13,14 +13,12 @@ import webbrowser
 
 from pathlib import Path
 
-from functional_components.services import BackupService, SettingsService, ExportService, ConversionService
+from functional_components.services import BackupService, SettingsService, ExportService, ConversionService, draw_progress_bar
 from cli_components.main_menu import gui_pick_folder
 
 from functional_components.photo_caption.app import photo_captioner
 from PIL import Image
 #from functional_components.photo_captioner import get_caption
-
-
 
 
 from textual.app import App, ComposeResult
@@ -32,6 +30,7 @@ from textual.widgets import ProgressBar
 from textual import work
 from textual import on, work
 from textual.widgets import DirectoryTree
+
 
 
 
@@ -602,48 +601,48 @@ class iExtractApp(App):
             self.query_one("#main_menu").remove_class("hidden")
         else:
             log.write_line(f"[ERROR] {message}")
-
     @work(thread=True)
     def run_export(self, target, dest_path):
         """
-        Executes the file extraction and conversion logic in a background thread.
-        Utilizes `call_from_thread` for all UI updates to guarantee thread safety.
+        Executes the file extraction and safely updates the UI.
+        Relies on the backend ExportService to manage sub-threads.
         """
         log = self.query_one("#log_window")
         pb = self.query_one("#pb_export")
         export_menu = self.query_one("#export_options")
         
-        # Show  progress bar and freeze the menu
-        pb.remove_class("hidden")
-        export_menu.disabled = True 
-        log.write_line(f"[EXPORTING] Executing export for {target} to {dest_path}...")
+        # Show progress bar and freeze the menu
+        self.call_from_thread(pb.remove_class, "hidden")
+        self.call_from_thread(setattr, export_menu, "disabled", True)
+        self.call_from_thread(log.write_line, f"[EXPORTING] Executing export for {target} to {dest_path}...")
+        self.call_from_thread(pb.update, total=100, progress=0)
 
-    
+        #  Create the safe UI updater
+        def update_textual_bar(pct):
+            self.call_from_thread(pb.update, progress=pct)
+
+        
         if target == "all albums":
             success, message = self.export_service.export_all(
-                self.backup_service.current_model, 
-                dest_path, 
-                self.settings_service, 
-                self.conversion_service
+                self.backup_service.current_model, dest_path, 
+                self.settings_service, self.conversion_service,
+                ui_callback=update_textual_bar 
             )
         else:
             success, message = self.export_service.export_single_album(
-                backup_model=self.backup_service.current_model,
-                destination_str=dest_path,
-                album_name=target,
-                settings_service=self.settings_service,
-                conversion_service=self.conversion_service
+                self.backup_service.current_model, dest_path, target, 
+                self.settings_service, self.conversion_service,
+                ui_callback=update_textual_bar
             )
-        
-        #  Re-enable the menu and hide the progress bar
-        export_menu.disabled = False
-        pb.add_class("hidden")
-        
-       
+
+        # --- UI Reset and Logging ---
+        self.call_from_thread(setattr, export_menu, "disabled", False)
+        self.call_from_thread(pb.add_class, "hidden")
+
         if success:
-            log.write_line(f"\n[SUCCESS] {message}\n")
+            self.call_from_thread(log.write_line, f"\n[SUCCESS] {message}\n")
         else:
-            log.write_line(f"\n[ERROR] {message}\n")
+            self.call_from_thread(log.write_line, f"\n[ERROR] {message}\n")
             
         self.call_from_thread(self.reset_export_menu)
         self.call_from_thread(export_menu.add_class, "hidden")
@@ -686,6 +685,8 @@ class iExtractApp(App):
         except Exception as e:
             self.call_from_thread(self.query_one("#lbl_photo_caption").update, f"[!] Error generating caption.")
             self.call_from_thread(log.write_line, f"[ERROR] Caption failed: {str(e)}")
+
+    
 def main():
     """
     Program entrypoint.

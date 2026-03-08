@@ -20,7 +20,7 @@ import os
 import tempfile, pathlib
 
 
-def draw_progress_bar(progress, thread):
+def draw_progress_bar(progress, thread,ui_callback=None):
     import time
     import sys
 
@@ -34,7 +34,10 @@ def draw_progress_bar(progress, thread):
         filled = int((pct / 100) * BAR_WIDTH)
         empty  = BAR_WIDTH - filled
         bar    = INDENT + FILLED * filled + EMPTY * empty + f"  {pct}%"
-        print(f"\r{bar}", end="", flush=True)
+        if ui_callback:
+            ui_callback(pct)
+        else:
+            print(f"\r{bar}", end="", flush=True) # Print to the raw CLI
         time.sleep(0.1)
 
     # Final bar reflecting actual completion
@@ -42,7 +45,10 @@ def draw_progress_bar(progress, thread):
     filled = int((pct / 100) * BAR_WIDTH)
     empty  = BAR_WIDTH - filled
     bar    = INDENT + FILLED * filled + EMPTY * empty + f"  {pct}%"
-    print(f"\r{bar}", flush=True)
+    if ui_callback:
+        ui_callback(pct)
+    else:
+        print(f"\r{bar}", flush=True)
 
 
 class BackupService:
@@ -330,7 +336,7 @@ class ExportService:
 
         return result
     
-    def export_all(self, backup_model, destination_str, settings_service, conversion_service):
+    def export_all(self, backup_model, destination_str, settings_service, conversion_service,ui_callback=None):
         """
         Export all function, based on psuedo code of extraction engine. subject to change.
         """
@@ -373,7 +379,7 @@ class ExportService:
             thread.start()
 
             # Draw progress bar while engine runs
-            draw_progress_bar(progress_tracker, thread)
+            draw_progress_bar(progress_tracker, thread, ui_callback)
 
             thread.join()
 
@@ -386,7 +392,7 @@ class ExportService:
             return False, f"Extraction Engine Error: {str(e)}"
 
 
-    def export_single_album(self, backup_model, destination_str, album_name, settings_service, conversion_service):
+    def export_single_album(self, backup_model, destination_str, album_name, settings_service, conversion_service,ui_callback=None):
         """Export a single specific album only."""
         if not backup_model:
             return False, "No backup loaded."
@@ -443,7 +449,7 @@ class ExportService:
 
             thread = threading.Thread(target=run, daemon=True)
             thread.start()
-            draw_progress_bar(progress_tracker, thread)
+            draw_progress_bar(progress_tracker, thread,ui_callback)
             thread.join()
 
             if engine_error:
