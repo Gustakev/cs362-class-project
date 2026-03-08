@@ -99,16 +99,18 @@ def get_file_id_for_mov_companion(conn, mov_filename: str):
     return results[0]["fileID"]
 
 def get_file_id_fallback(conn, filename: str):
-    """Fallback lookup by filename when primary path resolution fails."""
+    """Fallback lookup by filename stem when primary path resolution fails."""
+    stem = filename.rsplit(".", 1)[0]
     rows = execute_query(
         conn,
         """SELECT fileID FROM Files 
-           WHERE relativePath LIKE ? 
+           WHERE relativePath LIKE ?
            AND relativePath NOT LIKE '%.pvt%'
            AND relativePath NOT LIKE '%Thumbnails%'
            AND relativePath NOT LIKE '%Mutations%'
+           AND relativePath NOT LIKE '%.AAE%'
            ORDER BY length(relativePath) ASC""",
-        (f"%/{filename}",)
+        (f"%/{stem}.%",)
     )
     results = map_rows(rows)
     if not results:
