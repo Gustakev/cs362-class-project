@@ -108,7 +108,7 @@ def load_backup_menu():
             print("You chose:", selected_folder)
         elif folder_picker_method == "2":
             print("")
-            selected_folder = input("Enter the path to your iPhone backup " "folder: ")
+            selected_folder = input(r"Enter the path to your iPhone backup folder (e.g 'C:\Users\[Username]\Apple\MobileSync\Backup\[Backup Folder]' or '~/Library/Application Support/MobileSync/Backup/[Backup Folder]'): ")
             print("")
             print("You chose:", selected_folder)
         elif folder_picker_method == "3":

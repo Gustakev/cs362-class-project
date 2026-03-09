@@ -4,9 +4,14 @@ Date: 2026-02-15
 Program Description: Starts the iExtract program.
 """
 
+import warnings
+
+warnings.filterwarnings("ignore", message=".*urllib3.*")
+warnings.filterwarnings("ignore", message=".*chardet.*")
+warnings.filterwarnings("ignore", message=".*charset_normalizer.*")
+warnings.filterwarnings("ignore", message=".*character detection.*")
+
 import sys
-
-
 
 from cli_components.main_menu import main as cli_main
 
@@ -48,7 +53,7 @@ def launch_prompt():
 
 if __name__ == "__main__":
     try :
-        print("Starting iExtract... Press Ctrl+C to exit at any time.")
+        print(f"\033[33m" + "\nStarting iExtract... Press Ctrl+C to exit at any time." + "\033[0m")
         while True:
             launch_prompt()
     except KeyboardInterrupt:
