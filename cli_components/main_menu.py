@@ -58,7 +58,9 @@ def flush_input():
         # Linux / Mac approach
         import sys, termios
 
-        termios.tcflush(sys.stdin, termios.TCIOFLUSH)
+        if sys.stdin.isatty():
+            import termios
+            termios.tcflush(sys.stdin, termios.TCIOFLUSH)
 
 
 def gui_pick_folder():
