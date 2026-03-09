@@ -11,6 +11,8 @@ from pathlib import Path
 
 from .file_extraction_engine.domain.blacklist import ListEntry, Blacklist
 
+from functional_components.file_extraction_engine.app import extract_files
+
 from functional_components.file_extraction_engine.app.extract_files import (
     run_extraction_engine
 )
@@ -29,8 +31,41 @@ def draw_progress_bar(progress, thread,ui_callback=None):
     INDENT = "  "
     FILLED = "█"
     EMPTY  = "░"
+    LOG_LINES = 10
 
-    while thread.is_alive():
+    if not ui_callback:
+        sys.stdout.write("\033[?25l")
+        print("\n" * LOG_LINES)
+        sys.stdout.write(f"\033[{LOG_LINES}A")
+        sys.stdout.flush()
+
+    try:
+        while thread.is_alive():
+            pct    = min(progress.percent, 100)
+            filled = int((pct / 100) * BAR_WIDTH)
+            empty  = BAR_WIDTH - filled
+            bar    = INDENT + FILLED * filled + EMPTY * empty + f"  {pct}%"
+            if ui_callback:
+                ui_callback(pct)
+            else:
+                sys.stdout.write(f"\033[K{bar}\n")
+
+                recent_logs = getattr(progress, 'logs', [])
+
+                for i in range(LOG_LINES):
+                        if i < len(recent_logs):
+                            line = str(recent_logs[i])[:BAR_WIDTH + 15]
+                            sys.stdout.write(f"\033[K{INDENT}> {line}\n")
+                        else:
+                            sys.stdout.write("\033[K\n") 
+                            
+                sys.stdout.write(f"\033[{LOG_LINES + 1}A")
+                sys.stdout.flush()
+
+
+            time.sleep(0.1)
+
+        # Final bar reflecting actual completion
         pct    = min(progress.percent, 100)
         filled = int((pct / 100) * BAR_WIDTH)
         empty  = BAR_WIDTH - filled
@@ -38,18 +73,20 @@ def draw_progress_bar(progress, thread,ui_callback=None):
         if ui_callback:
             ui_callback(pct)
         else:
-            print(f"\r{bar}", end="", flush=True) # Print to the raw CLI
-        time.sleep(0.1)
+           sys.stdout.write(f"\r\033[K{bar}\n")
 
-    # Final bar reflecting actual completion
-    pct    = min(progress.percent, 100)
-    filled = int((pct / 100) * BAR_WIDTH)
-    empty  = BAR_WIDTH - filled
-    bar    = INDENT + FILLED * filled + EMPTY * empty + f"  {pct}%"
-    if ui_callback:
-        ui_callback(pct)
-    else:
-        print(f"\r{bar}", flush=True)
+           for _ in range(LOG_LINES):
+               sys.stdout.write("\r\033[K\n")
+
+           sys.stdout.write(f"\033[{LOG_LINES}A")
+           sys.stdout.flush()
+
+
+    finally:
+        # Restoring curosr 
+        if not ui_callback:
+            sys.stdout.write("\033[?25h")
+            sys.stdout.flush()       
 
 
 class BackupService:
@@ -286,9 +323,16 @@ class SettingsService:
 
 
 class DummyProgress:
-    """A simple placeholder to catch the progress.percent updates from the engine."""
+    """A simple placeholder to catch the progress.percent and conversion logs."""
     def __init__(self):
         self.percent = 0
+        self.logs = [] 
+
+    def add_log(self, message):
+        """Helper to append a log and keep the window at 10 lines."""
+        self.logs.append(message)
+        if len(self.logs) > 10:
+            self.logs.pop(0)
 
 
 class ConversionService:
@@ -396,6 +440,27 @@ class ExportService:
             except (OSError, NotImplementedError):
                 os_supports_symlinks = False
 
+            # Saving orignal maybe convert function
+            original_maybe_convert = extract_files.maybe_convert
+
+            def wrapped_maybe_convert(asset, convert_dict, temp_dir=None):
+                """ 
+                This function adds another part to the maybe convert function,
+                which takes note of the files being converted.
+                """
+                ext = asset.file_extension.upper()
+                if ext in convert_dict:
+                    progress_tracker.add_log(f"Converting: {asset.original_filename} → {convert_dict[ext]}")
+                else:
+                    
+                    progress_tracker.add_log(f"Exporting: {asset.original_filename}")
+                
+                return original_maybe_convert(asset, convert_dict, temp_dir)
+            
+            extract_files.maybe_convert = wrapped_maybe_convert
+
+
+
             engine_error = []
 
             def run():
@@ -477,6 +542,23 @@ class ExportService:
                 test.unlink()
             except (OSError, NotImplementedError):
                 os_supports_symlinks = False
+
+            original_maybe_convert = extract_files.maybe_convert
+
+            def wrapped_maybe_convert(asset, convert_dict, temp_dir=None):
+                ext = asset.file_extension.upper()
+                if ext in convert_dict:
+                    progress_tracker.add_log(f"Converting: {asset.original_filename} → {convert_dict[ext]}")
+                else:
+                    
+                    progress_tracker.add_log(f"Exporting: {asset.original_filename}")
+                
+                return original_maybe_convert(asset, convert_dict, temp_dir)
+            
+            extract_files.maybe_convert = wrapped_maybe_convert
+
+
+
 
             engine_error = []
 

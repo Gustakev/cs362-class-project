@@ -38,6 +38,21 @@ def restart_program():
     print("\nApplication state has been reset. Restarting...\n")
 
 
+def flush_input():
+    """
+    Clears the terminal input buffer to discard any keystrokes 
+    the user entered while a background process was running.
+    """
+    try:
+        # Windows approach
+        import msvcrt
+        while msvcrt.kbhit():
+            msvcrt.getch()
+    except ImportError:
+        # Linux / Mac approach
+        import sys, termios
+        termios.tcflush(sys.stdin, termios.TCIOFLUSH)
+
 
 
 def gui_pick_folder():
@@ -108,6 +123,9 @@ def load_backup_menu():
             continue
 
         success, message, warning = backup_service.attempt_load_backup(selected_folder)
+
+        # discarding any user input during the backup service loading
+        flush_input()
 
         if success:
             print(f"\n{message}")
@@ -245,6 +263,7 @@ def export_all_menu():
         settings_service,
         conversion_service
     )
+    flush_input()
     if success:
         print(f"\n[SUCCESS] {message}\n")
     else:
@@ -308,6 +327,7 @@ def export_specific_menu():
         settings_service=settings_service,
         conversion_service=conversion_service
     )
+    flush_input()
     if success:
         print(f"\n[SUCCESS] {message}\n")
     else:
