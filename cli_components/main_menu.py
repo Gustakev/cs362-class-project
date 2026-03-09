@@ -340,8 +340,8 @@ def export_specific_menu():
         else:
             print(
                 f"\033[31m"
-                + "\n[!] Error: Album '{choice}' does not exist."
-                + "\033[0m",
+                + f"\n[!] Error: Album '{choice}' does not exist."
+                + f"\033[0m",
                 file=sys.stderr,
             )
 

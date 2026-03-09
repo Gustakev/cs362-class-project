@@ -717,7 +717,7 @@ class iExtractApp(App):
             if icloud_warning:
                 self.call_from_thread(log.write_line, f"[WARNING] {icloud_warning}")
         else:
-            log.write_line(f"[ERROR] {message}")
+            self.call_from_thread(log.write_line(f"[ERROR] {message}"))
 
     @work(thread=True)
     def run_export(self, target, dest_path):
