@@ -70,11 +70,14 @@
 
 1. Make a push to the repository containing iExtract (or make a pull request to that repository).  
 2. GitHub Actions will automatically run the test suite against the commit. Wait for it to finish.  
-3. View the results of the test in the GitHub Actions tab.  
+3. View the results of the test in the GitHub Actions tab.
+
    *Offline Testing:* Run the command ‘python \-m unittest discover tests’ locally from the root directory of the project repo.
 
-* **How to Add New Tests:** Are there any naming conventions/patterns to follow when naming test files? Is there a particular test harness to use?  
-  To add tests, from the project root, enter the ‘/tests/’ directory, then create a test file adhering to the following requirements:  
+* **How to Add New Tests:** Are there any naming conventions/patterns to follow when naming test files? Is there a particular test harness to use?
+
+  To add tests, from the project root, enter the ‘/tests/’ directory, then create a test file adhering to the following requirements:
+
 1. Must be testable via the command ‘python \-m unittest discover tests’  
 2. Files must start with ‘test\_’  
 3. Files must end with ‘.py’  
@@ -111,36 +114,52 @@
 
 **How to Package This Application**
 
-* **Windows EXE:**  
-1. Install PyInstaller:
+iExtract can be packaged into a standalone executable for Windows, Linux, and macOS using PyInstaller. Each platform must be built natively — cross-compilation is not supported. Use Python 3.13 specifically; pydantic has known compatibility issues with Python 3.14 during the PyInstaller build process.
 
-   `pip install pyinstaller`
+**Windows 10/11 x64**
 
-2. Make sure all project dependencies are installed:
+1\. Install Python 3.13 from python.org. During install, check “Add Python to PATH”. Verify with: py \-3.13 \--version
 
-   `pip install -r requirements.txt`
+2\. In the project root, create and activate a dedicated build environment:
 
-3. Build the executable using Python (this avoids PATH issues):
+py \-3.13 \-m venv buildenv  
+buildenv\\Scripts\\activate
 
-   `macOS Terminal/Linux Bash or ZSH:`
+3\. Install dependencies:
 
-   `python -m PyInstaller --onefile --copy-metadata imageio --copy-metadata pillow_heif --add-data "functional_components/photo_caption/data:functional_components/photo_caption/data" --hidden-import PIL --hidden-import PIL.Image --hidden-import pillow_heif --hidden-import tkinter --collect-all imageio_ffmpeg iExtract.py`
+pip install \-r requirements.txt  
+pip install pyinstaller
 
-   `Windows Command Prompt/PowerShell:`
+4\. Build:
 
-   `python -m PyInstaller --onefile --copy-metadata imageio --copy-metadata pillow_heif --add-data "functional_components/photo_caption/data;functional_components/photo_caption/data" --hidden-import PIL --hidden-import PIL.Image --hidden-import pillow_heif --hidden-import tkinter --collect-all imageio_ffmpeg iExtract.py`
+python \-m PyInstaller \--onefile \--copy-metadata imageio \--copy-metadata pillow\_heif \--copy-metadata charset\_normalizer \--add-data "functional\_components/photo\_caption/data;functional\_components/photo\_caption/data" \--add-data "functional\_components/iphone\_models.json;functional\_components" \--hidden-import PIL \--hidden-import PIL.Image \--hidden-import pillow\_heif \--hidden-import tkinter \--hidden-import charset\_normalizer \--collect-all imageio\_ffmpeg \--collect-all charset\_normalizer iExtract.py
 
-4. Wait for the build to finish. PyInstaller will create two folders:  
-* `build/` (temporary files)  
-* `dist/` (this contains the final .exe)  
-5. The runnable program will be located at:
+5\. Output: dist\\iExtract.exe. Note: symlink creation on Windows requires Administrator privileges or Developer Mode (Settings \> System \> For Developers). Without either, iExtract automatically falls back to copying files and will display a warning.
 
-   `dist/iExtract.exe`
+**Linux x64**
 
-6. Run the .exe by double‑clicking it or running it from a terminal.
+1\. Install system dependencies and Python 3.13 (pillow-heif requires libheif at the system level):
 
-   Do not use `--noconsole` for this project. It is a CLI program and requires a console window. Using `--noconsole` will cause the program to crash with:
+sudo apt install libheif-dev python3.13 python3.13-venv
 
-   `RuntimeError: input(): lost sys.stdin`
+2\. Create and activate a build environment, install dependencies, then build:
 
-7. If you change the code later, rebuild the .exe by repeating step 3\.
+python3.13 \-m venv buildenv && source buildenv/bin/activate  
+pip install \-r requirements.txt && pip install pyinstaller  
+python3 \-m PyInstaller \--onefile \--copy-metadata imageio \--copy-metadata pillow\_heif \--copy-metadata charset\_normalizer \--add-data "functional\_components/photo\_caption/data:functional\_components/photo\_caption/data" \--add-data "functional\_components/iphone\_models.json:functional\_components" \--hidden-import PIL \--hidden-import PIL.Image \--hidden-import pillow\_heif \--hidden-import tkinter \--hidden-import charset\_normalizer \--collect-all imageio\_ffmpeg \--collect-all charset\_normalizer iExtract.py
+
+3\. Output: dist/iExtract. Run chmod \+x dist/iExtract if needed.
+
+**macOS Apple Silicon**
+
+1\. Install Homebrew if not already present (brew.sh), then install system dependencies:
+
+brew install libheif python@3.13
+
+2\. Create and activate a build environment, install dependencies, then build:
+
+python3.13 \-m venv buildenv && source buildenv/bin/activate  
+pip install \-r requirements.txt && pip install pyinstaller  
+python3 \-m PyInstaller \--onefile \--copy-metadata imageio \--copy-metadata pillow\_heif \--copy-metadata charset\_normalizer \--add-data "functional\_components/photo\_caption/data:functional\_components/photo\_caption/data" \--add-data "functional\_components/iphone\_models.json:functional\_components" \--hidden-import PIL \--hidden-import PIL.Image \--hidden-import pillow\_heif \--hidden-import tkinter \--hidden-import charset\_normalizer \--collect-all imageio\_ffmpeg \--collect-all charset\_normalizer \--target-arch arm64 iExtract.py
+
+3\. Output: dist/iExtract. Run chmod \+x dist/iExtract if needed. Note: macOS may show a Gatekeeper warning on first run since the binary is unsigned. Right-click \> Open \> Open anyway, or run directly from the terminal.

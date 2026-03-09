@@ -4,9 +4,14 @@ Date: 2026-02-15
 Program Description: Starts the iExtract program.
 """
 
+import warnings
+
+warnings.filterwarnings("ignore", message=".*urllib3.*")
+warnings.filterwarnings("ignore", message=".*chardet.*")
+warnings.filterwarnings("ignore", message=".*charset_normalizer.*")
+warnings.filterwarnings("ignore", message=".*character detection.*")
+
 import sys
-
-
 
 from cli_components.main_menu import main as cli_main
 
