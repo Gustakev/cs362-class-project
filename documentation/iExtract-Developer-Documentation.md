@@ -132,7 +132,7 @@ pip install pyinstaller
 
 4\. Build:
 
-python \-m PyInstaller \--onefile \--copy-metadata imageio \--copy-metadata pillow\_heif \--copy-metadata charset\_normalizer \--add-data "functional\_components/photo\_caption/data;functional\_components/photo\_caption/data" \--add-data "functional\_components/iphone\_models.json;functional\_components" \--hidden-import PIL \--hidden-import PIL.Image \--hidden-import pillow\_heif \--hidden-import tkinter \--hidden-import charset\_normalizer \--collect-all imageio\_ffmpeg \--collect-all charset\_normalizer iExtract.py
+python \-m PyInstaller \--onefile \--copy-metadata imageio \--copy-metadata pillow\_heif \--copy-metadata charset\_normalizer \--add-data "functional\_components/photo\_caption/data;functional\_components/photo\_caption/data" \--add-data "functional\_components/iphone\_models.json;functional\_components" \--add-data "cli\_components/main\_menu.tcss;cli\_components" \--hidden-import PIL \--hidden-import PIL.Image \--hidden-import pillow\_heif \--hidden-import tkinter \--hidden-import charset\_normalizer \--collect-all imageio\_ffmpeg \--collect-all charset\_normalizer iExtract.py
 
 5\. Output: dist\\iExtract.exe. Note: symlink creation on Windows requires Administrator privileges or Developer Mode (Settings \> System \> For Developers). Without either, iExtract automatically falls back to copying files and will display a warning.
 
@@ -144,9 +144,7 @@ sudo apt install libheif-dev python3.13 python3.13-venv
 
 2\. Create and activate a build environment, install dependencies, then build:
 
-python3.13 \-m venv buildenv && source buildenv/bin/activate  
-pip install \-r requirements.txt && pip install pyinstaller  
-python3 \-m PyInstaller \--onefile \--copy-metadata imageio \--copy-metadata pillow\_heif \--copy-metadata charset\_normalizer \--add-data "functional\_components/photo\_caption/data:functional\_components/photo\_caption/data" \--add-data "functional\_components/iphone\_models.json:functional\_components" \--hidden-import PIL \--hidden-import PIL.Image \--hidden-import pillow\_heif \--hidden-import tkinter \--hidden-import charset\_normalizer \--collect-all imageio\_ffmpeg \--collect-all charset\_normalizer iExtract.py
+python3 \-m PyInstaller \--onefile \--copy-metadata imageio \--copy-metadata pillow\_heif \--copy-metadata charset\_normalizer \--add-data "functional\_components/photo\_caption/data:functional\_components/photo\_caption/data" \--add-data "functional\_components/iphone\_models.json:functional\_components" \--add-data "cli\_components/main\_menu.tcss:cli\_components" \--hidden-import PIL \--hidden-import PIL.Image \--hidden-import pillow\_heif \--hidden-import tkinter \--hidden-import charset\_normalizer \--collect-all imageio\_ffmpeg \--collect-all charset\_normalizer iExtract.py
 
 3\. Output: dist/iExtract. Run chmod \+x dist/iExtract if needed.
 
@@ -158,8 +156,6 @@ brew install libheif python@3.13
 
 2\. Create and activate a build environment, install dependencies, then build:
 
-python3.13 \-m venv buildenv && source buildenv/bin/activate  
-pip install \-r requirements.txt && pip install pyinstaller  
-python3 \-m PyInstaller \--onefile \--copy-metadata imageio \--copy-metadata pillow\_heif \--copy-metadata charset\_normalizer \--add-data "functional\_components/photo\_caption/data:functional\_components/photo\_caption/data" \--add-data "functional\_components/iphone\_models.json:functional\_components" \--hidden-import PIL \--hidden-import PIL.Image \--hidden-import pillow\_heif \--hidden-import tkinter \--hidden-import charset\_normalizer \--collect-all imageio\_ffmpeg \--collect-all charset\_normalizer \--target-arch arm64 iExtract.py
+python3 \-m PyInstaller \--onefile \--copy-metadata imageio \--copy-metadata pillow\_heif \--copy-metadata charset\_normalizer \--add-data "functional\_components/photo\_caption/data:functional\_components/photo\_caption/data" \--add-data "functional\_components/iphone\_models.json:functional\_components" \--add-data "cli\_components/main\_menu.tcss:cli\_components" \--hidden-import PIL \--hidden-import PIL.Image \--hidden-import pillow\_heif \--hidden-import tkinter \--hidden-import charset\_normalizer \--collect-all imageio\_ffmpeg \--collect-all charset\_normalizer \--target-arch arm64 iExtract.py
 
 3\. Output: dist/iExtract. Run chmod \+x dist/iExtract if needed. Note: macOS may show a Gatekeeper warning on first run since the binary is unsigned. Right-click \> Open \> Open anyway, or run directly from the terminal.
