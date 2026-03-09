@@ -47,3 +47,9 @@ Button {
     margin-top: 1;
 
 }
+
+
+#hidden_album_options Label {
+    width: 100%;
+    height: auto;
+}

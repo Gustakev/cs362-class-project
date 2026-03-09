@@ -14,7 +14,7 @@ from .file_extraction_engine.domain.blacklist import ListEntry, Blacklist
 from functional_components.file_extraction_engine.app import extract_files
 
 from functional_components.file_extraction_engine.app.extract_files import (
-    run_extraction_engine
+    run_extraction_engine,
 )
 
 import json
@@ -23,14 +23,14 @@ import os
 import tempfile, pathlib
 
 
-def draw_progress_bar(progress, thread,ui_callback=None):
+def draw_progress_bar(progress, thread, ui_callback=None):
     import time
     import sys
 
     BAR_WIDTH = 70
     INDENT = "  "
     FILLED = "█"
-    EMPTY  = "░"
+    EMPTY = "░"
     LOG_LINES = 10
 
     if not ui_callback:
@@ -41,52 +41,51 @@ def draw_progress_bar(progress, thread,ui_callback=None):
 
     try:
         while thread.is_alive():
-            pct    = min(progress.percent, 100)
+            pct = min(progress.percent, 100)
             filled = int((pct / 100) * BAR_WIDTH)
-            empty  = BAR_WIDTH - filled
-            bar    = INDENT + FILLED * filled + EMPTY * empty + f"  {pct}%"
+            empty = BAR_WIDTH - filled
+            bar = INDENT + FILLED * filled + EMPTY * empty + f"  {pct}%"
             if ui_callback:
-                ui_callback(pct)
+                ui_callback(pct, progress.gui_logs)
+                progress.gui_logs = []
             else:
                 sys.stdout.write(f"\033[K{bar}\n")
 
-                recent_logs = getattr(progress, 'logs', [])
+                recent_logs = getattr(progress, "logs", [])
 
                 for i in range(LOG_LINES):
-                        if i < len(recent_logs):
-                            line = str(recent_logs[i])[:BAR_WIDTH + 15]
-                            sys.stdout.write(f"\033[K{INDENT}> {line}\n")
-                        else:
-                            sys.stdout.write("\033[K\n") 
-                            
+                    if i < len(recent_logs):
+                        line = str(recent_logs[i])[: BAR_WIDTH + 15]
+                        sys.stdout.write(f"\033[K{INDENT}> {line}\n")
+                    else:
+                        sys.stdout.write("\033[K\n")
+
                 sys.stdout.write(f"\033[{LOG_LINES + 1}A")
                 sys.stdout.flush()
-
 
             time.sleep(0.1)
 
         # Final bar reflecting actual completion
-        pct    = min(progress.percent, 100)
+        pct = min(progress.percent, 100)
         filled = int((pct / 100) * BAR_WIDTH)
-        empty  = BAR_WIDTH - filled
-        bar    = INDENT + FILLED * filled + EMPTY * empty + f"  {pct}%"
+        empty = BAR_WIDTH - filled
+        bar = INDENT + FILLED * filled + EMPTY * empty + f"  {pct}%"
         if ui_callback:
             ui_callback(pct)
         else:
-           sys.stdout.write(f"\r\033[K{bar}\n")
+            sys.stdout.write(f"\r\033[K{bar}\n")
 
-           for _ in range(LOG_LINES):
-               sys.stdout.write("\r\033[K\n")
+            for _ in range(LOG_LINES):
+                sys.stdout.write("\r\033[K\n")
 
-           sys.stdout.write(f"\033[{LOG_LINES}A")
-           sys.stdout.flush()
-
+            sys.stdout.write(f"\033[{LOG_LINES}A")
+            sys.stdout.flush()
 
     finally:
-        # Restoring curosr 
+        # Restoring curosr
         if not ui_callback:
             sys.stdout.write("\033[?25h")
-            sys.stdout.flush()       
+            sys.stdout.flush()
 
 
 class BackupService:
@@ -107,9 +106,9 @@ class BackupService:
 
     def _load_model_mappings(self):
         """Load iPhone model mappings from JSON file."""
-        json_path = os.path.join(os.path.dirname(__file__), 'iphone_models.json')
+        json_path = os.path.join(os.path.dirname(__file__), "iphone_models.json")
         try:
-            with open(json_path, 'r') as f:
+            with open(json_path, "r") as f:
                 self.technical_to_branded = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             # Fallback to empty dict if file is missing or invalid
@@ -200,21 +199,21 @@ class SettingsService:
         """Toggles the global symlink setting."""
         self.use_symlinks = not self.use_symlinks
         state = "ENABLED" if self.use_symlinks else "DISABLED"
-        return f"Symlink creation is now {state}."    
-    
+        return f"Symlink creation is now {state}."
+
     def toggle_exclude_hidden_album(self):
         """Toggles the hidden album exclusion setting."""
         self.exclude_hidden_album = not self.exclude_hidden_album
         state = "ENABLED" if self.exclude_hidden_album else "DISABLED"
-        return f"Hidden album exclusion is now {state}."    
+        return f"Hidden album exclusion is now {state}."
 
     def get_engine_blacklist(self):
         """Returns a Blacklist object for the Extraction Engine to evaluate."""
         return Blacklist(
             current_list=list(self.current_list),
-            is_blacklist=True  # Always treat as blacklist for engine.
+            is_blacklist=True,  # Always treat as blacklist for engine.
         )
-    
+
     def get_state(self):
         """
         Retrieves the current settings mode and the active list of albums.
@@ -227,17 +226,16 @@ class SettingsService:
 
         if self.is_blacklist_mode:
             display_list = [entry.name for entry in self.current_list]
-        
-        # Subtracting blacklist from full list to get whitelist 
-        else:   
-            whitelist_objects = self._original_full_list - self.current_list    
+
+        # Subtracting blacklist from full list to get whitelist
+        else:
+            whitelist_objects = self._original_full_list - self.current_list
             display_list = [entry.name for entry in whitelist_objects]
 
-
         album_string = ", ".join(display_list) if display_list else "None"
-        return mode, album_string    
+        return mode, album_string
 
-    def toggle_mode(self,all_available_album_names=None):
+    def toggle_mode(self, all_available_album_names=None):
         """
         Switches the application between Blacklist and Whitelist mode.
         Automatically clears the current album selection to prevent logic bleed.
@@ -254,7 +252,7 @@ class SettingsService:
                 # Failsafe: Revert to blacklist if we don't have the albums to build the whitelist
                 self.is_blacklist_mode = True
                 return "[!] Error: Cannot create Whitelist without backup data."
-     
+
             # Fill the blacklist with every album as an ListEntry object
             for name in all_available_album_names:
                 clean = name.removesuffix(" [Smart Album]")
@@ -263,9 +261,9 @@ class SettingsService:
                 self._original_full_list.add(entry)
 
             return "Mode switched to: Whitelist (List cleared. Select albums to ALLOW.)"
-        
+
         return "Mode switched to: Blacklist (List cleared. Select albums to BLOCK.)"
-    
+
     def toggle_album(self, album_name):
         """
         Adds or removes an album from the active selection set.
@@ -294,7 +292,7 @@ class SettingsService:
                 return True, f"Album '{entry.name}' added to Blacklist."
 
         else:
-            # Inverted logic: If it's in the working blacklist, "adding it to the whitelist" 
+            # Inverted logic: If it's in the working blacklist, "adding it to the whitelist"
             # means we remove it from the working blacklist so the engine exports it.
             if entry in self.current_list:
                 self.current_list.remove(entry)
@@ -303,7 +301,6 @@ class SettingsService:
                 # If they "remove" it from the whitelist, it goes back into the blacklist
                 self.current_list.add(entry)
                 return True, f"Album '{entry.name}' removed from Whitelist."
-
 
     def is_album_allowed(self, album_name):
         """
@@ -317,20 +314,23 @@ class SettingsService:
             bool: True if the album should be exported, False otherwise.
         """
         entry = ListEntry(album_name)
-        
-        # If the object is inside the blacklist, it is not allowed. 
+
+        # If the object is inside the blacklist, it is not allowed.
         return entry not in self.current_list
 
 
 class DummyProgress:
     """A simple placeholder to catch the progress.percent and conversion logs."""
+
     def __init__(self):
         self.percent = 0
-        self.logs = [] 
+        self.logs = []
+        self.gui_logs = []
 
     def add_log(self, message):
         """Helper to append a log and keep the window at 10 lines."""
         self.logs.append(message)
+        self.gui_logs.append(message)
         if len(self.logs) > 10:
             self.logs.pop(0)
 
@@ -358,7 +358,7 @@ class ConversionService:
     def get_convert_type_dict(self) -> dict:
         """Returns the dict the extraction engine expects."""
         return {ext: self.SUPPORTED_CONVERSIONS[ext] for ext in self.enabled}
-    
+
 
 class ExportService:
     """
@@ -376,7 +376,7 @@ class ExportService:
         Returns:
             list: A list of string album names.
         """
-        if not backup_model or not hasattr(backup_model, 'albums'):
+        if not backup_model or not hasattr(backup_model, "albums"):
             return []
 
         result = []
@@ -407,8 +407,15 @@ class ExportService:
             result.append(NUA_DISPLAY.get(nua, nua + " [Smart Album]"))
 
         return result
-    
-    def export_all(self, backup_model, destination_str, settings_service, conversion_service,ui_callback=None):
+
+    def export_all(
+        self,
+        backup_model,
+        destination_str,
+        settings_service,
+        conversion_service,
+        ui_callback=None
+    ):
         """
         Export all function, based on psuedo code of extraction engine. subject to change.
         """
@@ -444,22 +451,22 @@ class ExportService:
             original_maybe_convert = extract_files.maybe_convert
 
             def wrapped_maybe_convert(asset, convert_dict, temp_dir=None):
-                """ 
+                """
                 This function adds another part to the maybe convert function,
                 which takes note of the files being converted.
                 """
                 ext = asset.file_extension.upper()
                 if ext in convert_dict:
-                    progress_tracker.add_log(f"Converting: {asset.original_filename} → {convert_dict[ext]}")
+                    progress_tracker.add_log(
+                        f"Converting: {asset.original_filename} → {convert_dict[ext]}"
+                    )
                 else:
-                    
+
                     progress_tracker.add_log(f"Exporting: {asset.original_filename}")
-                
+
                 return original_maybe_convert(asset, convert_dict, temp_dir)
-            
+
             extract_files.maybe_convert = wrapped_maybe_convert
-
-
 
             engine_error = []
 
@@ -476,6 +483,7 @@ class ExportService:
                     )
                 except Exception as e:
                     import traceback
+
                     engine_error.append(traceback.format_exc())
 
             thread = threading.Thread(target=run, daemon=True)
@@ -487,9 +495,11 @@ class ExportService:
             thread.join()
 
             if settings_service.exclude_hidden_album and "hidden" in present_nuas:
-                from functional_components.file_extraction_engine.data.file_management import ensure_folder_exists
-                ensure_folder_exists(Path(destination_str) / "nua_hidden")
+                from functional_components.file_extraction_engine.data.file_management import (
+                    ensure_folder_exists,
+                )
 
+                ensure_folder_exists(Path(destination_str) / "nua_hidden")
 
             if engine_error:
                 return False, f"Extraction Engine Error: {engine_error[0]}"
@@ -499,13 +509,23 @@ class ExportService:
         except Exception as e:
             return False, f"Extraction Engine Error: {str(e)}"
 
-
-    def export_single_album(self, backup_model, destination_str, album_name, settings_service, conversion_service,ui_callback=None):
+    def export_single_album(
+        self,
+        backup_model,
+        destination_str,
+        album_name,
+        settings_service,
+        conversion_service,
+        ui_callback=None,
+    ):
         """Export a single specific album only."""
         if not backup_model:
             return False, "No backup loaded."
 
-        from functional_components.file_extraction_engine.domain.blacklist import Blacklist, ListEntry
+        from functional_components.file_extraction_engine.domain.blacklist import (
+            Blacklist,
+            ListEntry,
+        )
 
         # Build a whitelist containing only the requested album
         # Remove the suffix from the name
@@ -514,13 +534,19 @@ class ExportService:
 
         single_album_blacklist = Blacklist(
             current_list=[
-                entry for entry in
-                [ListEntry(album.title) for album in backup_model.albums
-                    if album.title != album_name]
-                + [ListEntry(nua) for nua in ["favorites", "hidden", "selfies", "recently_deleted"]
-                    if nua != clean_name]
+                entry
+                for entry in [
+                    ListEntry(album.title)
+                    for album in backup_model.albums
+                    if album.title != album_name
+                ]
+                + [
+                    ListEntry(nua)
+                    for nua in ["favorites", "hidden", "selfies", "recently_deleted"]
+                    if nua != clean_name
+                ]
             ],
-            is_blacklist=True
+            is_blacklist=True,
         )
 
         # Album UUID Debugging:
@@ -531,6 +557,7 @@ class ExportService:
 
         try:
             import threading
+
             user_set_symlinks = settings_service.use_symlinks
             convert_type_dict = conversion_service.get_convert_type_dict()
             progress_tracker = DummyProgress()
@@ -548,17 +575,16 @@ class ExportService:
             def wrapped_maybe_convert(asset, convert_dict, temp_dir=None):
                 ext = asset.file_extension.upper()
                 if ext in convert_dict:
-                    progress_tracker.add_log(f"Converting: {asset.original_filename} → {convert_dict[ext]}")
+                    progress_tracker.add_log(
+                        f"Converting: {asset.original_filename} → {convert_dict[ext]}"
+                    )
                 else:
-                    
+
                     progress_tracker.add_log(f"Exporting: {asset.original_filename}")
-                
+
                 return original_maybe_convert(asset, convert_dict, temp_dir)
-            
+
             extract_files.maybe_convert = wrapped_maybe_convert
-
-
-
 
             engine_error = []
 
@@ -576,11 +602,12 @@ class ExportService:
                     )
                 except Exception as e:
                     import traceback
+
                     engine_error.append(traceback.format_exc())
 
             thread = threading.Thread(target=run, daemon=True)
             thread.start()
-            draw_progress_bar(progress_tracker, thread,ui_callback)
+            draw_progress_bar(progress_tracker, thread, ui_callback)
             thread.join()
 
             if engine_error:
