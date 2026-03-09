@@ -855,7 +855,8 @@ class iExtractApp(App):
             "#hidden_album_options",
         ]
         for menu in menus_to_hide:
-            self.query_one(menu).add_class("hidden")
+            for node in self.query(menu):
+                node.add_class("hidden")
 
         self.query_one("#main_menu").remove_class("hidden")
         self.query_one("#lbl_menu_title").update("[b]MAIN MENU[/b]")
