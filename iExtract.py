@@ -48,7 +48,7 @@ def launch_prompt():
 
 if __name__ == "__main__":
     try :
-        print("Starting iExtract... Press Ctrl+C to exit at any time.")
+        print(f"\033[33m" + "\nStarting iExtract... Press Ctrl+C to exit at any time." + "\033[0m")
         while True:
             launch_prompt()
     except KeyboardInterrupt:
