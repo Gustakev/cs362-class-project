@@ -69,9 +69,6 @@ Lists **every artifact** the team relies on: tools, documents, external resource
 - Developer Documentation:
   - Located at `/documentation/` in the repository.
   - [Click here](https://docs.google.com/document/d/1b_GKadfXZ3BhCbaBva2A9yGD2T_0b9aMbPcIgIuJqG4/edit?tab=t.0).
-- User Documentation:
-  - Located at `/documentation/` in the repository.
-  - [Click here](https://docs.google.com/document/d/15Wjz9xbFSsDllAze02nyUA3Hoh9634gyACuPZ-2v-9Y/edit?tab=t.0).
 - Beta Testing Feedback:
   - Located at `/beta-testing/` in the repository.
 
