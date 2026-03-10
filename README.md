@@ -162,3 +162,5 @@ Steps:
 ## Documentation
 - <a href="https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-Developer-Documentation.md"> Developer Documentation</a>
 - <a href="https://github.com/Gustakev/cs362-class-project/blob/main/documentation/iExtract-User-Documentation.md"> User Documentation</a>
+
+- **Beta Test Feedback Note**: All GitHub issues created in response to beta tester feedback are tagged with the 'beta-test-1' label. All but one of the identified issues have been resolved and closed. The only one that hasn't yet been resolved is not a bug, but rather an enhancement suggestion (issue #46). Here is a link to those issues: <a href="https://github.com/Gustakev/cs362-class-project/issues?q=label%3Abeta-test-1">
