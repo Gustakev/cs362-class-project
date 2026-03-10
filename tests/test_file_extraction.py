@@ -97,8 +97,9 @@ class TestExtractionHelpers(unittest.TestCase):
         )
         cols = get_active_collections(asset, blacklist, mapping)
         titles = {c.title for c in cols}
-        self.assertIn("Album B", titles)
-        self.assertIn("nua_selfies", titles)
+        self.assertEqual(len(cols), 0)
+        self.assertNotIn("Album B", titles)
+        self.assertNotIn("nua_selfies", titles)
         self.assertNotIn("Album A", titles)
         self.assertNotIn("nua_favorites", titles)
 
