@@ -1,11 +1,11 @@
 <h1 align="center"><b>iExtract iOS Album to Folder Conversion Tool</b></h1>
 
 <p align="center">
-  <strong>iExtract Version 1.0.0</strong>
+  <strong>iExtract Version v1.0.0</strong>
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white" />
-  <img src="https://img.shields.io/badge/Version-1.0.0-red">
+  <img src="https://img.shields.io/badge/Version-v1.0.0-red">
   <img src="https://github.com/Gustakev/cs362-class-project/actions/workflows/ci.yml/badge.svg">
 </p>
 
@@ -27,49 +27,53 @@ iExtract makes it easy for iPhone users to extract their photos and videos from 
 * Avoid quality loss that typically occurs through compression of files during exports using other tools
 
 ## Repository Layout
-- iExtract.py: The launcher for iExtract. In the future, this will include the ability to launch the app in CLI or Textual-based GUI mode. As of now, it just launches the CLI mode.
 
-- README.md: The README file for iExtract.
+- `iExtract.py`: The entry point for iExtract. Prompts the user to choose between the Standard CLI and the Textual Dashboard (Beta) at startup, then launches the selected interface.
+- `README.md`: The README file for iExtract.
+- `INSTALL.md`: End-user installation instructions.
+- `SETUP.md`: System administrator / developer deployment and setup guide.
+- `RELEASE_NOTES.md`: Release notes for the current version of iExtract.
+- `requirements.txt`: A list of required modules that the user must install via `pip install -r requirements.txt`, or manually for each, in order to use iExtract.
+- `team-resources.md`: Describes the resources that the team uses, including relevant artifacts, libraries, etc.
 
-- requirements.txt: A list of required modules that the user must install via ‘pip install -r requirements.txt’, or manually for each, in order to use iExtract.
+- `/.github/workflows/`: Stores the workflow `.yml` file describing how continuous integration testing will be conducted.
 
-- team-resources.md: Describes the resources that the team uses, including relevant artifacts, libraries, etc.
+- `/beta-testing/`: Contains beta testing feedback PDFs from the in-class beta testing exercise.
 
-- /.github/workflows/: Stores the workflow '.yml' file describing how continuous integration testing will be conducted.
+- `/cli_components/`: Stores the code that runs the CLI and the Textual UI (TUI) for the application, accepting user interaction and calling logic from the `functional_components` directory to accomplish a given goal.
 
-- /cli_components/: Stores the code that runs the CLI for the application, accepting user interaction and calling logic from the 'functional_components' directory to accomplish a given goal.
+- `/documentation/`: Stores the user and developer documentation for iExtract.
 
-- /dist/: (Coming Soon: Will be the location of releases, like 'iExtract.exe' for Windows.)
+- `/functional_components/`: Stores all backend logic and features of iExtract.
+  - `/backup_locator_and_validator/`: Locates, validates, and parses an iPhone backup into the in-memory BackupModel.
+    - `/app/`: Contains code relevant to the Application Layer of iExtract, the code that executes program logic, like value processing.
+    - `/data/`: Contains code relevant to the Data Layer of iExtract, the code that reads/writes data.
+    - `/domain/`: Contains the code relevant to the Domain Layer of iExtract, the data structures and definitions primarily utilized by this module.
+  - `/conversion_engine/`: Converts proprietary media formats (HEIC → JPG, MOV → MP4) during extraction.
+    - `/app/`: Contains code relevant to the Application Layer of iExtract, the code that executes program logic, like value processing.
+    - `/data/`: Contains code relevant to the Data Layer of iExtract, the code that reads/writes data.
+    - `/domain/`: Contains the code relevant to the Domain Layer of iExtract, the data structures and definitions primarily utilized by this module.
+  - `/file_extraction_engine/`: Reconstructs album/collection folder structures from the backup onto local storage.
+    - `/app/`: Contains code relevant to the Application Layer of iExtract, the code that executes program logic, like value processing.
+    - `/data/`: Contains code relevant to the Data Layer of iExtract, the code that reads/writes data.
+    - `/domain/`: Contains the code relevant to the Domain Layer of iExtract, the data structures and definitions primarily utilized by this module.
+  - `/photo_caption/`: Beta feature: sends sample images to a remote CNN-LSTM model and returns a generated caption.
+    - `/app/`: Contains code relevant to the Application Layer of iExtract, the code that executes program logic, like value processing.
+    - `/data/`: Contains sample image sets used for the in-app Photo Descriptor demo.
+  - `/sql_cmd_facilitator/`: Handles all SQLite database interactions against `Photos.sqlite` and `Manifest.db`.
+    - `/app/`: Contains code relevant to the Application Layer of iExtract, the code that executes program logic, like value processing.
+    - `/data/`: Contains code relevant to the Data Layer of iExtract, the code that reads/writes data.
+    - `/domain/`: Contains the code relevant to the Domain Layer of iExtract, the data structures and definitions primarily utilized by this module.
+  - `services.py`: Application Layer service classes that bridge the Presentation Layer with the functional components.
+  - `iphone_models.json`: Maps internal Apple model identifiers to branded display names.
+  - `directory-explanation.md`: An explanation of the directory structure.
 
-- /documentation/: Stores the user and developer documentation for iExtract.
+- `/living_documents/`: Stores the project living document covering requirements, architecture, design, test plan, and reflections.
 
-- /functional_components/: Stores all our backend logic with all the features of our app.
-  - /backup_locator_and_validator/:
-    - /app/: Contains code relevant to the Application Layer of iExtract, the code that executes program logic, like value processing.
-    - /data/: Contains code relevant to the Data Layer of iExtract, the code that reads/writes data.
-    - /domain/: Contains the code relevant to the Domain Layer of iExtract, the data structures and definitions primarily utilized by this module.
-  - /conversion_engine/:
-    - /app/: Contains code relevant to the Application Layer of iExtract, the code that executes program logic, like value processing.
-    - /data/: Contains code relevant to the Data Layer of iExtract, the code that reads/writes data.
-    - /domain/: Contains the code relevant to the Domain Layer of iExtract, the data structures and definitions primarily utilized by this module.
-  - /file_extraction_engine/:
-    - /app/: Contains code relevant to the Application Layer of iExtract, the code that executes program logic, like value processing.
-    - /data/: Contains code relevant to the Data Layer of iExtract, the code that reads/writes data.
-    - /domain/: Contains the code relevant to the Domain Layer of iExtract, the data structures and definitions primarily utilized by this module.
-  - /sql_cmd_facilitator/:
-    - /app/: Contains code relevant to the Application Layer of iExtract, the code that executes program logic, like value processing.
-    - /data/: Contains code relevant to the Data Layer of iExtract, the code that reads/writes data.
-    - /domain/: Contains the code relevant to the Domain Layer of iExtract, the data structures and definitions primarily utilized by this module.
-  - directory-explanation.md: An explanation of the directory structure.
+- `/reports/`: Holds weekly progress reports for our project. Each report contains a weekly status update from our TA and the individual contributions of each team member for that week.
 
-- /living_documents/: Stores each version of the project proposal document for our app that explains our app idea, along with all the requirements.
-
-- /reports/: Holds weekly progress reports for our project. Each report contains a weekly status update from our TA and the individual contributions of each team member for that week.
-
-- /tests/: Stores the test cases that are being used against the program.
-  - /test_data/: Stores data for tests, if needed.
-
-- /beta-testing/: Contains beta testing feedback.
+- `/tests/`: Stores the test cases that are being used against the program.
+  - `/test_data/`: Stores data for tests, if needed.
 
 ## Install
 

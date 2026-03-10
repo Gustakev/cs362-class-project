@@ -388,13 +388,13 @@ NOTE: We require that you use GitHub Issues to track bugs that occur during use 
 
 1. **Sam Daughtry:**  
    1. What I Learned:  
-      1. I  
-      2. I  
-      3. I  
+      1. I think an important lesson I learned from this project was how to build a project with a specific software architecture in mind. Previously, in some of my past projects, I never really gave much thought to what kind of architecture I should use, so being told we needed to design something around a specific architecture was new to me.  
+      2. Another lesson I learned is the importance of continuous integration. I’ve never really used CI in any of my past projects, but after learning about it in the development of this project, I can see why it’s useful and important. I will definitely be using CI in any future major projects I develop.  
+      3. I also learned the importance of having an expansive test suite. I have, of course, in the past, included some smaller scale tests when developing other projects; however, when I was working on a large project such as this one, I quickly realized that I would need to develop more expansive tests, along with integration tests for the features that I was assigned to.  
    2. What went well:  
-      O  
+      Since we had a clear goal in mind for our project we were able to complete everything in a timely manner, including some of our stretch goals. We also had a clearly defined schedule along with good direction that allowed us to ensure we were on the right track.  
    3. What would I do differently?:  
-      O
+      Communication has always been a struggle for me because I generally like to silently work on things without notifying/bothering others, so there were definitely times where I think I should have been better at communicating what I was doing/working on.
 
 1. **Noah Gregie:**  
    1. What I Learned:  
