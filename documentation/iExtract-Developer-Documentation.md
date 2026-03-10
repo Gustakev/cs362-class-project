@@ -1,0 +1,172 @@
+**iExtract Developer Documentation**
+
+**Source Code:**
+
+* **iExtract:**  [https://github.com/Gustakev/cs362-class-project](https://github.com/Gustakev/cs362-class-project)   
+* **Photo Captioning Component:** [https://github.com/BrendxnW/image-captioning-cnn-lstm](https://github.com/BrendxnW/image-captioning-cnn-lstm)
+
+**Directory Structure**:
+
+* iExtract.py: The entry point for iExtract. Prompts the user to choose between the Standard CLI and the Textual Dashboard (Beta) at startup, then launches the selected interface.  
+* README.md: The README file for iExtract.  
+* INSTALL.md: End-user installation instructions.  
+* SETUP.md: System administrator / developer deployment and setup guide.  
+* RELEASE\_NOTES.md: Release notes for the current version of iExtract.  
+* requirements.txt: A list of required modules that the user must install via ‘pip install \-r requirements.txt’, or manually for each, in order to use iExtract.  
+* team-resources.md: Describes the resources that the team uses, including relevant artifacts, libraries, etc.  
+* /.github/workflows/: Stores the workflow ‘.yml’ file describing how continuous integration testing will be conducted.  
+* /beta-testing/: Contains beta testing feedback PDFs from the in-class beta testing exercise.  
+* /cli\_components/: Stores the code that runs the CLI and the Textual UI (TUI) for the application, accepting user interaction and calling logic from the ‘functional\_components’ directory to accomplish a given goal.  
+* /documentation/: Stores the user and developer documentation for iExtract.  
+* /functional\_components/: Stores all backend logic and features of iExtract.
+
+  * /backup\_locator\_and\_validator/: Locates, validates, and parses an iPhone backup into the in-memory BackupModel.  
+    * /app/: Contains code relevant to the Application Layer of iExtract, the code that executes program logic, like value processing.  
+    * /data/: Contains code relevant to the Data Layer of iExtract, the code that reads/writes data.  
+    * /domain/: Contains the code relevant to the Domain Layer of iExtract, the data structures and definitions primarily utilized by this module.  
+  * /conversion\_engine/: Converts proprietary media formats (HEIC → JPG, MOV → MP4) during extraction.  
+    * /app/: Contains code relevant to the Application Layer of iExtract, the code that executes program logic, like value processing.  
+    * /data/: Contains code relevant to the Data Layer of iExtract, the code that reads/writes data.  
+    * /domain/: Contains the code relevant to the Domain Layer of iExtract, the data structures and definitions primarily utilized by this module.  
+  * /file\_extraction\_engine/: Reconstructs album/collection folder structures from the backup onto local storage.  
+    * /app/: Contains code relevant to the Application Layer of iExtract, the code that executes program logic, like value processing.  
+    * /data/: Contains code relevant to the Data Layer of iExtract, the code that reads/writes data.  
+    * /domain/: Contains the code relevant to the Domain Layer of iExtract, the data structures and definitions primarily utilized by this module.  
+  * /photo\_caption/: Beta feature: sends sample images to a remote CNN-LSTM model and returns a generated caption.  
+    * /app/: Contains code relevant to the Application Layer of iExtract, the code that executes program logic, like value processing.  
+    * /data/: Contains sample image sets used for the in-app Photo Descriptor demo.  
+  * /sql\_cmd\_facilitator/: Handles all SQLite database interactions against ‘Photos.sqlite’ and ‘Manifest.db’.  
+    * /app/: Contains code relevant to the Application Layer of iExtract, the code that executes program logic, like value processing.  
+    * /data/: Contains code relevant to the Data Layer of iExtract, the code that reads/writes data.  
+    * /domain/: Contains the code relevant to the Domain Layer of iExtract, the data structures and definitions primarily utilized by this module.  
+  * services.py: Application Layer service classes that bridge the Presentation Layer with the functional components.  
+  * iphone\_models.json: Maps internal Apple model identifiers to branded display names.  
+  * directory-explanation.md: An explanation of the directory structure.  
+* /living\_documents/: Stores the project living document covering requirements, architecture, design, test plan, and reflections.  
+* /reports/: Holds weekly progress reports for our project. Each report contains a weekly status update from our TA and the individual contributions of each team member for that week.  
+* /tests/: Stores the test cases that are being used against the program.  
+  * /test\_data/: Stores data for tests, if needed.
+
+**How to Build the Software:** Provide clear instructions for how to use your project’s build system to build all system components.
+
+1. **Clone repo**  
+   1. In the terminal (using the shell of your choice) run the command:
+
+      \`git clone https://github.com/Gustakev/cs362-class-project.git\`  
+
+2. **Move to repo location**  
+   1. In the terminal, run the command:  \`cd cs362-class-project\`  
+3. **Install Python**  
+   1. Install Python 3.13+ for your system from this link: [https://www.python.org/downloads/](https://www.python.org/downloads/)  
+4. **Initialize virtual environment**  
+   1. In the terminal, run the command: \`python \-m venv venv\`  
+   2. Note: If the above command, or any other command prefixed with ‘python’ fails, ensure that you have a Python path variable set on your system. It may either be ‘python’, ‘python3’, or something more specific like ‘python3.13’, depending on your installation.  
+5. **Activate virtual environment**  
+   1. If your machine is running Mac or Linux, in the terminal, run the command:
+
+      \`source venv/bin/activate\` 
+
+   2. If you have a Windows machine, in administrator PowerShell, run the command: \`.\\venv\\Scripts\\Activate.ps1\`   
+6. **Install requirements**  
+   1. In the terminal, run the command: \`pip install \-r requirements.txt\`  
+   2. **Note:** Some Linux users may need to run the command: \`sudo apt install python3-tk\` in order to obtain a working installation of ‘tkinter’.  
+7. **How to deactivate the virtual environment**  
+   1. Enter \`deactivate\` into the terminal. 
+
+**How to Test the Software**
+
+*Online Continuous Integration*: In order to run the system’s test cases, the automated system that we have enabled in GitHub via the use of GitHub Actions, utilizing ‘unittest’ as our testing technology, a developer must simply follow the following steps:
+
+1. Make a push to the repository containing iExtract (or make a pull request to that repository).  
+2. GitHub Actions will automatically run the test suite against the commit. Wait for it to finish.  
+3. View the results of the test in the GitHub Actions tab.
+
+   *Offline Testing:* Run the command ‘python \-m unittest discover tests’ locally from the root directory of the project repo.
+
+* **How to Add New Tests:** Are there any naming conventions/patterns to follow when naming test files? Is there a particular test harness to use?
+
+  To add tests, from the project root, enter the ‘/tests/’ directory, then create a test file adhering to the following requirements:
+
+1. Must be testable via the command ‘python \-m unittest discover tests’  
+2. Files must start with ‘test\_’  
+3. Files must end with ‘.py’  
+4. **NOTE:** Any test data, like CSV files, for example, must go in the ‘test\_data’ folder within the ‘tests’ folder.
+
+	*Example Test:* ‘test\_backup\_locator.py’
+
+*Conventions (Within Test Files):* Test cases will start each function with ‘test\_’ followed by the task.
+
+**How to Build a Release of the Software:** Describe any tasks that are not automated. For example, should a developer update a version number (in code and documentation) prior to invoking the build system? Are there any sanity checks a developer should perform after building a release?
+
+*Follow These Steps:*
+
+1. Pull the latest changes from the main branch.  
+2. Run the test suite offline by entering the command ‘python \-m unittest discover tests’ into the terminal.  
+3. Confirm that the tests pass in GitHub Actions for this commit.  
+4. Launch iExtract to ensure that basic functionality isn’t broken.  
+5. Update the version number of iExtract in the ‘README.md’ file, under the following scheme:  
+   1. ‘major\_version.minor\_version.bug\_fix’ (X.Y.Z) versioning scheme, iterating the correct number corresponding to the update  
+6. Once the version number has been updated, tag the release/version number using Git:  
+   1. git tag vX.Y.Z  
+   2. git push origin vX.Y.Z  
+7. Create a GitHub release corresponding to the version you just tagged:  
+   1. On the project’s repo page on GitHub, under ‘Releases’:  
+      1. Select ‘Create a new release’  
+      2. Select the correct tag (the one you just made in *Step 6*)  
+      3. Add a release summary with a title and a description  
+      4. Attach relevant artifacts, such as a compressed directory containing the repository, along with executables for the 3 main targeted platforms: Windows 10/11 x64, Linux x64, and macOS Apple Silicon 64-bit   
+      5. Release to the correct branch  
+8. *Post-Release Sanity Checks:*  
+   1. Clone the repo to a fresh directory and ensure that the installation instructions actually work.  
+   2. Ensure that the release tag matches the one named in ‘README.md’.  
+   3. Ensure that the release notes are pertinent to the changes made.
+
+**How to Package This Application**
+
+iExtract can be packaged into a standalone executable for Windows, Linux, and macOS using PyInstaller. Each platform must be built natively — cross-compilation is not supported. Use Python 3.13 specifically; pydantic has known compatibility issues with Python 3.14 during the PyInstaller build process.
+
+**Windows 10/11 x64**
+
+1\. Install Python 3.13 from python.org. During install, check “Add Python to PATH”. Verify with: py \-3.13 \--version
+
+2\. In the project root, create and activate a dedicated build environment:
+
+py \-3.13 \-m venv buildenv  
+buildenv\\Scripts\\activate
+
+3\. Install dependencies:
+
+pip install \-r requirements.txt  
+pip install pyinstaller
+
+4\. Build:
+
+python \-m PyInstaller \--onefile \--copy-metadata imageio \--copy-metadata pillow\_heif \--copy-metadata charset\_normalizer \--add-data "functional\_components/photo\_caption/data;functional\_components/photo\_caption/data" \--add-data "functional\_components/iphone\_models.json;functional\_components" \--add-data "cli\_components/main\_menu.tcss;cli\_components" \--hidden-import PIL \--hidden-import PIL.Image \--hidden-import pillow\_heif \--hidden-import tkinter \--hidden-import charset\_normalizer \--collect-all imageio\_ffmpeg \--collect-all charset\_normalizer iExtract.py
+
+5\. Output: dist\\iExtract.exe. Note: symlink creation on Windows requires Administrator privileges or Developer Mode (Settings \> System \> For Developers). Without either, iExtract automatically falls back to copying files and will display a warning.
+
+**Linux x64**
+
+1\. Install system dependencies and Python 3.13 (pillow-heif requires libheif at the system level):
+
+sudo apt install libheif-dev python3.13 python3.13-venv
+
+- **Note:** Some Linux users may need to run the command: \`sudo apt install python3-tk\` in order to obtain a working installation of ‘tkinter’.
+
+2\. Create and activate a build environment, install dependencies, then build:
+
+python3 \-m PyInstaller \--onefile \--copy-metadata imageio \--copy-metadata pillow\_heif \--copy-metadata charset\_normalizer \--add-data "functional\_components/photo\_caption/data:functional\_components/photo\_caption/data" \--add-data "functional\_components/iphone\_models.json:functional\_components" \--add-data "cli\_components/main\_menu.tcss:cli\_components" \--hidden-import PIL \--hidden-import PIL.Image \--hidden-import pillow\_heif \--hidden-import tkinter \--hidden-import charset\_normalizer \--collect-all imageio\_ffmpeg \--collect-all charset\_normalizer iExtract.py
+
+3\. Output: dist/iExtract. Run chmod \+x dist/iExtract if needed.
+
+**macOS Apple Silicon**
+
+1\. Install Homebrew if not already present (brew.sh), then install system dependencies:
+
+brew install libheif python@3.13
+
+2\. Create and activate a build environment, install dependencies, then build:
+
+python3 \-m PyInstaller \--onefile \--copy-metadata imageio \--copy-metadata pillow\_heif \--copy-metadata charset\_normalizer \--add-data "functional\_components/photo\_caption/data:functional\_components/photo\_caption/data" \--add-data "functional\_components/iphone\_models.json:functional\_components" \--add-data "cli\_components/main\_menu.tcss:cli\_components" \--hidden-import PIL \--hidden-import PIL.Image \--hidden-import pillow\_heif \--hidden-import tkinter \--hidden-import charset\_normalizer \--collect-all imageio\_ffmpeg \--collect-all charset\_normalizer \--target-arch arm64 iExtract.py
+
+3\. Output: dist/iExtract. Run chmod \+x dist/iExtract if needed. Note: macOS may show a Gatekeeper warning on first run since the binary is unsigned. Right-click \> Open \> Open anyway, or run directly from the terminal.
