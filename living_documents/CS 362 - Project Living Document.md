@@ -398,13 +398,17 @@ NOTE: We require that you use GitHub Issues to track bugs that occur during use 
 
 1. **Noah Gregie:**  
    1. What I Learned:  
-      1. I  
-      2. I   
-      3. I  
+      1. The main thing I learnt from this project was the process of turning an idea into a functioning software. Most projects I've worked on have clear requirements and goals, but this one left it up to us. This really emphasized the importance of the requirements phase. As I know from experience, working towards an unclear goal is very difficult.
+  
+      2. Another important lesson was learning how to work with the specific architecture we chose, or the separation of work in general. Before this project, I had never worked on a UI/ interface while other people worked on the backend. This meant that at the beginning, I didn't want to create menus that would force the backend team to create the backend based on the menus I made. However, with good communication, this ended up not being a big deal.   
+      3. The final lesson that I already knew but was reinforced greatly in this project was the idea of continuous development. There was not a single moment during this project when I thought that I couldn't add or change anything. Of course, the main features have been implemented, but every time I go back, I always find something that could be optimized or changed. This also showed me why test suits are so important. When you are constantly making small changes, at the end of the day, you still need the main software to work. 
+  
    2. What went well:  
-      O  
+       I think the main factor behind the project's success was our clear vision. There was a clearly defined goal that we could all understand and work towards. We might have had different approaches or ideas, but we were all working towards the same thing. In my opinion, it's much better to differ on implementation than on what purpose the software should serve. 
+ 
    3. What would I do differently?:  
-      O
+      The one thing that I wish I had done differently was to work more on the backend. I did find working on the interface to be challenging and enjoying but it is something that I have done before. Usually its the backend of the software that makes it unique, and working more on that is definitely what I would do differently next time. 
+
 
 1. **Kevin Gustafson:**  
    1. What I Learned:  
