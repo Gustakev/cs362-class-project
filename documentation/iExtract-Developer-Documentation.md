@@ -43,26 +43,24 @@
 **How to Build the Software:** Provide clear instructions for how to use your project’s build system to build all system components.
 
 1. **Clone repo**  
-   1. In the terminal run the command:
-
-      \`git clone https://github.com/Gustakev/cs362-class-project.git\`  
-
+   1. In the terminal (using the shell of your choice) run the command:  
+      \`git clone https://github.com/Gustakev/cs362-class-project.git\`    
 2. **Move to repo location**  
    1. In the terminal, run the command:  \`cd cs362-class-project\`  
 3. **Install Python**  
    1. Install Python 3.13+ for your system from this link: [https://www.python.org/downloads/](https://www.python.org/downloads/)  
 4. **Initialize virtual environment**  
    1. In the terminal, run the command: \`python \-m venv venv\`  
-   2. Note: If the above command, or any other command prefixed with Python fails, ensure that you have a Python path variable set on your system. It may either be ‘python’, ‘python3’, or something more specific like ‘python3.13’, depending on your installation.  
+   2. Note: If the above command, or any other command prefixed with ‘python’ fails, ensure that you have a Python path variable set on your system. It may either be ‘python’, ‘python3’, or something more specific like ‘python3.13’, depending on your installation.  
 5. **Activate virtual environment**  
-   1. If your machine is running Mac or Linux, in the terminal, run the command:
-
-      \`source venv/bin/activate\` 
-
-   2. If you have a Windows machine, in the terminal, run the command: \`venv\\Scripts\\activate \`   
-6. **Install required requirements**  
+   1. If your machine is running Mac or Linux, in the terminal, run the command:  
+      \`source venv/bin/activate\`   
+   2. If you have a Windows machine, in administrator PowerShell, run the command: \`.\\venv\\Scripts\\Activate.ps1\`   
+6. **Install requirements**  
    1. In the terminal, run the command: \`pip install \-r requirements.txt\`  
-   2. **Note:** Some Linux users may need to run the command: \`sudo apt install python3-tk\` in order to obtain a working installation of ‘tkinter’.
+   2. **Note:** Some Linux users may need to run the command: \`sudo apt install python3-tk\` in order to obtain a working installation of ‘tkinter’.  
+7. **How to deactivate the virtual environment**  
+   1. Enter \`deactivate\` into the terminal. 
 
 **How to Test the Software**
 
@@ -81,11 +79,11 @@
 1. Must be testable via the command ‘python \-m unittest discover tests’  
 2. Files must start with ‘test\_’  
 3. Files must end with ‘.py’  
-4. **NOTE:** Any test data, like a CSV file, for example, must go in the ‘test\_data’ folder within the ‘tests’ folder.
+4. **NOTE:** Any test data, like CSV files, for example, must go in the ‘test\_data’ folder within the ‘tests’ folder.
 
 	*Example Test:* ‘test\_backup\_locator.py’
 
-*Conventions (Within Test Files):* Test cases will start each function with ‘test’ followed by the task.
+*Conventions (Within Test Files):* Test cases will start each function with ‘test\_’ followed by the task.
 
 **How to Build a Release of the Software:** Describe any tasks that are not automated. For example, should a developer update a version number (in code and documentation) prior to invoking the build system? Are there any sanity checks a developer should perform after building a release?
 
@@ -105,7 +103,7 @@
       1. Select ‘Create a new release’  
       2. Select the correct tag (the one you just made in *Step 6*)  
       3. Add a release summary with a title and a description  
-      4. Attach relevant artifacts, such as a compressed directory containing the repository  
+      4. Attach relevant artifacts, such as a compressed directory containing the repository, along with executables for the 3 main targeted platforms: Windows 10/11 x64, Linux x64, and macOS Apple Silicon 64-bit   
       5. Release to the correct branch  
 8. *Post-Release Sanity Checks:*  
    1. Clone the repo to a fresh directory and ensure that the installation instructions actually work.  
@@ -141,6 +139,8 @@ python \-m PyInstaller \--onefile \--copy-metadata imageio \--copy-metadata pill
 1\. Install system dependencies and Python 3.13 (pillow-heif requires libheif at the system level):
 
 sudo apt install libheif-dev python3.13 python3.13-venv
+
+- **Note:** Some Linux users may need to run the command: \`sudo apt install python3-tk\` in order to obtain a working installation of ‘tkinter’.
 
 2\. Create and activate a build environment, install dependencies, then build:
 
