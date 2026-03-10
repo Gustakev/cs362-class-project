@@ -18,7 +18,7 @@ from cli_components.main_menu import (
     help_user,
     conversion_settings_menu,
     symlink_settings_menu,
-    hidden_album_settings_menu,
+    smart_album_settings_menu,
 )
 
 
@@ -373,25 +373,24 @@ class TestMainMenuUI(unittest.TestCase):
         mock_settings.toggle_symlinks.assert_called_once()
         self.assertEqual(mock_input.call_count, 3)
 
-    # HIDDEN ALBUM SETTINGS MENU
-    @patch("builtins.input", side_effect=["1", "3", "2"])
+    # SMART ALBUM SETTINGS MENU
+    @patch("builtins.input", side_effect=["1", "3"])
     @patch("cli_components.main_menu.settings_service")
-    def test_hidden_album_settings_menu(self, mock_settings, mock_input):
+    def test_smart_album_settings_menu(self, mock_settings, mock_input):
         """
         Tests:
         - Toggle Hidden Album
-        - Invalid number (3)
-        - Exit (2)
+        - Exit (3)
         """
-        mock_settings.exclude_hidden_album = False
-        mock_settings.toggle_exclude_hidden_album.return_value = (
-            "Hidden Exclusion ENABLED"
+        mock_settings.excluded_smart_albums = set()
+        mock_settings.toggle_smart_album_exclusion.return_value = (
+            "Hidden Album exclusion ENABLED"
         )
 
-        hidden_album_settings_menu()
+        smart_album_settings_menu()
 
-        mock_settings.toggle_exclude_hidden_album.assert_called_once()
-        self.assertEqual(mock_input.call_count, 3)
+        mock_settings.toggle_smart_album_exclusion.assert_called_once_with("hidden")
+        self.assertEqual(mock_input.call_count, 2)
 
 
 if __name__ == "__main__":

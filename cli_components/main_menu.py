@@ -381,7 +381,7 @@ def settings_menu():
         print("1. Blacklist/Whitelist Settings")
         print("2. Conversion Settings")
         print("3. Symlink Settings")
-        print("4. Hidden Album Settings")
+        print("4. Smart Album Settings")
         print("5. Back")
 
         choice = input("Select: ").strip()
@@ -393,7 +393,7 @@ def settings_menu():
         elif choice == "3":
             symlink_settings_menu()
         elif choice == "4":
-            hidden_album_settings_menu()
+            smart_album_settings_menu()
         elif choice == "5":
             print("Going back...")
             return
@@ -511,26 +511,33 @@ def symlink_settings_menu():
             print("\nInvalid Choice")
 
 
-def hidden_album_settings_menu():
-    """Manages hidden album exclusion settings."""
+def smart_album_settings_menu():
+    """Manages smart album (NUA) exclusion settings."""
     while True:
-        print("\033[33m" + "\n--- HIDDEN ALBUM SETTINGS ---" + "\033[0m")
+        print("\033[33m" + "\n--- SMART ALBUM SETTINGS ---" + "\033[0m")
 
         print(
-            "- Enabling hidden album exclusion prevents the export of any\n"
-            "media included in the hidden album.\n"
+            "- Exclude specific smart albums from exports. When a smart album\n"
+            "is excluded, media in that album is not exported.\n"
         )
 
-        status = "ON" if settings_service.exclude_hidden_album else "OFF"
-        print(f"Current Status: [{status}]")
-        print("1. Toggle Hidden Album Exclusion")
-        print("2. Back")
+        # Check status of each smart album
+        hidden_status = "ON" if "hidden" in settings_service.excluded_smart_albums else "OFF"
+        deleted_status = "ON" if "recently_deleted" in settings_service.excluded_smart_albums else "OFF"
+        
+        print(f"1. Hidden Album  [{hidden_status}]")
+        print(f"2. Recently Deleted  [{deleted_status}]")
+        print("3. Back")
 
         choice = input("\nSelect: ").strip()
 
         if choice == "1":
-            print("\n" + settings_service.toggle_exclude_hidden_album())
+            msg = settings_service.toggle_smart_album_exclusion("hidden")
+            print("\n" + msg)
         elif choice == "2":
+            msg = settings_service.toggle_smart_album_exclusion("recently_deleted")
+            print("\n" + msg)
+        elif choice == "3":
             return
         else:
             print("\nInvalid Choice")
