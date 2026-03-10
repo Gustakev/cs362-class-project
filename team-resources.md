@@ -8,10 +8,10 @@ This document lists our team roles, links to project‑relevant artifacts, and o
 
 | Name | Role(s) | Description of Responsibilities |
 |------|---------|--------------------------------|
-| Kevin Gustafson | Director & Frontend Developer | Directs the project's overall direction and implements the agreed upon UI design. |
+| Kevin Gustafson | Director & Backend Developer | Directs the project's overall direction and implements much of the core extraction and backend logic. |
 | Sam Daughtry | Backend Developer | Develops much of the program's functional logic. |
-| Noah Gregie | UI/UX Designer | Mocks up the UI and helps code the UI and test it for usability and non-functional requirements. Helps code the app where needed. |
-| Brendon Wong | QA Tester | Designs tests and tests many of the program's core functionalities with those tests. Fixes bugs if they are found. |
+| Noah Gregie | UI/UX Designer & Frontend Developer | Mocks up the UI and implements both the Standard CLI and the Textual Dashboard interface. Tests for usability and non-functional requirements. |
+| Brendon Wong | QA Tester & ML Developer | Designs tests and tests many of the program's core functionalities with those tests. Fixes bugs if they are found. Develops and trains the AI photo captioning model. |
 
 > Roles may evolve as the project progresses. Updates should be documented here.
 
@@ -25,15 +25,34 @@ Lists **every artifact** the team relies on: tools, documents, external resource
 - Programming language(s):
   - Python
 - Frameworks & libraries:
-  - sys
-  - tkinter
+  - **sys** — Standard library. Used for error handling (stderr) and clean exits.
+  - **tkinter** — Standard library. Used to trigger native OS file explorer dialogs for folder selection.
+  - **plistlib** — Standard library. Used to parse Apple `.plist` files from iPhone backups (device info, manifest).
+  - **sqlite3** — Standard library. Used to query `Photos.sqlite` and `Manifest.db` from iPhone backups.
+  - **pydantic** — Used to define and validate all domain data models (assets, albums, backup metadata, etc.).
+  - **Pillow** — Used for image processing and HEIC/JPG conversion.
+  - **pillow-heif** — Extends Pillow with HEIC/HEIF format support, required for reading Apple's native image format.
+  - **imageio-ffmpeg** — Bundles a self-contained ffmpeg binary used by the conversion engine for MOV → MP4 transcoding.
+  - **requests** — Used by the photo captioning component to call the AI model inference endpoint.
+  - **textual** — Terminal UI framework used to implement the Textual Dashboard (Beta) interface.
 - Required versions:
-  - Python: 3.14+ (For compatibility with the newest features.)
-  - sys: ?
-  - tkinter: ?
+  - Python: **3.13** (3.14 has known pydantic compatibility issues with PyInstaller builds)
+  - pydantic: >= 2.0.0
+  - Pillow: >= 10.0.0
+  - pillow-heif: >= 0.18.0
+  - textual: >= 0.50.0
+  - moviepy: >= 2.0.0 (listed in requirements; ffmpeg is preferred for actual conversion)
+  - imageio-ffmpeg: latest
+  - requests: latest
 - Installation notes:
   - Python:
-    - Install Python from [here](https://www.python.org/downloads/).
+    - Install Python 3.13 from [here](https://www.python.org/downloads/). On Windows, check "Add to PATH" during installation.
+  - All Python dependencies:
+    - Run `pip install -r requirements.txt` from the project root inside a virtual environment.
+  - Linux only — system-level dependency required before pip install:
+    - `sudo apt install libheif-dev`
+  - macOS only — system-level dependency required before pip install:
+    - `brew install libheif` (requires [Homebrew](https://brew.sh))
 
 ### **2.2 Documents & Shared Resources**
 - Requirements document:
@@ -41,22 +60,34 @@ Lists **every artifact** the team relies on: tools, documents, external resource
 - Architecture/design document:
   - [Temporary: Click Here](https://docs.google.com/document/d/1D1vTsdaMA0Npfb_yuyDox-kD976CTZfN947ZtuWGLDE/edit?tab=t.0).
 - Living document:
+  - Located at `/living_documents/` in the repository.
   - [Click here](https://docs.google.com/document/d/1Mhivfg5L7h5X3cCTO7E5iUiXo8Poj--A-039OMgZ9fI/edit?tab=t.0).
+  
 - Mockups & diagrams:
   - Program Flow Diagram:
     - [Click here](https://oregonstateuniversity-my.sharepoint.com/:u:/g/personal/gustafke_oregonstate_edu/IQBgmBfGjFt0Q5smIIyV4imhAdqkP3baczqTaU_koUTAxiw?e=CP3WyP).
+- Developer Documentation:
+  - Located at `/documentation/` in the repository.
+  - [Click here](https://docs.google.com/document/d/1b_GKadfXZ3BhCbaBva2A9yGD2T_0b9aMbPcIgIuJqG4/edit?tab=t.0).
+- User Documentation:
+  - Located at `/documentation/` in the repository.
+  - [Click here](https://docs.google.com/document/d/15Wjz9xbFSsDllAze02nyUA3Hoh9634gyACuPZ-2v-9Y/edit?tab=t.0).
+- Beta Testing Feedback:
+  - Located at `/beta-testing/` in the repository.
 
 ### **2.3 External Tools & Services**
 - Issue tracker (GitHub Issues):
-  - We will be using these to track issues discovered while working on features -- issues that do not need to be considered major features themselves.
+  - We use GitHub Issues to track bugs and minor tasks discovered during development.
 - Weekly progress reports in GitHub repo:
   - [Click here](https://github.com/Gustakev/cs362-class-project/tree/main/reports).
 - CI/CD (GitHub Actions):
-  - N/A
+  - Automated test suite runs on every push and pull request to the repository via GitHub Actions, using `unittest`. Status badge visible in the README.
+- Packaging (PyInstaller):
+  - iExtract is packaged into a standalone executable for Windows, Linux, and macOS using PyInstaller. An `iExtract.spec` file is present in the repo root reflecting the current build configuration. See the developer documentation for full build instructions.
+- AI Photo Captioning Component:
+  - [Click here](https://github.com/BrendxnW/image-captioning-cnn-lstm). A CNN-LSTM model trained to generate natural language captions for photos. Integrated into iExtract as a beta demo feature (Photo Descriptor).
 - Any APIs or datasets:
   - N/A
-- AI Photo Captioning Tool:
-  - [Click here](https://github.com/BrendxnW/photo-captioning).
 
 ---
 
@@ -103,14 +134,18 @@ Lists **every artifact** the team relies on: tools, documents, external resource
 
 Briefly explaining **why** our team chose the languages, frameworks, and tools that we did.
 
-- Why using Python fits the project:
-  - Python: This language is great for quick development, without having to worry about low-level memory errors very much, making the chances of corrupting a user's backup lower than if we were to use something like C or C++. Though Python does run slower than C or C++, for a utility program like ours, this will not be an issue, as the runtime will surely be dominated by the extraction process itself.
-- Why these libraries/frameworks:
-  - sys: This allows us to handle errors correctly, returning errors to stderr.
-  - tkinter: This allows us to trigger file explorer popups for various reasons throughout the program, which will post to the GUI of the OS, not to the command line, making the UX smoother. The main reason we chose this over other libraries is that it works on Windows, macOS, and Linux.
+- **Python** — Great for quick development without low-level memory management concerns, reducing the risk of corrupting a user's backup. While slower than C or C++, runtime for a utility like ours is dominated by the extraction process itself, making the performance difference negligible.
+- **tkinter** — Allows native OS file explorer dialogs on Windows, macOS, and Linux without external dependencies. Chosen over alternatives for its cross-platform reliability.
+- **pydantic** — Provides runtime data validation and clean model definitions throughout the app, catching malformed backup data early and keeping domain structures well-typed and self-documenting.
+- **Pillow + pillow-heif** — Required combination for handling Apple's HEIC/HEIF image format. Pillow provides the base image processing; pillow-heif extends it with HEIC support, which is the default format for modern iPhones.
+- **imageio-ffmpeg** — Self-contained ffmpeg binary that bundles with the app. Chosen over requiring the user to install ffmpeg separately, enabling MOV → MP4 conversion out of the box with no additional setup.
+- **textual** — Chosen to implement the optional Textual Dashboard UI. Provides a rich terminal-based interface with widgets, layouts, and reactive state — all without requiring a traditional GUI framework. Gives users a more visual option while still being terminal-native.
+- **requests** — Lightweight HTTP library used by the photo captioning component to call the inference endpoint. No alternatives were seriously considered given its ubiquity for this use case.
+- **sqlite3** — Standard library. Used to query `Photos.sqlite` (Apple's photo library database) and `Manifest.db` (the backup file index). No third-party ORM is needed given the read-only, query-specific nature of the access.
 - Any tradeoffs or alternatives considered:
-  - C++: C++ was considered, as many of us are well versed in it, with some of us being the strongest in it out of any language. However, picking C++ would open the floodgates to many kinds of errors we do not want to deal with in such a short development timeline. Additionally, for a program like ours, the performance gains would be minimal if we went with C++ over Python.
-  - JS: JS was considered instead of Python due to how dynamic it is and how quick JS programs can run, as opposed to Python programs. However, we, as a team, are not as well versed in JS (and its oddities may introduce bugs that wouldn't come about while writing code in Python), so it lost the vote.
+  - **C++**: Was considered given team familiarity, but the risk of memory errors and the short development timeline made Python the safer choice. Performance gains would be minimal for this type of utility.
+  - **JS**: Was considered for its dynamic nature and speed relative to Python, but the team is less fluent in JS and its quirks could introduce bugs that Python wouldn't. Lost the vote.
+  - **moviepy**: Is listed in requirements and was the original video conversion library used. Replaced in practice by a direct ffmpeg subprocess approach via imageio-ffmpeg, which is more reliable and faster for MOV → MP4 conversion.
 
 ---
 
@@ -121,3 +156,4 @@ A simple place to track changes to this file.
 | Date | Change | Author |
 |------|--------|--------|
 | 2026‑01‑30 | Initial version | Kevin Gustafson |
+| 2026‑03‑09 | Updated libraries, roles, CI/CD status, packaging tools, photo captioning repo link, and toolset rationale to reflect current project state | Kevin Gustafson |
