@@ -33,6 +33,15 @@ def get_active_collections(asset, blacklist, album_title_by_uuid) -> List[Collec
     ua_names = {e.name for e in blacklist.current_list if not e.is_NUA}
     nua_names = {e.name for e in blacklist.current_list if e.is_NUA}
 
+    # If asset is in any excluded smart album, don't extract it at all
+    if getattr(blacklist, "is_blacklist", True):
+        if any(nua in nua_names for nua in asset.relationships.smart_folders):
+            return []
+    else:
+        # In whitelist mode, also exclude assets in excluded smart albums
+        if any(nua in nua_names for nua in asset.relationships.smart_folders):
+            return []
+
     result: List[CollectionRef] = []
 
     # user albums: resolve UUID -> title via provided map

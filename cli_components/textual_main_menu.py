@@ -109,7 +109,7 @@ class iExtractApp(App):
                     yield Button("1. Blacklist/Whitelist Settings", id="btn_menu_bw")
                     yield Button("2. Conversion Settings", id="btn_menu_conv")
                     yield Button("3. Symlink Settings", id="btn_menu_symlink")
-                    yield Button("4. Hidden Album Settings", id="btn_menu_hidden")
+                    yield Button("4. Smart Album Settings", id="btn_menu_smart_album")
                     yield Button("5. Go Back", id="btn_back_settings")
 
                 # --- 5. BLACKLIST / WHITELIST MENU ---
@@ -216,16 +216,16 @@ class iExtractApp(App):
                     yield Label("", id="lbl_photo_caption")
                     yield Button("Go Back", id="btn_back_photo")
 
-                # ---  HIDDEN ALBUM SETTINGS ---
-                with Vertical(id="hidden_album_options", classes="hidden"):
+                # ---  SMART ALBUM SETTINGS ---
+                with Vertical(id="smart_album_options", classes="hidden"):
                     yield Label(
-                        "- Enabling hidden album exclusion prevents the export of any media included in the hidden album."
+                        "- Exclude specific smart albums from exports. When a smart album\nis excluded, media in that album is not exported, even if the\nalbum is whitelisted."
                     )
-                    yield Label("Current Status: [Unknown]", id="lbl_hidden_status")
-                    yield Button(
-                        "1. Toggle Hidden Album Exclusion", id="btn_toggle_hidden"
-                    )
-                    yield Button("2. Go Back", id="btn_back_hidden")
+                    yield Label("Hidden Album: [Unknown]", id="lbl_hidden_status")
+                    yield Label("Recently Deleted: [Unknown]", id="lbl_recently_deleted_status")
+                    yield Button("1. Toggle Hidden Album", id="btn_toggle_hidden")
+                    yield Button("2. Toggle Recently Deleted", id="btn_toggle_recently_deleted")
+                    yield Button("3. Go Back", id="btn_back_smart_album")
 
             # RIGHT SIDEBAR: System Log Output
 
@@ -616,41 +616,67 @@ class iExtractApp(App):
             self.query_one("#settings_options").remove_class("hidden")
             self.query_one("#lbl_menu_title").update("[b]SETTINGS[/b]")
 
-        # Hidden Album settings
+        # Smart Album settings
 
-        if btn_id == "btn_menu_hidden":
+        if btn_id == "btn_menu_smart_album":
             self.query_one("#settings_options").add_class("hidden")
-            self.query_one("#hidden_album_options").remove_class("hidden")
-            self.query_one("#lbl_menu_title").update("[b]HIDDEN ALBUM SETTINGS[/b]")
+            self.query_one("#smart_album_options").remove_class("hidden")
+            self.query_one("#lbl_menu_title").update("[b]SMART ALBUM SETTINGS[/b]")
 
-            is_on = self.settings_service.exclude_hidden_album
-            status = "✓ ON" if is_on else "OFF"
-
+            # Update status for hidden album
+            is_hidden_excluded = "hidden" in self.settings_service.excluded_smart_albums
+            hidden_status = "✓ ON" if is_hidden_excluded else "OFF"
             self.query_one("#lbl_hidden_status", Label).update(
-                f"Current Status: [{status}]"
+                f"Hidden Album: [{hidden_status}]"
             )
             self.query_one("#btn_toggle_hidden", Button).variant = (
-                "success" if is_on else "default"
+                "success" if is_hidden_excluded else "default"
+            )
+
+            # Update status for recently deleted album
+            is_recently_deleted_excluded = "recently_deleted" in self.settings_service.excluded_smart_albums
+            recently_deleted_status = "✓ ON" if is_recently_deleted_excluded else "OFF"
+            self.query_one("#lbl_recently_deleted_status", Label).update(
+                f"Recently Deleted: [{recently_deleted_status}]"
+            )
+            self.query_one("#btn_toggle_recently_deleted", Button).variant = (
+                "success" if is_recently_deleted_excluded else "default"
             )
 
         if btn_id == "btn_toggle_hidden":
-            # Toggle it in the backend
-            msg = self.settings_service.toggle_exclude_hidden_album()
-            log.write_line(f"[HIDDEN ALBUM] {msg}")
+            # Toggle hidden album exclusion
+            msg = self.settings_service.toggle_smart_album_exclusion("hidden")
+            log.write_line(f"[SMART ALBUM] {msg}")
 
             # Update the UI
-            is_on = self.settings_service.exclude_hidden_album
-            status = "✓ ON" if is_on else "OFF"
+            is_excluded = "hidden" in self.settings_service.excluded_smart_albums
+            status = "✓ ON" if is_excluded else "OFF"
 
             self.query_one("#lbl_hidden_status", Label).update(
-                f"Current Status: [{status}]"
+                f"Hidden Album: [{status}]"
             )
             self.query_one("#btn_toggle_hidden", Button).variant = (
-                "success" if is_on else "default"
+                "success" if is_excluded else "default"
             )
 
-        if btn_id == "btn_back_hidden":
-            self.query_one("#hidden_album_options").add_class("hidden")
+        if btn_id == "btn_toggle_recently_deleted":
+            # Toggle recently deleted album exclusion
+            msg = self.settings_service.toggle_smart_album_exclusion("recently_deleted")
+            log.write_line(f"[SMART ALBUM] {msg}")
+
+            # Update the UI
+            is_excluded = "recently_deleted" in self.settings_service.excluded_smart_albums
+            status = "✓ ON" if is_excluded else "OFF"
+
+            self.query_one("#lbl_recently_deleted_status", Label).update(
+                f"Recently Deleted: [{status}]"
+            )
+            self.query_one("#btn_toggle_recently_deleted", Button).variant = (
+                "success" if is_excluded else "default"
+            )
+
+        if btn_id == "btn_back_smart_album":
+            self.query_one("#smart_album_options").add_class("hidden")
             self.query_one("#settings_options").remove_class("hidden")
             self.query_one("#lbl_menu_title").update("[b]SETTINGS[/b]")
 

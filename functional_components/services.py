@@ -193,7 +193,7 @@ class SettingsService:
         self._original_full_list = set()
         self.is_blacklist_mode = True
         self.use_symlinks = True
-        self.exclude_hidden_album = False
+        self.excluded_smart_albums = set()
 
     def toggle_symlinks(self):
         """Toggles the global symlink setting."""
@@ -201,11 +201,14 @@ class SettingsService:
         state = "ENABLED" if self.use_symlinks else "DISABLED"
         return f"Symlink creation is now {state}."
 
-    def toggle_exclude_hidden_album(self):
-        """Toggles the hidden album exclusion setting."""
-        self.exclude_hidden_album = not self.exclude_hidden_album
-        state = "ENABLED" if self.exclude_hidden_album else "DISABLED"
-        return f"Hidden album exclusion is now {state}."
+    def toggle_smart_album_exclusion(self, nua_name):
+        """Toggles exclusion for a specific smart album."""
+        if nua_name in self.excluded_smart_albums:
+            self.excluded_smart_albums.remove(nua_name)
+            return f"'{nua_name}' is no longer excluded from exports."
+        else:
+            self.excluded_smart_albums.add(nua_name)
+            return f"'{nua_name}' is now excluded from exports."
 
     def get_engine_blacklist(self):
         """Returns a Blacklist object for the Extraction Engine to evaluate."""
@@ -430,8 +433,10 @@ class ExportService:
             progress_tracker = DummyProgress()
 
             blacklist = settings_service.get_engine_blacklist()
-            if settings_service.exclude_hidden_album:
-                blacklist.current_list.append(ListEntry("hidden"))
+            
+            # Add excluded smart albums to the blacklist
+            for nua in settings_service.excluded_smart_albums:
+                blacklist.current_list.append(ListEntry(nua))
 
             # Compute present NUAs for folder creation
             present_nuas = set()
@@ -494,12 +499,11 @@ class ExportService:
 
             thread.join()
 
-            if settings_service.exclude_hidden_album and "hidden" in present_nuas:
-                from functional_components.file_extraction_engine.data.file_management import (
-                    ensure_folder_exists,
-                )
-
-                ensure_folder_exists(Path(destination_str) / "nua_hidden")
+            # Create empty folders for excluded smart albums that exist
+            for nua in settings_service.excluded_smart_albums:
+                if nua in present_nuas:
+                    from functional_components.file_extraction_engine.data.file_management import ensure_folder_exists
+                    ensure_folder_exists(Path(destination_str) / f"nua_{nua}")
 
             if engine_error:
                 return False, f"Extraction Engine Error: {engine_error[0]}"
