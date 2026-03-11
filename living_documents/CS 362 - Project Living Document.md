@@ -286,7 +286,7 @@ INSTRUCTIONS TO COMPLETE PROJECT SCHEDULE:
 * **Project Schedule:**
 
 | ID | Milestone / Task | Role | Effort Estimate | Dependencies |
-| ----- | ----- | ----- | ----- | ----- |
+| :---- | :---- | :---- | :---- | :---- |
 | M1 | Internal: System Architecture & Skeleton  \[Week 3\] | \-- | \-- | \-- |
 | T1.1 | Create skeleton code for all components with modular layered design | Developer | 1 week | None |
 | T1.2 | Create mock data for initial feature testing | Director | 1 day | T1.1 |
@@ -310,6 +310,12 @@ INSTRUCTIONS TO COMPLETE PROJECT SCHEDULE:
 | T5.3 | Implement FileCopier (copy media files, invoke Conversion Engine when needed) | Developer & Director | 3 days | T5.2, T4.1, T4.2 |
 | T5.4 | Implement SymlinkManager (handle non-exclusive assets across multiple albums) | Developer & Director | 2 days | T5.3 |
 | T5.5 | Integrate File Extraction Engine backend with CLI | UI/UX & Developer | 3 days | T2.2, T5.4 |
+
+
+  
+
+
+
 
 * **Team Structure (Member Roles & Justifications):**  
   * Kevin (Director): This project needs a director so that the direction of the project stays on track and within scope. This role will prevent us from wasting time or not knowing what to do while waiting for others to finish their work. Kevin is being chosen for this role because the project was his idea, so it makes sense that the general direction of it should stay in line with that idea.  
