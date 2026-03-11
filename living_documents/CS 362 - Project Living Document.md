@@ -402,7 +402,7 @@ NOTE: We require that you use GitHub Issues to track bugs that occur during use 
    3. What would I do differently?:  
       Communication has always been a struggle for me because I generally like to silently work on things without notifying/bothering others, so there were definitely times where I think I should have been better at communicating what I was doing/working on.
 
-1. **Noah Gregie:**  
+2. **Noah Gregie:**  
    1. What I Learned:  
       1. The main thing I learnt from this project was the process of turning an idea into a functioning software. Most projects I've worked on have clear requirements and goals, but this one left it up to us. This really emphasized the importance of the requirements phase. As I know from experience, working towards an unclear goal is very difficult.  
       2. Another important lesson was learning how to work with the specific architecture we chose, or the separation of work in general. Before this project, I had never worked on a UI/ interface while other people worked on the backend. This meant that at the beginning, I didn't want to create menus that would force the backend team to create the backend based on the menus I made. However, with good communication, this ended up not being a big deal.  
@@ -412,7 +412,7 @@ NOTE: We require that you use GitHub Issues to track bugs that occur during use 
    3. What would I do differently?:  
       The one thing that I wish I had done differently was to work more on the backend. I did find working on the interface to be challenging and enjoyable, but it is something that I have done before. Usually it's the backend of the software that makes it unique, and working more on that is definitely what I would do differently next time.
 
-1. **Kevin Gustafson:**  
+3. **Kevin Gustafson:**  
    1. What I Learned:  
       1. By working on this project, I learned more about software architectures, which will help me professionally in the future. We decided to go with Layered Architecture for this project, which was sort of hard to plan, but the fact that we decided to go with it was ultimately beneficial, as it allowed us all to work on independent components at the same time without breaking things (which may have happened if we used a different, more monolithic architecture).  
       2. I also learned how to delineate responsibilities across a team, as I was the designated Director of the project (who also did a lot of various development, but mostly backend stuff). I learned that keeping the team up to date with goals for the week was something I needed to work on pretty early on. I ended up getting into the habit of communicating frequently, which helped me, in terms of telling the team what needed to be worked on and keeping the reports and GitHub issues up-to-date.  
@@ -423,7 +423,7 @@ NOTE: We require that you use GitHub Issues to track bugs that occur during use 
       If I could’ve, I would’ve only done one thing differently: I would have (in more depth) decided, with the team, the specifics of the project early on, making detailed pseudocode (because before I started to do that, there were times in which some teammates misinterpreted what I had asked them to do and developed something slightly different that needed changes later). Doing so could have saved us some time in the long-run.
 
      
-1. **Brendon Wong:**  
+4. **Brendon Wong:**  
    1. What I Learned:  
       1. I learned a lot about software architecture. Before this class, I never had to build my software around a software architecture, but it taught me how to build a more organized software.  
       2. I learned the importance of communication within a team. Since multiple people are working on different parts of the system, it is important that everyone understands the overall design and stays informed about changes or updates. When communication was clear, it was easier to coordinate tasks and avoid duplicated work.   
